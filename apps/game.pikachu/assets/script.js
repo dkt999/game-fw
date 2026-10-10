@@ -385,7 +385,7 @@ function computeAdaptiveShape(totalCells) {
   // Không đo element vì layout lúc mới mở chưa ổn định (toolbar/CSS chưa áp xong).
   const winW = window.innerWidth, winH = window.innerHeight;
   const availW = Math.max(200, winW - 130); // trừ toolbar dọc + padding/gap
-  const availH = Math.max(120, winH - 115); // trừ titlebar + padding app
+  const availH = Math.max(120, winH - 20); // trừ titlebar + padding app
   // Board có margin 0.6 ô mỗi bên cho đường nối vòng ngoài -> kích thước thật
   // là (cols+1.2)*cell x (rows+1.2)*cell. Tính shape theo cell HIỆU DỤNG này.
   const MG = 1.2;
@@ -577,7 +577,7 @@ function boardCellSize() {
   if (window.IS_MOBILE === true) {
     // Đơn giản: dùng window trừ margin cố định (ổn định, không phụ thuộc layout)
     const availW = window.innerWidth - 130;
-    const availH = window.innerHeight - 115;
+    const availH = window.innerHeight - 20;
     const fitW = Math.floor(availW / (C + 1.2)); // +1.2 ô margin đường nối
     const fitH = Math.floor(availH / (R + 1.2));
     const size = Math.min(fitW, fitH);
