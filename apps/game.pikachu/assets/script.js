@@ -370,7 +370,9 @@ function watchBoardResize() {
         const w2 = winEl2 ? winEl2.clientWidth : 0, h2 = winEl2 ? winEl2.clientHeight : 0;
         if (Math.abs(w2 - lastBoardWinW) > 120 || Math.abs(h2 - lastBoardWinH) > 120) {
           const sh = computeAdaptiveShape(level.cells);
+          pkcDebug("resize", "w2=" + w2 + " h2=" + h2 + " last=" + lastBoardWinW + "x" + lastBoardWinH + " newShape=" + sh.rows + "x" + sh.cols + " cur=" + R + "x" + C);
           if ((sh.rows !== R || sh.cols !== C) && pairsLeft === totalPairs) {
+            pkcDebug("rebuild", "dung lai ban voi shape moi");
             buildLevelBoard(level); // chưa đi nước nào -> dựng lại an toàn
             return;
           }
@@ -449,6 +451,17 @@ function computeAdaptiveShape(totalCells) {
    LEVEL START / BOARD GENERATION
 ===================================================================== */
 let levelBuildToken = 0; // chống race khi đổi màn nhanh
+const PKC_DEBUG = (function(){ try { return /[?&]pikachu_debug=1/.test(location.search); } catch(e){ return false; } })();
+let pkcDebugLog = [];
+function pkcDebug(tag, info) {
+  const line = new Date().toISOString().substr(11, 12) + " [" + tag + "] " + info;
+  pkcDebugLog.push(line);
+  if (pkcDebugLog.length > 30) pkcDebugLog.shift();
+  try { console.log("[PKC-DBG]", line); } catch(e){}
+  if (!PKC_DEBUG) return;
+  const el = document.getElementById("pkc-debugPanel");
+  if (el) { el.style.display = "block"; el.textContent = pkcDebugLog.join("\n"); }
+}
 let lastBoardWinW = 0, lastBoardWinH = 0; // kích thước window lúc dựng bàn
 function startLevel(lv) {
   level = lv;
@@ -471,7 +484,20 @@ function startLevel(lv) {
 function buildLevelBoard(lv) {
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
   let shape = { rows: lv.rows, cols: lv.cols };
+  const _dbgBefore = (function(){
+    try {
+      const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
+      const bc = document.querySelector(".pikachu-app .pkc-boardcol");
+      return "win=" + (winEl ? winEl.clientWidth + "x" + winEl.clientHeight : "?") +
+        " colW=" + (bc ? bc.clientWidth : "?") +
+        " frameTop=" + Math.round(boardFrame.getBoundingClientRect().top) +
+        " inner=" + window.innerWidth + "x" + window.innerHeight +
+        " mobile=" + window.IS_MOBILE;
+    } catch(e){ return "err:" + e.message; }
+  })();
+  pkcDebug("pre-shape", "lv#" + lv.id + " lvRows=" + lv.rows + " lvCols=" + lv.cols + " cells=" + lv.cells + " | " + _dbgBefore);
   if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
+  pkcDebug("post-shape", "R=" + shape.rows + " C=" + shape.cols + " cellPx=" + boardCellSize());
   R = shape.rows; C = shape.cols;
   const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
   lastBoardWinW = winEl ? winEl.clientWidth : 0;

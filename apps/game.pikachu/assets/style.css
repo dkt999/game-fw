@@ -198,6 +198,12 @@
 .pikachu-app .shuffle-modal .spin{ display:inline-block; animation: spin360 0.9s linear infinite; }
 @keyframes spin360{ to{ transform:rotate(360deg); } }
 @keyframes shufflePulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.06);} }
+.pikachu-app .debug-panel{
+  position:fixed; top:8px; right:8px; z-index:9999; max-width:78vw;
+  background:rgba(0,0,0,0.85); color:#0f0; font-family:monospace; font-size:11px;
+  padding:10px 12px; border-radius:8px; white-space:pre-wrap; word-break:break-all;
+  pointer-events:auto; line-height:1.5;
+}
 .pikachu-app .time-bonus{
   position:absolute; top:10px; left:50%; transform:translateX(-50%);
   font-family:"Spectral", serif; font-weight:700; font-size:20px; color:#7bc47f;
