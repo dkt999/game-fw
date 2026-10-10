@@ -83,8 +83,16 @@ function generateLevels(count) {
     const idx = levels.findIndex(l => l.id === x.afterLevel);
     if (idx >= 0) levels.splice(idx + 1, 0, Object.assign({ id: levels.length + 1, tier: "expert" }, x.level));
   });
+  // Map Chuyên gia: sau mỗi cặp nối, board "rơi" theo trọng lực —
+  // 1/3 đầu rơi cố định 1 hướng, 1/3 giữa đảo qua lại, 1/3 cuối ngẫu nhiên.
+  const experts = levels.filter(l => l.tier === "expert");
+  experts.forEach((l, idx) => {
+    const e = idx / Math.max(1, experts.length - 1);
+    l.shift = e < 1/3 ? "fixed" : (e < 2/3 ? "alternate" : "random");
+  });
   return levels;
 }
+const SHIFT_LABEL = { fixed: "Rơi ↓", alternate: "Rơi ↕", random: "Rơi ngẫu nhiên" };
 
 const LEVELS = generateLevels(LEVEL_COUNT);
 
@@ -94,21 +102,50 @@ const LEVELS = generateLevels(LEVEL_COUNT);
    - Lưu: số map đã mở khóa + thành tích thời gian tốt nhất mỗi map.
 ===================================================================== */
 const PROGRESS_KEY = "pikachu-progress-v1";
+/* Pack: moi pack 10 map, qua it nhat 80% (8/10) map cua pack hien tai
+   thi mo pack tiep theo. completed[id] = true nghia la map id da qua. */
+const PACK_SIZE = 10;
+const PACK_NEED = 8;
 function loadProgress() {
+  const fresh = () => ({ completed: {}, best: {} });
   try {
     const raw = localStorage.getItem(PROGRESS_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && typeof p.unlocked === "number") {
-        return {
-          unlocked: Math.max(1, Math.min(LEVELS.length, p.unlocked)),
-          best: (p.best && typeof p.best === "object") ? p.best : {}
-        };
-      }
+    if (!raw) return fresh();
+    const p = JSON.parse(raw);
+    if (!p || typeof p !== "object") return fresh();
+    const best = (p.best && typeof p.best === "object") ? p.best : {};
+    if (p.completed && typeof p.completed === "object") {
+      return { completed: p.completed, best };
     }
+    // Migrate tu ban cu (mo khoa tuan tu theo unlocked): map 1..unlocked-1 da qua
+    const completed = {};
+    if (typeof p.unlocked === "number") {
+      const up = Math.max(1, Math.min(LEVELS.length, p.unlocked));
+      for (let i = 1; i < up; i++) completed[i] = true;
+    }
+    Object.keys(best).forEach(k => { completed[k] = true; });
+    return { completed, best };
   } catch (e) { /* localStorage không dùng được: chơi như chưa lưu */ }
-  return { unlocked: 1, best: {} };
+  return fresh();
 }
+function packOf(levelId) { return Math.ceil(levelId / PACK_SIZE); }
+function packCount() { return Math.ceil(LEVELS.length / PACK_SIZE); }
+function packRange(p) {
+  return { from: (p - 1) * PACK_SIZE + 1, to: Math.min(p * PACK_SIZE, LEVELS.length) };
+}
+function packCompleted(p) {
+  const { from, to } = packRange(p);
+  let n = 0;
+  for (let i = from; i <= to; i++) if (progress.completed[i]) n++;
+  return n;
+}
+function totalCompleted() { return Object.keys(progress.completed).length; }
+function isPackUnlocked(p) {
+  if (p <= 1) return true;
+  if (p > packCount()) return false;
+  return packCompleted(p - 1) >= PACK_NEED;
+}
+function isLevelUnlocked(id) { return isPackUnlocked(packOf(id)); }
 function saveProgress() {
   try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (e) {}
 }
@@ -165,20 +202,33 @@ function buildMapGrid() {
   refreshMapGrid();
 }
 function refreshMapGrid() {
-  mapCountEl.textContent = progress.unlocked + "/" + LEVELS.length;
+  mapCountEl.textContent = totalCompleted() + "/" + LEVELS.length;
+  const np = packCount();
   let html = "";
-  LEVELS.forEach(lv => {
-    const isLocked = lv.id > progress.unlocked;
-    const best = progress.best[lv.id];
-    const tip = isLocked
-      ? "Hoàn thành Map " + (lv.id - 1) + " để mở khóa"
-      : (TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : ""));
-    html += `<button class="map-btn tier-${lv.tier}${isLocked ? " locked" : ""}" data-level="${lv.id}"${isLocked ? " disabled" : ""} title="${tip}">${isLocked ? "🔒" : lv.id}</button>`;
-  });
+  for (let p = 1; p <= np; p++) {
+    const { from, to } = packRange(p);
+    const unlocked = isPackUnlocked(p);
+    const done = packCompleted(p);
+    const size = to - from + 1;
+    const headNote = unlocked
+      ? `<span class="pack-progress">${done}/${size}</span>`
+      : `<span class="pack-progress">🔒 qua ${PACK_NEED}/${PACK_SIZE} Pack ${p - 1} để mở</span>`;
+    html += `<div class="pack${unlocked ? "" : " locked-pack"}"><div class="pack-head"><span>Pack ${p}</span>${headNote}</div><div class="pack-grid">`;
+    for (let id = from; id <= to; id++) {
+      const lv = LEVELS[id - 1];
+      const isDone = !!progress.completed[id];
+      const best = progress.best[id];
+      const tip = unlocked
+        ? (TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
+        : ("Hoàn thành " + PACK_NEED + "/" + PACK_SIZE + " map của Pack " + (p - 1) + " để mở khóa");
+      html += `<button class="map-btn tier-${lv.tier}${unlocked ? "" : " locked"}${isDone ? " done" : ""}" data-level="${id}"${unlocked ? "" : " disabled"} title="${tip}">${unlocked ? id : "🔒"}</button>`;
+    }
+    html += `</div></div>`;
+  }
   mapGrid.innerHTML = html;
   // Nut do kho chi sang khi tier do co it nhat 1 map da mo
   diffRow.querySelectorAll(".diff-btn").forEach(b => {
-    const hasOpen = LEVELS.some(l => l.tier === b.dataset.diff && l.id <= progress.unlocked);
+    const hasOpen = LEVELS.some(l => l.tier === b.dataset.diff && isLevelUnlocked(l.id));
     b.disabled = !hasOpen;
   });
 }
@@ -188,7 +238,7 @@ mapGrid.addEventListener("click", (e) => {
   const btn = e.target.closest(".map-btn");
   if (!btn) return;
   const lv = LEVELS.find(l => l.id === Number(btn.dataset.level));
-  if (!lv || lv.id > progress.unlocked) return;
+  if (!lv || !isLevelUnlocked(lv.id)) return;
   startLevel(lv);
 });
 
@@ -198,7 +248,7 @@ diffRow.addEventListener("click", (e) => {
   diffRow.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   const tier = btn.dataset.diff;
-  const pool = LEVELS.filter(l => l.tier === tier && l.id <= progress.unlocked);
+  const pool = LEVELS.filter(l => l.tier === tier && isLevelUnlocked(l.id));
   if (!pool.length) return;
   const lv = pool[Math.floor(Math.random() * pool.length)];
   startLevel(lv);
@@ -208,8 +258,8 @@ document.getElementById("pkc-btnMenu").addEventListener("click", backToMenu);
 document.getElementById("pkc-btnNewGame").addEventListener("click", () => { if (level) startLevel(level); });
 const btnNextMap = document.getElementById("pkc-btnNextMap");
 btnNextMap.addEventListener("click", () => {
-  const next = LEVELS.find(l => l.id === level.id + 1);
-  if (next && next.id <= progress.unlocked) startLevel(next);
+  const next = LEVELS.find(l => l.id > level.id && isLevelUnlocked(l.id));
+  if (next) startLevel(next);
 });
 btnShuffle.addEventListener("click", doShuffle);
 btnHint.addEventListener("click", useHint);
@@ -264,6 +314,7 @@ function startLevel(lv) {
   seconds = 0;
   selected = null;
   locked = false;
+  shiftCount = 0;
 
   grid = buildSolvedGrid(R, C, lv.variety, lv.copies);
   totalPairs = (R * C) / 2;
@@ -279,7 +330,7 @@ function startLevel(lv) {
   }
   btnNextMap.style.display = "none";
 
-  statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier];
+  statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier] + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : "");
   hintBadge.textContent = hintsLeft;
   statShuffle.textContent = shufflesLeft;
   updatePairsStat();
@@ -443,20 +494,31 @@ function resolveMatch(a, b, path) {
   pairsLeft--;
   updatePairsStat();
   setTimeout(() => {
-    if (elA) elA.classList.add("cleared");
-    if (elB) elB.classList.add("cleared");
-  }, 260);
-
-  if (pairsLeft <= 0) {
-    winGame();
-  } else if (!hasAnyMove()) {
-    // Bí đường ngay sau khi nối: tự xáo nếu còn lượt, không thì báo thua
-    if (shufflesLeft > 0) {
-      setTimeout(() => doShuffle(true), 400);
-    } else {
-      setTimeout(loseGame, 400);
+    if (pairsLeft <= 0) {
+      if (elA) elA.classList.add("cleared");
+      if (elB) elB.classList.add("cleared");
+      winGame();
+      return;
     }
-  }
+    if (level.shift) {
+      // Map khó: board rơi/dịch chuyển sau mỗi cặp nối rồi mới vẽ lại
+      doBoardShift();
+      renderBoard();
+      clearSelectionClasses();
+      selected = null;
+    } else {
+      if (elA) elA.classList.add("cleared");
+      if (elB) elB.classList.add("cleared");
+    }
+    if (!hasAnyMove()) {
+      // Bí đường ngay sau khi nối (hoặc sau khi board rơi): tự xáo nếu còn lượt, không thì báo thua
+      if (shufflesLeft > 0) {
+        setTimeout(() => doShuffle(true), 400);
+      } else {
+        setTimeout(loseGame, 400);
+      }
+    }
+  }, 260);
 }
 
 function updatePairsStat() {
@@ -567,6 +629,43 @@ function drawLinkPath(path) {
 }
 
 /* =====================================================================
+   BOARD SHIFT (map khó): sau mỗi cặp nối, toàn bộ hình còn lại "rơi"
+   theo trọng lực về 1 hướng — fixed: luôn rơi xuống; alternate: đảo
+   lên/xuống qua lại; random: hướng ngẫu nhiên mỗi lần.
+===================================================================== */
+let shiftCount = 0; // đếm số lần đã shift trong ván hiện tại (cho alternate)
+function applyGravity(dir) {
+  if (dir === "down" || dir === "up") {
+    for (let c = 0; c < C; c++) {
+      const col = [];
+      for (let r = 0; r < R; r++) if (grid[r][c] !== 0) col.push(grid[r][c]);
+      for (let r = 0; r < R; r++) {
+        if (dir === "down") grid[r][c] = (r < R - col.length) ? 0 : col[r - (R - col.length)];
+        else grid[r][c] = (r < col.length) ? col[r] : 0;
+      }
+    }
+  } else {
+    for (let r = 0; r < R; r++) {
+      const row = grid[r].filter(v => v !== 0);
+      for (let c = 0; c < C; c++) {
+        if (dir === "right") grid[r][c] = (c < C - row.length) ? 0 : row[c - (C - row.length)];
+        else grid[r][c] = (c < row.length) ? row[c] : 0;
+      }
+    }
+  }
+}
+function doBoardShift() {
+  const mode = level.shift;
+  let dir;
+  if (mode === "fixed") dir = "down";
+  else if (mode === "alternate") dir = (shiftCount % 2 === 0) ? "down" : "up";
+  else dir = ["up", "down", "left", "right"][Math.floor(Math.random() * 4)];
+  shiftCount++;
+  applyGravity(dir);
+  return dir;
+}
+
+/* =====================================================================
    SHUFFLE / HINT
 ===================================================================== */
 function doShuffle(silent) {
@@ -640,27 +739,32 @@ function updateTimeDisplay() {
 function winGame() {
   locked = true;
   stopTimer();
-  // Mở khóa map tiếp theo (nếu đây là map cao nhất đã mở)
-  let unlockMsg = "";
-  if (level.id >= progress.unlocked && progress.unlocked < LEVELS.length) {
-    progress.unlocked = level.id + 1;
-    unlockMsg = " · Đã mở khóa Map " + progress.unlocked + "!";
-  }
+  // Đánh dấu map đã qua; nếu đủ 80% pack thì mở pack tiếp theo
+  const curPack = packOf(level.id);
+  const nextPack = curPack + 1;
+  const wasNextUnlocked = nextPack > packCount() || isPackUnlocked(nextPack);
+  progress.completed[level.id] = true;
   // Lưu kỷ lục thời gian của map này
   const prevBest = progress.best[level.id];
   if (!prevBest || seconds < prevBest.time) {
     progress.best[level.id] = { time: seconds };
   }
   saveProgress();
+  const nowNextUnlocked = nextPack > packCount() || isPackUnlocked(nextPack);
+  let unlockMsg = "";
+  if (!wasNextUnlocked && nowNextUnlocked) {
+    unlockMsg = " · Đã mở khóa Pack " + nextPack + "!";
+  }
   refreshMapGrid();
   resultTitle.textContent = "Hoàn thành!";
   resultSub.textContent = "Bạn đã dọn sạch " + totalPairs + " cặp trong " + statTime.textContent + " · " + statMap.textContent + unlockMsg;
   resultBanner.classList.remove("lose");
   resultBanner.classList.add("show");
   hankoEl.classList.add("show");
-  // Hiện nút chơi tiếp map vừa mở khóa
-  if (unlockMsg) {
-    btnNextMap.textContent = "Chơi tiếp Map " + progress.unlocked + " →";
+  // Hiện nút chơi tiếp map mở gần nhất
+  const next = LEVELS.find(l => l.id > level.id && isLevelUnlocked(l.id));
+  if (next) {
+    btnNextMap.textContent = "Chơi tiếp Map " + next.id + " →";
     btnNextMap.style.display = "";
   }
 }

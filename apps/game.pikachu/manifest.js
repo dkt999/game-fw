@@ -46,6 +46,8 @@ function InitPikachuGame() {
                     <li>Bí đường? Nhấn <b>Xáo bài</b> để xáo lại các ô còn lại (không đổi số lần xáo còn hạn chế ở mức khó cao).</li>
                     <li>Dùng <b>Gợi ý</b> để bàn cờ tự tìm và nhấp nháy một cặp có thể nối — số lần gợi ý có giới hạn.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
+                    <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>
+                    <li>Từ map <b>Chuyên gia</b>: mỗi lần nối xong, toàn bộ hình còn lại sẽ <b>rơi/dịch chuyển</b> — lúc đầu rơi cố định xuống dưới, sau đảo lên/xuống qua lại, cuối cùng ngẫu nhiên 4 hướng.</li>
                 </ul>
             </details>
 
@@ -57,7 +59,7 @@ function InitPikachuGame() {
                     <button class="diff-btn" data-diff="expert">Chuyên gia</button>
                 </div>
                 <details class="map-picker">
-                    <summary>Chọn map cụ thể (đã mở <span id="pkc-mapCount">0</span>)</summary>
+                    <summary>Chọn map cụ thể (<span id="pkc-mapCount">0</span> map đã qua)</summary>
                     <div class="map-grid" id="pkc-mapGrid"></div>
                 </details>
             </div>
