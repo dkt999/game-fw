@@ -537,12 +537,9 @@ function resolveMatch(a, b, path) {
       if (elB) elB.classList.add("cleared");
     }
     if (!hasAnyMove()) {
-      // Bí đường ngay sau khi nối (hoặc sau khi board rơi): tự xáo nếu còn lượt, không thì báo thua
-      if (shufflesLeft > 0) {
-        setTimeout(() => doShuffle(true), 400);
-      } else {
-        setTimeout(loseGame, 400);
-      }
+      // Bí đường sau khi nối (hoặc sau khi board rơi): thua luôn —
+      // người chơi phải chủ động xáo TRƯỚC khi bí, game không tự cứu.
+      setTimeout(() => loseGame("Hết đường nối! Nhớ xáo bài trước khi bí."), 400);
     }
   }, 260);
 }
