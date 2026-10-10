@@ -336,6 +336,7 @@ function backToMenu() {
   hideWinModal();
   hideLoseModal();
   if (rotateHintEl) rotateHintEl.style.display = "none";
+  levelBuildToken++; // hủy buildLevelBoard đang chờ (nếu có)
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
@@ -361,7 +362,22 @@ function watchBoardResize() {
   boardResizeObserver = new ResizeObserver(() => {
     if (boardResizeRaf) cancelAnimationFrame(boardResizeRaf);
     boardResizeRaf = requestAnimationFrame(() => {
-      if (gameArea.style.display !== "none" && grid.length) renderBoard();
+      if (gameArea.style.display === "none" || !grid.length) return;
+      // Window thay đổi kích thước lớn (vừa xoay xong / vừa mở app):
+      // tính lại shape, nếu khác thì dựng lại bàn cho đúng
+      if (window.IS_MOBILE === true && level && level.cells) {
+        const winEl2 = boardFrame.closest(".window") || boardFrame.closest(".window-content");
+        const w2 = winEl2 ? winEl2.clientWidth : 0, h2 = winEl2 ? winEl2.clientHeight : 0;
+        if (Math.abs(w2 - lastBoardWinW) > 120 || Math.abs(h2 - lastBoardWinH) > 120) {
+          const sh = computeAdaptiveShape(level.cells);
+          if ((sh.rows !== R || sh.cols !== C) && pairsLeft === totalPairs) {
+            buildLevelBoard(level); // chưa đi nước nào -> dựng lại an toàn
+            return;
+          }
+          lastBoardWinW = w2; lastBoardWinH = h2;
+        }
+      }
+      renderBoard();
     });
   });
   boardResizeObserver.observe(winEl);
@@ -432,21 +448,34 @@ function computeAdaptiveShape(totalCells) {
 /* =====================================================================
    LEVEL START / BOARD GENERATION
 ===================================================================== */
+let levelBuildToken = 0; // chống race khi đổi màn nhanh
+let lastBoardWinW = 0, lastBoardWinH = 0; // kích thước window lúc dựng bàn
 function startLevel(lv) {
   level = lv;
   progress.lastPlayed = lv.id;
   viewPack = packOf(lv.id);
   saveProgress();
-  // Hiện gameArea trước để đo được kích thước thật (cho computeAdaptiveShape)
   hideWinModal();
   hideLoseModal();
   mainMenu.style.display = "none";
   gameArea.style.display = "flex";
+  updateRotateHint();
+  // Đợi 2 frame cho layout ổn định (vừa hiện gameArea / vừa xoay màn hình
+  // do orientation.lock) rồi mới đo kích thước thật để tính shape
+  const token = ++levelBuildToken;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (token !== levelBuildToken) return; // đã chuyển màn khác
+    buildLevelBoard(lv);
+  }));
+}
+function buildLevelBoard(lv) {
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
   let shape = { rows: lv.rows, cols: lv.cols };
   if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
-  updateRotateHint();
   R = shape.rows; C = shape.cols;
+  const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
+  lastBoardWinW = winEl ? winEl.clientWidth : 0;
+  lastBoardWinH = winEl ? winEl.clientHeight : 0;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;
   timeLimit = lv.timeLimit;
