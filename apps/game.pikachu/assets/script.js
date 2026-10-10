@@ -460,6 +460,10 @@ let levelBuildToken = 0; // chống race khi đổi màn nhanh
 const PKC_DEBUG = (function(){ try { return /[?&]pikachu_debug=1/.test(location.search); } catch(e){ return false; } })();
 let pkcDebugLog = [];
 function pkcDebug(tag, info) {
+  if (tag === "pre-shape" && !pkcDebug._v) {
+    pkcDebug._v = true;
+    try { pkcDebugLog.push("VER=" + (window.APP_VERSION || "?")); } catch(e){}
+  }
   const line = new Date().toISOString().substr(11, 12) + " [" + tag + "] " + info;
   pkcDebugLog.push(line);
   if (pkcDebugLog.length > 30) pkcDebugLog.shift();
