@@ -276,7 +276,7 @@ function refreshMapGrid() {
     const isDone = !!progress.completed[id];
     const best = progress.best[id];
     const tip = unlocked
-      ? ("Map " + id + " · " + TIER_LABEL[lv.tier] + " · " + lv.cells + " ô" + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
+      ? ("Map " + id + " · " + TIER_LABEL[lv.tier] + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
       : "Pack chưa mở khóa";
     html += `<button class="map-btn tier-${lv.tier}${unlocked ? "" : " locked"}${isDone ? " done" : ""}${id === lastId ? " last" : ""}" data-level="${id}"${unlocked ? "" : " disabled"} title="${tip}">${unlocked ? id : "🔒"}</button>`;
   }
@@ -374,6 +374,7 @@ function stopBoardResizeWatch() {
    thì xoay theo màn hình để tile luôn to nhất: màn ngang -> bàn rộng,
    màn dọc -> bàn cao. Desktop giữ shape cố định như cũ.
 ===================================================================== */
+const MIN_TILE_PX = 32; // Mobile: tile không nhỏ hơn mức này -> map khó nhiều ô sẽ tự giảm số ô
 function computeAdaptiveShape(totalCells) {
   const winEl = (typeof boardFrame !== "undefined" && boardFrame.closest(".window"))
     || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
@@ -385,12 +386,17 @@ function computeAdaptiveShape(totalCells) {
   let top = 0;
   try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
   const availH = Math.max(120, winH - top - 32); // trừ padding dưới wrap (12) + frame/board (20)
+  // Map khó: giới hạn số ô để tile không nhỏ hơn MIN_TILE_PX (dễ thấy, dễ bấm)
+  const maxCells = Math.floor(availW / MIN_TILE_PX) * Math.floor(availH / MIN_TILE_PX);
+  let cells = Math.min(totalCells, maxCells);
+  if (cells % 2 !== 0) cells -= 1;
+  cells = Math.max(24, cells);
   // Muốn tile vuông to nhất: tỉ lệ cols/rows ~ availW/availH
-  let cols = Math.round(Math.sqrt(totalCells * availW / availH));
+  let cols = Math.round(Math.sqrt(cells * availW / availH));
   cols = Math.max(6, Math.min(40, cols));
-  let rows = Math.max(4, Math.ceil(totalCells / cols));
+  let rows = Math.max(4, Math.ceil(cells / cols));
   if ((cols * rows) % 2 !== 0) cols += 1; // luôn cần số ô chẵn
-  while (cols * rows < totalCells) cols += 2;
+  while (cols * rows < cells) cols += 2;
   return { rows, cols };
 }
 
