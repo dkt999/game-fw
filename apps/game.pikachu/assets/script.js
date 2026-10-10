@@ -411,33 +411,37 @@ function computeAdaptiveShape(totalCells) {
   const colH = (colRect && colRect.height > 0) ? colRect.height : winH;
   const availW = Math.max(200, colW - 20); // trừ padding frame (6*2) + board (4*2)
   const availH = Math.max(120, colH - 32); // trừ padding frame/board + margin dưới
+  // Board có margin 0.6 ô mỗi bên cho đường nối vòng ngoài -> kích thước thật
+  // là (cols+1.2)*cell x (rows+1.2)*cell. Tính shape theo cell HIỆU DỤNG này.
+  const MG = 1.2;
+  const effCell = (r, c) => Math.min(availW / (c + MG), availH / (r + MG));
   // Fill đầy khung: làm tròn LÊN số hàng/cột, miễn tile không nhỏ hơn 80% target
-  let rows = Math.ceil(availH / TARGET_TILE_PX);
-  if (availH / rows < MIN_TILE_PX) rows = Math.floor(availH / TARGET_TILE_PX);
-  let cols = Math.ceil(availW / TARGET_TILE_PX);
-  if (availW / cols < MIN_TILE_PX) cols = Math.floor(availW / TARGET_TILE_PX);
+  let rows = Math.ceil(availH / (TARGET_TILE_PX * 1.15));
+  if (effCell(rows, 12) < MIN_TILE_PX) rows = Math.floor(availH / (TARGET_TILE_PX * 1.15));
+  let cols = Math.ceil(availW / (TARGET_TILE_PX * 1.15));
+  if (effCell(8, cols) < MIN_TILE_PX) cols = Math.floor(availW / (TARGET_TILE_PX * 1.15));
   rows = Math.max(4, rows);
   cols = Math.max(6, Math.min(40, cols));
   // Không dùng quá số ô của level: giảm chiều nào còn giữ tile to hơn
   let guard = 0;
   while (rows * cols > totalCells && (rows > 4 || cols > 6) && guard++ < 200) {
-    const tRow = rows > 4 ? Math.min(availW / cols, availH / (rows - 1)) : -1;
-    const tCol = cols > 6 ? Math.min(availW / (cols - 1), availH / rows) : -1;
+    const tRow = rows > 4 ? effCell(rows - 1, cols) : -1;
+    const tCol = cols > 6 ? effCell(rows, cols - 1) : -1;
     if (tRow >= tCol && rows > 4) rows--;
     else if (cols > 6) cols--;
     else break;
   }
   // Tham lam mở rộng chiều đang trống nhiều hơn (tile vẫn >= 80% target, không vượt số ô level)
   for (let gi = 0; gi < 4; gi++) {
-    const cell = Math.min(availW / cols, availH / rows);
-    const fillW = (cols * cell) / availW, fillH = (rows * cell) / availH;
+    const cell = effCell(rows, cols);
+    const fillW = ((cols + MG) * cell) / availW, fillH = ((rows + MG) * cell) / availH;
     let grew = false;
     const tryGrow = (nr, nc) => {
       if (nr * nc > totalCells) return false;
-      const ncell = Math.min(availW / nc, availH / nr);
+      const ncell = effCell(nr, nc);
       if (ncell < MIN_TILE_PX) return false;
-      const nfill = ((nc * ncell) * (nr * ncell)) / (availW * availH);
-      const ofill = ((cols * cell) * (rows * cell)) / (availW * availH);
+      const nfill = (((nc + MG) * ncell) * ((nr + MG) * ncell)) / (availW * availH);
+      const ofill = (((cols + MG) * cell) * ((rows + MG) * cell)) / (availW * availH);
       if (nfill > ofill + 0.01) { rows = nr; cols = nc; return true; }
       return false;
     };
