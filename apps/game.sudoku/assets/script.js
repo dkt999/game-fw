@@ -11,8 +11,8 @@ function computeSudokuBoardPx() {
   var landscape = w > h;
   if (typeof window !== "undefined" && window.IS_MOBILE === true) {
     if (landscape) {
-      // Xoay ngang: board vua theo chieu cao (tru titlebar + stats-row + padding)
-      return Math.max(200, h - 170);
+      // Xoay ngang: board cao toi da (tru titlebar 48 + padding wrap/frame ~65)
+      return Math.max(200, h - 115);
     }
     // Man hinh doc: board lap vua chieu ngang
     return Math.max(220, Math.min(w - 48, h - 380));

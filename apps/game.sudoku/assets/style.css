@@ -291,25 +291,29 @@
   .sudoku-app .tool-btn:hover{ background:none; }
 }
 
-/* ---------- Mobile xoay ngang: board bên trái, cụm điều khiển bên phải ---------- */
+/* ---------- Mobile xoay ngang: board trai cao toi da, moi thu khac sang phai ---------- */
 @media (orientation: landscape) and (max-height: 540px) {
   .is-mobile .sudoku-app .wrap{ padding: 12px 10px 24px; }
   .is-mobile .sudoku-app #sdk-gameSudokuArea{
     display:grid;
     grid-template-columns: auto 1fr;
     grid-template-areas:
-      "stats stats"
+      "board nav"
+      "board stats"
       "board numpad"
       "board tools";
-    gap: 4px 14px;
+    gap: 8px 16px;
     align-items:start;
     justify-items:start;
     width:100%;
   }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row{ grid-area:stats; width:100%; }
+  /* "Xoa" stats-row de 2 cum con (nut dieu huong / thong ke) thanh item rieng cua grid */
+  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row{ display:contents; }
+  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row .stats-container:first-child{ grid-area:nav; }
+  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row .stats-container:last-child{ grid-area:stats; }
   .is-mobile .sudoku-app #sdk-gameSudokuArea .board-frame{ grid-area:board; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .numpad-row{ grid-area:numpad; margin-top:0; max-width:360px; justify-content:flex-start; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .tool-row{ grid-area:tools; margin-top:2px; justify-content:flex-start; }
+  .is-mobile .sudoku-app #sdk-gameSudokuArea .numpad-row{ grid-area:numpad; margin-top:0; max-width:380px; justify-content:flex-start; }
+  .is-mobile .sudoku-app #sdk-gameSudokuArea .tool-row{ grid-area:tools; margin-top:0; justify-content:flex-start; }
   .is-mobile .sudoku-app #sdk-gameSudokuArea .result-banner{ grid-column:1 / -1; width:100%; }
   .is-mobile .sudoku-app .num-btn{ width:40px; height:46px; }
 }
