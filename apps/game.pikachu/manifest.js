@@ -55,7 +55,7 @@ function InitPikachuGame() {
                     <ul>
                     <li>Chọn hai ô có <b>hình giống hệt nhau</b> để nối chúng lại và loại bỏ khỏi bàn cờ.</li>
                     <li>Đường nối giữa hai ô chỉ được phép <b>rẽ tối đa 2 lần</b>, không được đi xuyên qua ô còn hình khác.</li>
-                    <li>Sắp bí đường? Nhấn <b>Xáo bài</b> <b>trước khi</b> hết đường nối — bí hẳn là <b>thua luôn</b>, game không tự xáo cứu.</li>
+                    <li>Bí đường (không còn cặp nối được): game sẽ <b>tự động xáo bài miễn phí</b> cứu ván. Bạn cũng có thể chủ động nhấn <b>Xáo bài</b> bất cứ lúc nào (số lượt có giới hạn).</li>
                     <li>Dùng <b>Gợi ý</b> để bàn cờ tự tìm và nhấp nháy một cặp có thể nối — số lần gợi ý có giới hạn.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>

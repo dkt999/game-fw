@@ -456,6 +456,8 @@ function startLevel(lv) {
   grid = buildSolvedGrid(R, C, lv.variety, lv.copies, lv.tier);
   totalPairs = (R * C) / 2;
   pairsLeft = totalPairs;
+  // Ván mới luôn có nước đi (xáo miễn phí đến khi có, không trừ lượt)
+  for (let i = 0; i < 50 && !hasAnyMove(); i++) shuffleGrid();
 
   hankoEl.classList.remove("show");
   if (window.IS_MOBILE === true) {
@@ -704,9 +706,14 @@ function resolveMatch(a, b, path) {
       clearEls.forEach(el => el && el.classList.add("cleared"));
     }
     if (!hasAnyMove()) {
-      // Bí đường sau khi nối (hoặc sau khi board rơi): thua luôn —
-      // người chơi phải chủ động xáo TRƯỚC khi bí, game không tự cứu.
-      setTimeout(() => loseGame("Hết đường nối! Nhớ xáo bài trước khi bí."), 400);
+      // Bí đường sau khi nối (hoặc sau khi board rơi): tự động xáo miễn phí cứu ván
+      setTimeout(() => {
+        showTimeBonus("🔀 Hết nước đi, tự xáo!");
+        setTimeout(() => {
+          if (hasAnyMove()) return; // đã có nước (tự xáo tay trong lúc chờ)
+          if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
+        }, 700);
+      }, 400);
     }
   }, 140);
 }
@@ -854,29 +861,41 @@ function doBoardShift() {
 /* =====================================================================
    SHUFFLE / HINT
 ===================================================================== */
+function shuffleGrid() {
+  const remaining = [];
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) remaining.push(grid[r][c]);
+  shuffleArray(remaining);
+  let k = 0;
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) grid[r][c] = remaining[k++];
+}
 function doShuffle(silent) {
   if (locked) return;
   if (shufflesLeft <= 0 && !silent) return;
   if (!silent) shufflesLeft--;
   shuffleBadge.textContent = shufflesLeft;
 
-  const remaining = [];
-  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) remaining.push(grid[r][c]);
-  shuffleArray(remaining);
-  let k = 0;
-  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) grid[r][c] = remaining[k++];
-
+  shuffleGrid();
   renderBoard();
   clearSelectionClasses();
   selected = null;
 
   if (!hasAnyMove()) {
-    if (shufflesLeft > 0) {
-      doShuffle(true);
-    } else {
-      loseGame();
+    // Xáo tay vẫn bí: tự xáo miễn phí tiếp, chỉ thua khi thực sự hết cứu
+    if (!autoRescueShuffle()) loseGame();
+  }
+}
+/* Bí đường sau khi nối: tự động xáo MIỄN PHÍ đến khi có nước đi (không trừ lượt xáo) */
+function autoRescueShuffle() {
+  for (let i = 0; i < 50; i++) {
+    shuffleGrid();
+    if (hasAnyMove()) {
+      renderBoard();
+      clearSelectionClasses();
+      selected = null;
+      return true;
     }
   }
+  return false; // xáo 50 lần vẫn bí -> thực sự hết cứu
 }
 
 function useHint() {
