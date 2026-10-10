@@ -100,7 +100,7 @@ function InitPikachuGame() {
                     </div>
                     <div class="pkc-toolstats">
                         <div class="stat"><span class="val" id="pkc-statTime">00:00</span></div>
-                        <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span></div>
+                        <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span><span class="lbl" id="pkc-statTier">-</span></div>
                     </div>
                 </div>
                 <div class="pkc-boardcol">

@@ -97,6 +97,7 @@ function generateLevels(count) {
   return levels;
 }
 const SHIFT_LABEL = { fixed: "Rơi ↓", alternate: "Rơi ↕", random: "Rơi ngẫu nhiên" };
+const SHIFT_ICON = { fixed: "⬇️", alternate: "↕️", random: "🔀" };
 
 const LEVELS = generateLevels(LEVEL_COUNT);
 
@@ -436,7 +437,8 @@ function startLevel(lv) {
     if (footEl) footEl.style.display = "none"; // cho board co them cho
   }
 
-  statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier] + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : "");
+  statMap.textContent = "#" + lv.id;
+  document.getElementById("pkc-statTier").textContent = TIER_LABEL[lv.tier] + (lv.shift ? " " + SHIFT_ICON[lv.shift] : "");
   hintBadge.textContent = hintsLeft;
   shuffleBadge.textContent = shufflesLeft;
   renderBoard();

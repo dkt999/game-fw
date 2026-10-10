@@ -134,7 +134,7 @@
 .pikachu-app .pkc-toolstats{ margin-top:auto; display:flex; flex-direction:column; gap:10px; align-items:center; padding-top:6px; }
 .pikachu-app .pkc-toolstats .stat{ min-width:0; }
 .pikachu-app .pkc-toolstats .stat .val{ font-size:13px; }
-.pikachu-app .pkc-toolstats .stat .lbl{ font-size:8px; }
+.pikachu-app .pkc-toolstats .stat .lbl{ font-size:8px; text-align:center; line-height:1.5; max-width:64px; }
 .pikachu-app .pkc-toolbar{ align-items:center; }
 .pikachu-app .btn-square{
   height: 38px; width: 38px; border-radius: 9px;
