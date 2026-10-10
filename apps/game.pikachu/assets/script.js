@@ -25,7 +25,7 @@ function tileSrc(n) {
    vào EXTRA_LEVELS bên dưới để chèn map "đặc chế" xen giữa map sinh tự
    động, không cần đụng vào logic sinh bàn hay logic chơi.
 ===================================================================== */
-const LEVEL_COUNT = 50; // tang so nay de co them map tu dong
+const LEVEL_COUNT = 200; // tang so nay de co them map tu dong
 
 // Map thủ công có thể chèn thêm ở đây sau này, ví dụ:
 // { afterLevel: 30, level: { name: "Đại chiến", rows: 20, cols: 12, variety: 40, copies: 2, shuffles: 1, hints: 1, timeLimit: 240 } }
@@ -33,9 +33,9 @@ const EXTRA_LEVELS = [];
 
 function tierOf(levelNumber, total) {
   const p = levelNumber / total;
-  if (p <= 0.33) return "easy";
-  if (p <= 0.66) return "medium";
-  if (p <= 0.9) return "hard";
+  if (p <= 0.15) return "easy";
+  if (p <= 0.45) return "medium";
+  if (p <= 0.75) return "hard";
   return "expert";
 }
 const TIER_LABEL = { easy: "Dễ", medium: "Trung bình", hard: "Khó", expert: "Chuyên gia" };
@@ -46,9 +46,9 @@ function generateLevels(count) {
     const t = (i - 1) / Math.max(1, count - 1); // 0 -> 1 độ khó tăng dần
     const tier = tierOf(i, count);
 
-    // Kích thước bàn tăng dần: 6x4 (24 ô) -> 20x14 (280 ô)
-    let cols = Math.round(6 + t * 14);
-    let rows = Math.round(4 + t * 10);
+    // Kích thước bàn tăng dần: 6x4 (24 ô) -> 22x16 (352 ô)
+    let cols = Math.round(6 + t * 16);
+    let rows = Math.round(4 + t * 12);
     if ((rows * cols) % 2 !== 0) cols += 1; // luôn cần số ô chẵn để chia cặp
 
     // Số bản sao mỗi hình: dễ thì nhiều bản sao giống nhau (dễ tìm),
@@ -62,9 +62,9 @@ function generateLevels(count) {
     if (variety > TILE_COUNT) variety = TILE_COUNT;
     if (variety < 3) variety = 3;
 
-    const shuffles = Math.max(1, Math.round(5 - t * 4));      // 5 -> 1 lần xáo
-    const hints = Math.max(1, Math.round(5 - t * 3));         // 5 -> 2 lượt gợi ý
-    const timeLimit = tier === "easy" ? 0 : Math.round(480 - t * 330); // dễ: không giới hạn, khó dần tới 150s
+    const shuffles = Math.max(1, Math.round(4 - t * 3));      // 4 -> 1 lần xáo (ít hơn = khó hơn)
+    const hints = Math.max(1, Math.round(4 - t * 3));         // 4 -> 1 lượt gợi ý
+    const timeLimit = tier === "easy" ? 0 : Math.round(400 - t * 280); // dễ: không giới hạn, còn lại 400s -> 120s
 
     levels.push({
       id: i,
