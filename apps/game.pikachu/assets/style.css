@@ -168,7 +168,7 @@
   display:flex; align-items:center; justify-content:center;
   transition: transform .12s ease, box-shadow .15s ease;
 }
-.pikachu-app .tile img{ width:94%; height:94%; pointer-events:none; user-select:none; }
+.pikachu-app .tile img{ width:100%; height:100%; pointer-events:none; user-select:none; }
 .pikachu-app .tile:hover{ transform: translateY(-1px); }
 .pikachu-app .tile.selected{ box-shadow: 0 0 0 3px var(--vermillion); border-radius:4px; }
 .pikachu-app .tile.hint{ animation: hintPulse 0.9s ease-in-out infinite; }
