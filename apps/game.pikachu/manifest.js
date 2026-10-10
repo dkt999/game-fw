@@ -57,7 +57,7 @@ function InitPikachuGame() {
                     <button class="diff-btn" data-diff="expert">Chuyên gia</button>
                 </div>
                 <details class="map-picker">
-                    <summary>Chọn map cụ thể (<span id="pkc-mapCount">0</span> map)</summary>
+                    <summary>Chọn map cụ thể (đã mở <span id="pkc-mapCount">0</span>)</summary>
                     <div class="map-grid" id="pkc-mapGrid"></div>
                 </details>
             </div>
@@ -97,6 +97,7 @@ function InitPikachuGame() {
             <div class="result-banner" id="pkc-resultBanner">
                 <div class="title" id="pkc-resultTitle">Hoàn thành!</div>
                 <div class="sub" id="pkc-resultSub"></div>
+                <button class="next-map-btn" id="pkc-btnNextMap" style="display:none;">Chơi tiếp →</button>
             </div>
         </div>
 

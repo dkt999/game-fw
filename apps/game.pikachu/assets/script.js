@@ -25,7 +25,7 @@ function tileSrc(n) {
    vào EXTRA_LEVELS bên dưới để chèn map "đặc chế" xen giữa map sinh tự
    động, không cần đụng vào logic sinh bàn hay logic chơi.
 ===================================================================== */
-const LEVEL_COUNT = 30; // "vài chục map" - tăng số này để có thêm map tự động
+const LEVEL_COUNT = 50; // tang so nay de co them map tu dong
 
 // Map thủ công có thể chèn thêm ở đây sau này, ví dụ:
 // { afterLevel: 30, level: { name: "Đại chiến", rows: 20, cols: 12, variety: 40, copies: 2, shuffles: 1, hints: 1, timeLimit: 240 } }
@@ -46,9 +46,9 @@ function generateLevels(count) {
     const t = (i - 1) / Math.max(1, count - 1); // 0 -> 1 độ khó tăng dần
     const tier = tierOf(i, count);
 
-    // Kích thước bàn tăng dần: 6x4 (24 ô) -> 18x12 (216 ô)
-    let cols = Math.round(6 + t * 12);
-    let rows = Math.round(4 + t * 8);
+    // Kích thước bàn tăng dần: 6x4 (24 ô) -> 20x14 (280 ô)
+    let cols = Math.round(6 + t * 14);
+    let rows = Math.round(4 + t * 10);
     if ((rows * cols) % 2 !== 0) cols += 1; // luôn cần số ô chẵn để chia cặp
 
     // Số bản sao mỗi hình: dễ thì nhiều bản sao giống nhau (dễ tìm),
@@ -64,7 +64,7 @@ function generateLevels(count) {
 
     const shuffles = Math.max(1, Math.round(5 - t * 4));      // 5 -> 1 lần xáo
     const hints = Math.max(1, Math.round(5 - t * 3));         // 5 -> 2 lượt gợi ý
-    const timeLimit = tier === "easy" ? 0 : Math.round(420 - t * 240); // dễ: không giới hạn
+    const timeLimit = tier === "easy" ? 0 : Math.round(480 - t * 330); // dễ: không giới hạn, khó dần tới 150s
 
     levels.push({
       id: i,
@@ -87,6 +87,32 @@ function generateLevels(count) {
 }
 
 const LEVELS = generateLevels(LEVEL_COUNT);
+
+/* =====================================================================
+   TIẾN TRÌNH MỞ KHÓA MAP (localStorage)
+   - Chơi xong map N mới mở khóa map N+1 (khó hơn).
+   - Lưu: số map đã mở khóa + thành tích thời gian tốt nhất mỗi map.
+===================================================================== */
+const PROGRESS_KEY = "pikachu-progress-v1";
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && typeof p.unlocked === "number") {
+        return {
+          unlocked: Math.max(1, Math.min(LEVELS.length, p.unlocked)),
+          best: (p.best && typeof p.best === "object") ? p.best : {}
+        };
+      }
+    }
+  } catch (e) { /* localStorage không dùng được: chơi như chưa lưu */ }
+  return { unlocked: 1, best: {} };
+}
+function saveProgress() {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (e) {}
+}
+let progress = loadProgress();
 
 /* =====================================================================
    DOM REFS
@@ -130,13 +156,31 @@ let locked = false;
 /* =====================================================================
    MENU: DIFFICULTY + MAP PICKER
 ===================================================================== */
+function fmtTime(sec) {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s2 = String(sec % 60).padStart(2, "0");
+  return m + ":" + s2;
+}
 function buildMapGrid() {
-  mapCountEl.textContent = LEVELS.length;
+  refreshMapGrid();
+}
+function refreshMapGrid() {
+  mapCountEl.textContent = progress.unlocked + "/" + LEVELS.length;
   let html = "";
   LEVELS.forEach(lv => {
-    html += `<button class="map-btn tier-${lv.tier}" data-level="${lv.id}" title="${TIER_LABEL[lv.tier]} · ${lv.cols}x${lv.rows}">${lv.id}</button>`;
+    const isLocked = lv.id > progress.unlocked;
+    const best = progress.best[lv.id];
+    const tip = isLocked
+      ? "Hoàn thành Map " + (lv.id - 1) + " để mở khóa"
+      : (TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : ""));
+    html += `<button class="map-btn tier-${lv.tier}${isLocked ? " locked" : ""}" data-level="${lv.id}"${isLocked ? " disabled" : ""} title="${tip}">${isLocked ? "🔒" : lv.id}</button>`;
   });
   mapGrid.innerHTML = html;
+  // Nut do kho chi sang khi tier do co it nhat 1 map da mo
+  diffRow.querySelectorAll(".diff-btn").forEach(b => {
+    const hasOpen = LEVELS.some(l => l.tier === b.dataset.diff && l.id <= progress.unlocked);
+    b.disabled = !hasOpen;
+  });
 }
 buildMapGrid();
 
@@ -144,7 +188,8 @@ mapGrid.addEventListener("click", (e) => {
   const btn = e.target.closest(".map-btn");
   if (!btn) return;
   const lv = LEVELS.find(l => l.id === Number(btn.dataset.level));
-  if (lv) startLevel(lv);
+  if (!lv || lv.id > progress.unlocked) return;
+  startLevel(lv);
 });
 
 diffRow.addEventListener("click", (e) => {
@@ -153,13 +198,19 @@ diffRow.addEventListener("click", (e) => {
   diffRow.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   const tier = btn.dataset.diff;
-  const pool = LEVELS.filter(l => l.tier === tier);
+  const pool = LEVELS.filter(l => l.tier === tier && l.id <= progress.unlocked);
+  if (!pool.length) return;
   const lv = pool[Math.floor(Math.random() * pool.length)];
   startLevel(lv);
 });
 
 document.getElementById("pkc-btnMenu").addEventListener("click", backToMenu);
 document.getElementById("pkc-btnNewGame").addEventListener("click", () => { if (level) startLevel(level); });
+const btnNextMap = document.getElementById("pkc-btnNextMap");
+btnNextMap.addEventListener("click", () => {
+  const next = LEVELS.find(l => l.id === level.id + 1);
+  if (next && next.id <= progress.unlocked) startLevel(next);
+});
 btnShuffle.addEventListener("click", doShuffle);
 btnHint.addEventListener("click", useHint);
 
@@ -168,6 +219,7 @@ function backToMenu() {
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
+  refreshMapGrid();
 }
 
 /* =====================================================================
@@ -219,6 +271,7 @@ function startLevel(lv) {
   gameArea.style.display = "flex";
   resultBanner.classList.remove("show", "lose");
   hankoEl.classList.remove("show");
+  btnNextMap.style.display = "none";
 
   statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier];
   hintBadge.textContent = hintsLeft;
@@ -490,7 +543,7 @@ function findOneMove() {
 ===================================================================== */
 function drawLinkPath(path) {
   const cellPx = boardCellSize();
-  const gap = 3;
+  const gap = 2;
   const toXY = (p) => ({
     x: (p.c + 0.5) * (cellPx + gap) - gap / 2,
     y: (p.r + 0.5) * (cellPx + gap) - gap / 2
@@ -575,11 +628,29 @@ function updateTimeDisplay() {
 function winGame() {
   locked = true;
   stopTimer();
+  // Mở khóa map tiếp theo (nếu đây là map cao nhất đã mở)
+  let unlockMsg = "";
+  if (level.id >= progress.unlocked && progress.unlocked < LEVELS.length) {
+    progress.unlocked = level.id + 1;
+    unlockMsg = " · Đã mở khóa Map " + progress.unlocked + "!";
+  }
+  // Lưu kỷ lục thời gian của map này
+  const prevBest = progress.best[level.id];
+  if (!prevBest || seconds < prevBest.time) {
+    progress.best[level.id] = { time: seconds };
+  }
+  saveProgress();
+  refreshMapGrid();
   resultTitle.textContent = "Hoàn thành!";
-  resultSub.textContent = "Bạn đã dọn sạch " + totalPairs + " cặp trong " + statTime.textContent + " · " + statMap.textContent;
+  resultSub.textContent = "Bạn đã dọn sạch " + totalPairs + " cặp trong " + statTime.textContent + " · " + statMap.textContent + unlockMsg;
   resultBanner.classList.remove("lose");
   resultBanner.classList.add("show");
   hankoEl.classList.add("show");
+  // Hiện nút chơi tiếp map vừa mở khóa
+  if (unlockMsg) {
+    btnNextMap.textContent = "Chơi tiếp Map " + progress.unlocked + " →";
+    btnNextMap.style.display = "";
+  }
 }
 function loseGame(reason) {
   locked = true;
