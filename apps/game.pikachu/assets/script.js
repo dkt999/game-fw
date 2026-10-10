@@ -353,6 +353,7 @@ function backToMenu() {
    ở size cũ (để trống viền quanh bàn).
 ===================================================================== */
 let boardResizeObserver = null;
+let boardColObserver = null, boardColRaf = null, lastColW = 0, lastColH = 0, colWatchGuard = 0;
 let boardResizeRaf = null;
 
 function watchBoardResize() {
@@ -388,6 +389,33 @@ function watchBoardResize() {
 function stopBoardResizeWatch() {
   if (boardResizeObserver) { boardResizeObserver.disconnect(); boardResizeObserver = null; }
   if (boardResizeRaf) { cancelAnimationFrame(boardResizeRaf); boardResizeRaf = null; }
+  if (boardColObserver) { boardColObserver.disconnect(); boardColObserver = null; }
+  if (boardColRaf) { cancelAnimationFrame(boardColRaf); boardColRaf = null; }
+}
+/* Theo dõi boardcol: nếu size đổi đáng kể sau khi dựng (layout chưa ổn định,
+   vd toolbar từ 38px -> 64px khi CSS mobile áp xong) thì dựng lại bàn */
+function watchBoardColResize() {
+  if (boardColObserver) boardColObserver.disconnect();
+  const colEl = document.querySelector(".pikachu-app .pkc-boardcol");
+  if (!colEl || typeof ResizeObserver === "undefined") return;
+  const r = colEl.getBoundingClientRect();
+  lastColW = r.width; lastColH = r.height;
+  colWatchGuard = 0;
+  boardColObserver = new ResizeObserver(() => {
+    if (boardColRaf) cancelAnimationFrame(boardColRaf);
+    boardColRaf = requestAnimationFrame(() => {
+      if (gameArea.style.display === "none" || !grid.length) return;
+      const rr = colEl.getBoundingClientRect();
+      const dw = Math.abs(rr.width - lastColW), dh = Math.abs(rr.height - lastColH);
+      if ((dw > 20 || dh > 20) && colWatchGuard++ < 3) {
+        pkcDebug("colwatch", "layout doi " + Math.round(lastColW) + "x" + Math.round(lastColH) + " -> " + Math.round(rr.width) + "x" + Math.round(rr.height) + " -> dung lai");
+        lastColW = rr.width; lastColH = rr.height;
+        if (pairsLeft === totalPairs && level) { buildLevelBoard(level); return; }
+      }
+      lastColW = rr.width; lastColH = rr.height;
+    });
+  });
+  boardColObserver.observe(colEl);
 }
 
 /* =====================================================================
@@ -548,6 +576,7 @@ function buildLevelBoard(lv) {
   renderBoard();
   startTimer();
   watchBoardResize();
+  watchBoardColResize();
 }
 
 // Tạo bàn cờ: chọn `variety` mã hình ngẫu nhiên trong 200 hình, lặp mỗi
