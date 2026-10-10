@@ -1,5 +1,29 @@
 let windowCounter = 0;
 let zIndexCounter = 1;
+let fsGameWindows = 0; // dem cua so game fullscreen dang mo (de thoat browser-fullscreen khi dong het)
+
+/* Vao browser fullscreen (an thanh cong cu + notification bar cua trinh duyet).
+   Chi goi tren mobile khi mo game; iPhone Safari khong ho tro thi bo qua em. */
+function enterBrowserFullscreen() {
+    try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (req) {
+            var p = req.call(el);
+            if (p && typeof p.catch === "function") p.catch(function(){});
+        }
+    } catch (e) { /* thiet bi khong ho tro: bo qua */ }
+}
+function exitBrowserFullscreen() {
+    try {
+        var ex = document.exitFullscreen || document.webkitExitFullscreen;
+        if ((document.fullscreenElement || document.webkitFullscreenElement) && ex) {
+            var p = ex.call(document);
+            if (p && typeof p.catch === "function") p.catch(function(){});
+        }
+    } catch (e) {}
+}
 function createWindow({
     title = "Untitled",
     content = "Empty window",
@@ -27,6 +51,7 @@ function createWindow({
         windowElement.style.height = `100%`;
         windowElement.style.minWidth = '0';
         windowElement.style.borderRadius = '0';
+        if (window.IS_MOBILE === true) { enterBrowserFullscreen(); fsGameWindows++; }
         $('#taskbar').hide();
         $('#desktop').css('height', '100%');
     }
@@ -97,6 +122,10 @@ function createWindow({
         event.stopPropagation();
         windowElement.remove();
         taskbarIcon.remove();
+        if (window.IS_MOBILE === true) {
+            fsGameWindows = Math.max(0, fsGameWindows - 1);
+            if (fsGameWindows === 0) exitBrowserFullscreen();
+        }
         $('#taskbar').show();
         $('#desktop').css('height', '');
     });
