@@ -258,7 +258,7 @@ function refreshMapGrid() {
     const isDone = !!progress.completed[id];
     const best = progress.best[id];
     const tip = unlocked
-      ? ("Map " + id + " · " + TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
+      ? ("Map " + id + " · " + TIER_LABEL[lv.tier] + " · " + lv.cells + " ô" + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
       : "Pack chưa mở khóa";
     html += `<button class="map-btn tier-${lv.tier}${unlocked ? "" : " locked"}${isDone ? " done" : ""}${id === lastId ? " last" : ""}" data-level="${id}"${unlocked ? "" : " disabled"} title="${tip}">${unlocked ? id : "🔒"}</button>`;
   }
@@ -347,7 +347,14 @@ function startLevel(lv) {
   progress.lastPlayed = lv.id;
   viewPack = packOf(lv.id);
   saveProgress();
-  R = lv.rows; C = lv.cols;
+  // Hiện gameArea trước để đo được kích thước thật (cho computeAdaptiveShape)
+  hideWinModal();
+  mainMenu.style.display = "none";
+  gameArea.style.display = "flex";
+  // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
+  let shape = { rows: lv.rows, cols: lv.cols };
+  if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
+  R = shape.rows; C = shape.cols;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;
   timeLimit = lv.timeLimit;
@@ -360,9 +367,6 @@ function startLevel(lv) {
   totalPairs = (R * C) / 2;
   pairsLeft = totalPairs;
 
-  hideWinModal();
-  mainMenu.style.display = "none";
-  gameArea.style.display = "flex";
   resultBanner.classList.remove("show", "lose");
   hankoEl.classList.remove("show");
   if (window.IS_MOBILE === true) {
