@@ -130,6 +130,7 @@
 .pikachu-app .pkc-game-layout{ display:flex; flex-direction:row; gap:12px; width:100%; align-items:stretch; }
 .pikachu-app .pkc-toolbar{ display:flex; flex-direction:column; gap:10px; flex:none; }
 .pikachu-app .pkc-boardcol{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.pikachu-app .board-frame{ margin:auto; }
 .pikachu-app .pkc-topstats{ display:flex; gap:18px; justify-content:flex-end; align-items:center; padding: 0 4px 8px; }
 .pikachu-app .btn-square{
   height: 38px; width: 38px; border-radius: 9px;
