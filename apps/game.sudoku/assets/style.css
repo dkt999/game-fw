@@ -21,7 +21,7 @@
   color: var(--paper);
   font-family: "Be Vietnam Pro", sans-serif;
   -webkit-font-smoothing: antialiased;
-  min-height:100vh;
+  min-height:100%;
 }
 .sudoku-app *{ box-sizing:border-box; }
 .sudoku-app .wrap{
@@ -272,3 +272,21 @@
 .sudoku-app footer{ margin-top: 30px; font-size: 11.5px; color:#6f6552; text-align:center; }
 
 @media (prefers-reduced-motion: reduce){ .sudoku-app *{ animation-duration:0.001s !important; transition-duration:0.001s !important; } }
+/* ---------- Mobile: numpad to vừa ngón tay, chống zoom double-tap ---------- */
+.is-mobile .sudoku-app .wrap{ padding: 20px 12px 40px; }
+.is-mobile .sudoku-app .num-btn{ width:44px; height:54px; font-size:20px; }
+.is-mobile .sudoku-app .btn-square{ width:44px; height:44px; }
+.is-mobile .sudoku-app .tool-btn{ padding:10px 14px; }
+.is-mobile .sudoku-app .cell,
+.is-mobile .sudoku-app .num-btn,
+.is-mobile .sudoku-app .tool-btn,
+.is-mobile .sudoku-app .btn-square,
+.is-mobile .sudoku-app .size-btn,
+.is-mobile .sudoku-app .diff-btn{
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: none){
+  .sudoku-app .num-btn:hover{ background:rgba(255,255,255,0.05); }
+  .sudoku-app .tool-btn:hover{ background:none; }
+}

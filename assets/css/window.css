@@ -29,6 +29,10 @@
     height: calc(100% - 40px);
     background-color: #fff;
     padding: 10px;
+    box-sizing: border-box; /* padding không làm tràn cửa sổ */
+    overflow-y: auto; /* game dài hơn màn hình thì cuộn trong cửa sổ */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 .window-titlebar-toolbox{
     display: flex;

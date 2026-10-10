@@ -1,0 +1,31 @@
+/* =====================================================================
+   mobile.js — Nhận diện thiết bị di động cho game-fw
+   File này phải được load TRƯỚC background.js / window.js / desktop.js
+   và trước mọi manifest.js của game.
+
+   window.IS_MOBILE = true khi:
+     - viewport hẹp (<= 767px), hoặc
+     - thiết bị cảm ứng (pointer: coarse) có cạnh màn hình nhỏ < 900px
+       (bắt cả tablet dọc).
+   Đồng thời gắn class `is-mobile` lên <html> để CSS bám theo.
+===================================================================== */
+(function () {
+    "use strict";
+    function detectMobile() {
+        try {
+            if (window.matchMedia("(max-width: 767px)").matches) return true;
+            var coarse = window.matchMedia("(pointer: coarse)").matches;
+            if (coarse) {
+                var s = window.screen || {};
+                var w = s.width || window.innerWidth || 0;
+                var h = s.height || window.innerHeight || 0;
+                if (Math.min(w, h) > 0 && Math.min(w, h) < 900) return true;
+            }
+        } catch (e) { /* bỏ qua, coi như desktop */ }
+        return false;
+    }
+    window.IS_MOBILE = detectMobile();
+    if (window.IS_MOBILE) {
+        document.documentElement.classList.add("is-mobile");
+    }
+})();

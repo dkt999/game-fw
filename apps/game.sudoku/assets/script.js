@@ -2,8 +2,15 @@
 "use strict";
 
 const $sdk_game_sudoku_window = $(`#${sudokuWindowId}`);
-const sdk_game_sudoku_boardPx = Math.min($sdk_game_sudoku_window.height(), $sdk_game_sudoku_window.width()) - 350;
-console.log(sdk_game_sudoku_boardPx)
+// Mobile: bàn cờ lấp vừa chiều ngang màn hình (trừ hao padding);
+// desktop giữ công thức cũ.
+const sdk_game_sudoku_boardPx = (function () {
+    var w = $sdk_game_sudoku_window.width(), h = $sdk_game_sudoku_window.height();
+    if (typeof window !== "undefined" && window.IS_MOBILE === true) {
+        return Math.max(220, Math.min(w - 48, h - 380));
+    }
+    return Math.min(w, h) - 350;
+})();
 const MODES = {
   classic: {
     B: 3, N: 9,

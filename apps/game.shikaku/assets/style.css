@@ -492,3 +492,17 @@
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:0.001s !important; transition-duration:0.001s !important; }
 }
+/* ---------- Mobile: nút to vừa ngón tay, chống zoom double-tap ---------- */
+.is-mobile .shikaku-app .wrap{ padding: 20px 12px 40px; }
+.is-mobile .shikaku-app .board-frame{ padding: 10px; }
+.is-mobile .shikaku-app .stats-row .stats-container .btn-square{ width:44px; height:44px; }
+.is-mobile .shikaku-app button,
+.is-mobile .shikaku-app .btn-square,
+.is-mobile .shikaku-app .diff-btn{
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: none){
+  .shikaku-app .diff-btn:hover{ color:#cfc4a6; }
+  .shikaku-app .btn:hover{ filter:none; }
+}

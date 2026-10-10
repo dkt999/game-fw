@@ -1,6 +1,7 @@
 #windows{
     width:100vw;
     height:100vh;
+    height:100dvh; /* iOS Safari: trừ thanh địa chỉ trình duyệt */
     display:flex;
     flex-direction:column;
 }

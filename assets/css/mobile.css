@@ -1,0 +1,89 @@
+/* =====================================================================
+   mobile.css — Tinh chỉnh giao diện cho điện thoại / tablet
+   Chỉ có hiệu lực khi <html> có class `is-mobile` (do mobile.js gắn).
+===================================================================== */
+
+/* ---------- Khung chung: chống zoom khi double-tap, chống kéo refresh ---------- */
+.is-mobile body {
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+}
+.is-mobile button,
+.is-mobile .btn-square,
+.is-mobile .tile,
+.is-mobile .cell,
+.is-mobile .icon-item,
+.is-mobile .taskbar-icon {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Desktop: icon xếp hàng ngang, dễ bấm bằng ngón tay ---------- */
+.is-mobile #icon-layout {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    gap: 6px;
+    margin: 14px 10px;
+}
+.is-mobile .icon-item {
+    width: 84px;
+    height: 92px;
+    padding: 10px 6px;
+}
+.is-mobile .icon-item-logo {
+    width: 52px;
+    height: 52px;
+}
+.is-mobile .icon-item-text {
+    font-size: 12px;
+    margin-top: 6px;
+    line-height: 1.25;
+}
+
+/* ---------- Taskbar: cao hơn cho ngón tay + tránh tai thỏ ---------- */
+.is-mobile #taskbar {
+    height: 58px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: center;
+    overflow-x: auto;
+}
+.is-mobile .taskbar-icon {
+    width: 60px;
+    height: 52px;
+    flex: 0 0 auto;
+    background-size: 34px 34px;
+}
+.is-mobile #desktop {
+    height: calc(100% - 58px);
+}
+
+/* ---------- Window: fullscreen, nút đủ to để bấm ---------- */
+.is-mobile .window {
+    min-width: 0 !important;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+.is-mobile .window-titlebar {
+    height: 48px;
+    padding: 0 8px 0 12px;
+}
+.is-mobile .window-title-text {
+    font-size: 15px;
+}
+.is-mobile .window-titlebar-toolbox-btn {
+    width: 44px;
+    height: 44px;
+    margin-left: 8px;
+    border-radius: 8px;
+}
+
+/* Tắt hiệu ứng hover dính trên màn hình cảm ứng */
+@media (hover: none) {
+    .icon-item:hover { background-color: transparent; }
+    .taskbar-icon:hover { background-color: transparent; }
+    .is-mobile .window-titlebar-toolbox-btn:hover { background-color: #555; }
+}

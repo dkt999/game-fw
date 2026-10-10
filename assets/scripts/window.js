@@ -12,6 +12,9 @@ function createWindow({
     allowResize = true,
     fullScreenApp = false
     } = {}) {
+    // Tren mobile: moi cua so luon mo fullscreen, khong keo-tha/resize.
+    var _isMobileWin = (typeof window !== 'undefined') && window.IS_MOBILE === true;
+    if (_isMobileWin) { fullScreenApp = true; allowResize = false; }
     //1. Init windows layout 
     const windowElement = document.createElement('div');
     const uniqueId = `window-${Date.now()}-${++windowCounter}`;
@@ -22,6 +25,8 @@ function createWindow({
         windowElement.style.top  = '-1px';
         windowElement.style.width  = `100%`;
         windowElement.style.height = `100%`;
+        windowElement.style.minWidth = '0';
+        windowElement.style.borderRadius = '0';
         $('#taskbar').hide();
         $('#desktop').css('height', '100%');
     }
@@ -32,7 +37,7 @@ function createWindow({
         windowElement.style.width = `${width}px`;
         windowElement.style.height = `${height}px`;
         $('#taskbar').show();
-        $('#desktop').css('height', 'calc(100% - 35px');
+        $('#desktop').css('height', 'calc(100% - 45px)');
     }
     
     windowElement.style.zIndex = zIndexCounter;
@@ -93,7 +98,7 @@ function createWindow({
         windowElement.remove();
         taskbarIcon.remove();
         $('#taskbar').show();
-        $('#desktop').css('height', 'calc(100% - 35px');
+        $('#desktop').css('height', '');
     });
     let taskbarIcon = addTaskbarIcon(title, iconUrl, uniqueId);
     
@@ -108,9 +113,9 @@ function createWindow({
 
     document.getElementById('desktop').appendChild(windowElement);
 
-    makeDraggable(windowElement, windowTitleBar);
+    if (!_isMobileWin) { makeDraggable(windowElement, windowTitleBar); }
     bringToFront(windowElement);
-    if (allowResize) {
+    if (allowResize && !_isMobileWin) {
         makeResizable(windowElement);
     }
     

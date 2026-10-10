@@ -14,6 +14,7 @@ function openPikachuGame() {
         return;
     }
     loadAppStylesheet("./apps/game.pikachu/assets/style.css");
+    const isMobile = (typeof window !== "undefined") && window.IS_MOBILE === true;
     const parentHeight = $('.icon-item').parent().height();
     const parentWidth = $('.icon-item').parent().width();
     pikachuWindowId = createWindow({
@@ -23,6 +24,7 @@ function openPikachuGame() {
         width: parentHeight - 25,
         height: parentHeight - 50,
         allowResize: false,
+        fullScreenApp: isMobile,
         top: parentHeight - parentHeight + 25,
         left: parentWidth/2 - (parentHeight / 2)  + 25
     });

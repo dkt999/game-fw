@@ -1,6 +1,6 @@
 #desktop{
     width:100vw;
-    height:calc(100% - 35px);
+    height:calc(100% - 45px);
     position:relative;
     overflow:hidden;
     z-index: 1;

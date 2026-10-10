@@ -21,7 +21,7 @@
   color: var(--paper);
   font-family: "Be Vietnam Pro", sans-serif;
   -webkit-font-smoothing: antialiased;
-  min-height:100vh;
+  min-height:100%;
 }
 .pikachu-app *{ box-sizing:border-box; }
 .pikachu-app .wrap{
@@ -208,3 +208,23 @@
 .pikachu-app .result-banner .sub{ margin-top:4px; font-size: 12.5px; color:#d9cca3; }
 
 footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66; }
+/* ---------- Mobile: nút to vừa ngón tay, chống zoom double-tap ---------- */
+.is-mobile .pikachu-app .wrap{ padding: 20px 12px 40px; }
+.is-mobile .pikachu-app .btn-square{ width:44px; height:44px; border-radius:11px; }
+.is-mobile .pikachu-app .tile,
+.is-mobile .pikachu-app .btn-square,
+.is-mobile .pikachu-app .diff-btn,
+.is-mobile .pikachu-app .map-btn{
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.is-mobile .pikachu-app .stats-row{ gap:8px; }
+.is-mobile .pikachu-app .stats-container{ gap:10px; }
+.is-mobile .pikachu-app .board-frame{ padding:8px; }
+/* Tắt hover dính trên màn hình cảm ứng */
+@media (hover: none){
+  .pikachu-app .tile:hover{ transform:none; }
+  .pikachu-app .btn-square:hover{ background:rgba(255,255,255,0.06); }
+  .pikachu-app .diff-btn:hover{ color:#cfc4a6; }
+  .pikachu-app .map-btn:hover{ background:rgba(255,255,255,0.05); }
+}

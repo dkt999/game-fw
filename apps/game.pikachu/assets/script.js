@@ -289,12 +289,24 @@ function renderBoard() {
 }
 
 function boardCellSize() {
-  // Lấy kích thước của .window (class cha chứa cả app) thay vì hằng số cố định,
-  // rồi cho bàn cờ chiếm tới 80% chiều rộng/cao của window đó.
+  // Lấy kích thước của .window (class cha chứa cả app) thay vì hằng số cố định.
   const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content") || boardFrame.parentElement;
   const winW = winEl ? winEl.clientWidth : window.innerWidth;
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
 
+  if (window.IS_MOBILE === true) {
+    // Mobile: bàn cờ lấp vừa chiều ngang màn hình, không cuộn ngang.
+    // Trừ hao: padding window-content (10px x2) + padding board-frame (10px x2)
+    // + padding board (6px x2) + khe gap 3px giữa các ô.
+    const gap = 3;
+    const fitW = Math.floor((winW - 52 - gap * (C - 1)) / C);
+    // Trừ hao chiều cao: titlebar 48 + padding + stats-row + footer ~ 240px.
+    const fitH = Math.floor((winH - 240) / R);
+    const size = Math.min(fitW, fitH);
+    return Math.max(14, Math.min(56, size));
+  }
+
+  // Desktop: cho bàn cờ chiếm tới 80% chiều rộng/cao của window.
   const availW = (winW * 0.8) - 40; // trừ hao padding/border của board-frame
   const availH = (winH * 0.8) - 40;
 

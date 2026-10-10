@@ -3,7 +3,8 @@ const ctx = canvas.getContext('2d');
 
 let w, h;
 let particles = [];
-const particleCount = 150; // Số lượng hạt ánh sáng
+// Mobile: giảm số hạt để nhẹ GPU, mượt hơn trên máy yếu
+const particleCount = (typeof window !== "undefined" && window.IS_MOBILE === true) ? 60 : 150; // Số lượng hạt ánh sáng
 
 // Bảng màu cho các hạt ánh sáng giống trong hình
 const colors = ['#ffffff', '#ffdf80', '#ff80bf', '#80dfff', '#c299ff', '#ffb347'];
