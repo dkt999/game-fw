@@ -251,6 +251,7 @@ function buildNumpad(){
     btn.addEventListener("click", () => inputNumber(n));
     numpadEl.appendChild(btn);
   }
+  applyNumpadGrid();
 }
 
 /* ---------------- Refit board khi xoay / doi kich thuoc man hinh ----------------
@@ -273,6 +274,37 @@ function refitSudokuBoard() {
 function debounceSdk(fn, ms) {
   var t;
   return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+/* Xep numpad theo luoi co dinh khi landscape: 3x3 cho classic (9 so),
+   4x4 cho hex (16 so) - nut to de bam. Goi sau moi lan buildNumpad. */
+function applyNumpadGrid() {
+  var area = document.getElementById("sdk-gameSudokuArea");
+  var on = !!(area && area.classList.contains("sdk-landscape"));
+  var ncols = (typeof MODES !== "undefined" && MODES[selectedMode] && MODES[selectedMode].N === 16) ? 4 : 3;
+  var btns = numpadEl.querySelectorAll(".num-btn");
+  var i;
+  if (on) {
+    numpadEl.style.display = "grid";
+    numpadEl.style.gridTemplateColumns = "repeat(" + ncols + ", 1fr)";
+    numpadEl.style.gap = "8px";
+    numpadEl.style.marginTop = "0";
+    numpadEl.style.maxWidth = (ncols === 4 ? "240px" : "180px");
+    numpadEl.style.justifyContent = "";
+    for (i = 0; i < btns.length; i++) {
+      btns[i].style.width = "100%";
+      btns[i].style.height = "54px";
+    }
+  } else {
+    numpadEl.style.display = "";
+    numpadEl.style.gridTemplateColumns = "";
+    numpadEl.style.gap = "";
+    numpadEl.style.marginTop = "";
+    numpadEl.style.maxWidth = "";
+    for (i = 0; i < btns.length; i++) {
+      btns[i].style.width = "";
+      btns[i].style.height = "";
+    }
+  }
 }
 /* Gan/go class sdk-landscape theo huong man hinh that te (khong phu thuoc media query).
    Layout ngang dung INLINE STYLE de ap dung duoc ngay ca khi file CSS bi cache cu.
@@ -345,11 +377,7 @@ function updateSudokuOrientationClass() {
       frame.style.gridArea = "board";
       frame.style.alignSelf = "start";
     }
-    if (numpadRow) {
-      numpadRow.style.marginTop = "0";
-      numpadRow.style.maxWidth = "380px";
-      numpadRow.style.justifyContent = "flex-start";
-    }
+    applyNumpadGrid();
     if (toolRow) {
       toolRow.style.marginTop = "0";
       toolRow.style.justifyContent = "flex-start";
@@ -368,10 +396,8 @@ function updateSudokuOrientationClass() {
     if (numpadRow) {
       if (resultBanner) area.insertBefore(numpadRow, resultBanner);
       else area.appendChild(numpadRow);
-      numpadRow.style.marginTop = "";
-      numpadRow.style.maxWidth = "";
-      numpadRow.style.justifyContent = "";
     }
+    applyNumpadGrid();
     if (toolRow) {
       if (resultBanner) area.insertBefore(toolRow, resultBanner);
       else area.appendChild(toolRow);
