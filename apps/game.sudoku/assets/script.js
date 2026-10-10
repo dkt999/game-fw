@@ -273,12 +273,72 @@ function debounceSdk(fn, ms) {
   var t;
   return function () { clearTimeout(t); t = setTimeout(fn, ms); };
 }
-/* Gan/go class sdk-landscape theo huong man hinh that te (khong phu thuoc media query) */
+/* Gan/go class sdk-landscape theo huong man hinh that te (khong phu thuoc media query).
+   Layout ngang dung INLINE STYLE de ap dung duoc ngay ca khi file CSS bi cache cu. */
 function updateSudokuOrientationClass() {
   var area = document.getElementById("sdk-gameSudokuArea");
   if (!area) return;
-  var isLandscape = window.innerWidth > window.innerHeight;
-  area.classList.toggle("sdk-landscape", isLandscape && window.IS_MOBILE === true);
+  var visible = area.style.display !== "none";
+  var isLandscape = visible && window.innerWidth > window.innerHeight && window.IS_MOBILE === true;
+  area.classList.toggle("sdk-landscape", isLandscape);
+
+  var wrap = area.closest(".wrap");
+  var statsRow = area.querySelector(".stats-row");
+  var boxes = statsRow ? statsRow.querySelectorAll(".stats-container") : [];
+  var navBox = boxes[0] || null;
+  var statBox = boxes[1] || null;
+  var numpadRow = document.getElementById("sdk-numpad");
+  var toolRow = area.querySelector(".tool-row");
+
+  if (isLandscape) {
+    area.style.display = "grid";
+    area.style.gridTemplateColumns = "auto 1fr";
+    area.style.gridTemplateAreas = "'board nav' 'board stats' 'board numpad' 'board tools'";
+    area.style.gap = "8px 16px";
+    area.style.alignItems = "start";
+    area.style.justifyItems = "start";
+    area.style.width = "100%";
+    if (wrap) wrap.style.padding = "12px 10px 24px";
+    if (statsRow) statsRow.style.display = "contents";
+    if (navBox) navBox.style.gridArea = "nav";
+    if (statBox) statBox.style.gridArea = "stats";
+    if (typeof boardFrame !== "undefined" && boardFrame) boardFrame.style.gridArea = "board";
+    if (numpadRow) {
+      numpadRow.style.gridArea = "numpad";
+      numpadRow.style.marginTop = "0";
+      numpadRow.style.maxWidth = "380px";
+      numpadRow.style.justifyContent = "flex-start";
+    }
+    if (toolRow) {
+      toolRow.style.gridArea = "tools";
+      toolRow.style.marginTop = "0";
+      toolRow.style.justifyContent = "flex-start";
+    }
+  } else {
+    area.style.display = visible ? "" : "none";
+    area.style.gridTemplateColumns = "";
+    area.style.gridTemplateAreas = "";
+    area.style.gap = "";
+    area.style.alignItems = "";
+    area.style.justifyItems = "";
+    area.style.width = "";
+    if (wrap) wrap.style.padding = "";
+    if (statsRow) statsRow.style.display = "";
+    if (navBox) navBox.style.gridArea = "";
+    if (statBox) statBox.style.gridArea = "";
+    if (typeof boardFrame !== "undefined" && boardFrame) boardFrame.style.gridArea = "";
+    if (numpadRow) {
+      numpadRow.style.gridArea = "";
+      numpadRow.style.marginTop = "";
+      numpadRow.style.maxWidth = "";
+      numpadRow.style.justifyContent = "";
+    }
+    if (toolRow) {
+      toolRow.style.gridArea = "";
+      toolRow.style.marginTop = "";
+      toolRow.style.justifyContent = "";
+    }
+  }
 }
 function onSudokuViewportChange() {
   updateSudokuOrientationClass();

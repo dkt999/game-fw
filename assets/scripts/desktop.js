@@ -2,13 +2,17 @@ window.appListData = [];
 function registerApp(appInfo) {
     window.appListData.push(appInfo);
 }
+function assetUrl(path) {
+    var v = (typeof window !== "undefined" && window.APP_VERSION) ? "?v=" + window.APP_VERSION : "";
+    return path + v;
+}
 function loadAppStylesheet(cssPath) {
     if (!cssPath) return;
-    if ($(`link[href="${cssPath}"]`).length === 0) {
+    if ($(`link[href^="${cssPath}"]`).length === 0) {
         $('<link>', {
             rel: 'stylesheet',
             type: 'text/css',
-            href: cssPath,
+            href: assetUrl(cssPath),
         }).appendTo('head');
     }
 }
@@ -17,8 +21,8 @@ function loadAppScript(scriptPath, callback) {
         if (callback) callback();
         return;
     }
-    if ($(`script[src="${scriptPath}"]`).length === 0) {
-        $.getScript(scriptPath)
+    if ($(`script[src^="${scriptPath}"]`).length === 0) {
+        $.getScript(assetUrl(scriptPath))
             .done(function() {
                 if (callback) callback();
             })
