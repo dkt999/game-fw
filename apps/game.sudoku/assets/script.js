@@ -64,6 +64,7 @@ let selectedMode = "classic";
 let currentDiff = "medium";
 let timerId = null;
 let cellEls = [];
+let sdkSideWrap = null; /* wrapper cot phai khi xoay ngang */
 let keyToValue = {};
 
 /* ---------------- Sudoku generation (mode-agnostic) ---------------- */
@@ -274,7 +275,8 @@ function debounceSdk(fn, ms) {
   return function () { clearTimeout(t); t = setTimeout(fn, ms); };
 }
 /* Gan/go class sdk-landscape theo huong man hinh that te (khong phu thuoc media query).
-   Layout ngang dung INLINE STYLE de ap dung duoc ngay ca khi file CSS bi cache cu. */
+   Layout ngang dung INLINE STYLE de ap dung duoc ngay ca khi file CSS bi cache cu.
+   Cot phai gom: [nut dieu huong + thong ke] / spacer co gian / numpad / toolbar dinh day. */
 function updateSudokuOrientationClass() {
   var area = document.getElementById("sdk-gameSudokuArea");
   if (!area) return;
@@ -289,32 +291,90 @@ function updateSudokuOrientationClass() {
   var statBox = boxes[1] || null;
   var numpadRow = document.getElementById("sdk-numpad");
   var toolRow = area.querySelector(".tool-row");
+  var resultBanner = document.getElementById("sdk-resultBanner");
+  var frame = (typeof boardFrame !== "undefined") ? boardFrame : null;
 
   if (isLandscape) {
+    if (!sdkSideWrap) {
+      sdkSideWrap = document.createElement("div");
+      sdkSideWrap.className = "sdk-side";
+    }
+    var topRow = sdkSideWrap.querySelector(".sdk-side-top");
+    if (!topRow) {
+      topRow = document.createElement("div");
+      topRow.className = "sdk-side-top";
+      topRow.style.display = "flex";
+      topRow.style.flexWrap = "wrap"; /* chat qua thi moi rot xuong */
+      topRow.style.alignItems = "center";
+      topRow.style.gap = "6px 18px";
+      sdkSideWrap.appendChild(topRow);
+    }
+    var spacer = sdkSideWrap.querySelector(".sdk-side-spacer");
+    if (!spacer) {
+      spacer = document.createElement("div");
+      spacer.className = "sdk-side-spacer";
+      spacer.style.flex = "1";
+      sdkSideWrap.appendChild(spacer);
+    }
+    sdkSideWrap.style.display = "flex";
+    sdkSideWrap.style.flexDirection = "column";
+    sdkSideWrap.style.height = "100%";
+    sdkSideWrap.style.minHeight = "0";
+    sdkSideWrap.style.gridArea = "side";
+
+    if (navBox) topRow.appendChild(navBox);
+    if (statBox) topRow.appendChild(statBox);
+    if (numpadRow) sdkSideWrap.appendChild(numpadRow);
+    if (toolRow) sdkSideWrap.appendChild(toolRow);
+    if (spacer && numpadRow) sdkSideWrap.insertBefore(spacer, numpadRow);
+    area.appendChild(sdkSideWrap);
+
     area.style.display = "grid";
     area.style.gridTemplateColumns = "auto 1fr";
-    area.style.gridTemplateAreas = "'board nav' 'board stats' 'board numpad' 'board tools'";
+    area.style.gridTemplateAreas = "'board side'";
     area.style.gap = "8px 16px";
-    area.style.alignItems = "start";
+    area.style.alignItems = "stretch";
     area.style.justifyItems = "start";
     area.style.width = "100%";
-    if (wrap) wrap.style.padding = "12px 10px 24px";
-    if (statsRow) statsRow.style.display = "contents";
-    if (navBox) navBox.style.gridArea = "nav";
-    if (statBox) statBox.style.gridArea = "stats";
-    if (typeof boardFrame !== "undefined" && boardFrame) boardFrame.style.gridArea = "board";
+    if (wrap) wrap.style.padding = "10px 10px 16px";
+    if (statsRow) statsRow.style.display = "none";
+    if (frame) {
+      frame.style.gridArea = "board";
+      frame.style.alignSelf = "start";
+    }
     if (numpadRow) {
-      numpadRow.style.gridArea = "numpad";
       numpadRow.style.marginTop = "0";
       numpadRow.style.maxWidth = "380px";
       numpadRow.style.justifyContent = "flex-start";
     }
     if (toolRow) {
-      toolRow.style.gridArea = "tools";
       toolRow.style.marginTop = "0";
       toolRow.style.justifyContent = "flex-start";
     }
+    if (resultBanner) resultBanner.style.gridColumn = "1 / -1";
   } else {
+    /* Tra cac cum ve vi tri cu trong DOM */
+    if (statsRow) {
+      if (navBox) statsRow.appendChild(navBox);
+      if (statBox) statsRow.appendChild(statBox);
+      statsRow.style.display = "";
+    }
+    if (sdkSideWrap && sdkSideWrap.parentNode) {
+      sdkSideWrap.parentNode.removeChild(sdkSideWrap);
+    }
+    if (numpadRow) {
+      if (resultBanner) area.insertBefore(numpadRow, resultBanner);
+      else area.appendChild(numpadRow);
+      numpadRow.style.marginTop = "";
+      numpadRow.style.maxWidth = "";
+      numpadRow.style.justifyContent = "";
+    }
+    if (toolRow) {
+      if (resultBanner) area.insertBefore(toolRow, resultBanner);
+      else area.appendChild(toolRow);
+      toolRow.style.marginTop = "";
+      toolRow.style.justifyContent = "";
+    }
     area.style.display = visible ? "" : "none";
     area.style.gridTemplateColumns = "";
     area.style.gridTemplateAreas = "";
@@ -323,21 +383,11 @@ function updateSudokuOrientationClass() {
     area.style.justifyItems = "";
     area.style.width = "";
     if (wrap) wrap.style.padding = "";
-    if (statsRow) statsRow.style.display = "";
-    if (navBox) navBox.style.gridArea = "";
-    if (statBox) statBox.style.gridArea = "";
-    if (typeof boardFrame !== "undefined" && boardFrame) boardFrame.style.gridArea = "";
-    if (numpadRow) {
-      numpadRow.style.gridArea = "";
-      numpadRow.style.marginTop = "";
-      numpadRow.style.maxWidth = "";
-      numpadRow.style.justifyContent = "";
+    if (frame) {
+      frame.style.gridArea = "";
+      frame.style.alignSelf = "";
     }
-    if (toolRow) {
-      toolRow.style.gridArea = "";
-      toolRow.style.marginTop = "";
-      toolRow.style.justifyContent = "";
-    }
+    if (resultBanner) resultBanner.style.gridColumn = "";
   }
 }
 function onSudokuViewportChange() {
