@@ -514,7 +514,8 @@ function buildLevelBoard(lv) {
         " toolbar=" + (tbr ? Math.round(tbr.width) + "x" + Math.round(tbr.height) : "?") +
         " foot=" + (ft ? (ft.style.display || "vis") : "?") +
         " gameAreaH=" + (ga ? Math.round(ga.getBoundingClientRect().height) : "?") +
-        " inner=" + window.innerWidth + "x" + window.innerHeight;
+        " inner=" + window.innerWidth + "x" + window.innerHeight +
+        " htmlClass=" + (document.documentElement ? document.documentElement.className : "?");
     } catch(e){ return "err:" + e.message; }
   })();
   pkcDebug("pre-shape", "lv#" + lv.id + " lvRows=" + lv.rows + " lvCols=" + lv.cols + " cells=" + lv.cells + " | " + _dbgBefore);
