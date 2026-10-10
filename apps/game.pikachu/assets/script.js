@@ -357,14 +357,14 @@ function boardCellSize() {
     // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
     const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
     const frameW = areaW - 24; // tru padding ngang .wrap (mobile 12px moi ben)
-    const fitW = Math.floor((frameW - 28) / C); // tru padding board-frame (8*2) + board (6*2)
+    const fitW = Math.floor((frameW - 24) / C); // tru padding board-frame (8*2) + board (4*2)
     let top = 0;
     try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
     let belowH = 0;
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
     if (resultBanner.classList.contains("show")) belowH += resultBanner.offsetHeight + 18;
-    const availH = winH - top - 40 - belowH - 28; // 40: padding duoi wrap, 28: padding frame+board
+    const availH = winH - top - 40 - belowH - 24; // 40: padding duoi wrap, 24: padding frame+board
     const fitH = Math.floor(availH / R);
     const size = Math.min(fitW, fitH);
     return Math.max(14, Math.min(64, size));
@@ -555,7 +555,7 @@ function findOneMove() {
 ===================================================================== */
 function drawLinkPath(path) {
   const cellPx = boardCellSize();
-  const gap = 2;
+  const gap = 0;
   const toXY = (p) => ({
     x: (p.c + 0.5) * (cellPx + gap) - gap / 2,
     y: (p.r + 0.5) * (cellPx + gap) - gap / 2
