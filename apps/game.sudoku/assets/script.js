@@ -284,15 +284,23 @@ function applyNumpadGrid() {
   var btns = numpadEl.querySelectorAll(".num-btn");
   var i;
   if (on) {
+    /* Tinh chieu cao nut theo chieu cao man hinh de numpad khong can len tren.
+       Tru hao: padding wrap + hang nav/thong ke + toolbar + cac khe ho. */
+    var reserve = 160;
+    var availH = window.innerHeight - reserve;
+    var btnH = Math.floor((availH - (ncols - 1) * 8) / ncols);
+    if (btnH > 50) btnH = 50; /* khong qua 50px */
+    if (btnH < 36) btnH = 36; /* khong nho hon 36px de van de bam */
     numpadEl.style.display = "grid";
     numpadEl.style.gridTemplateColumns = "repeat(" + ncols + ", 1fr)";
     numpadEl.style.gap = "8px";
     numpadEl.style.marginTop = "0";
-    numpadEl.style.maxWidth = (ncols === 4 ? "240px" : "180px");
+    numpadEl.style.maxWidth = (ncols * btnH + (ncols - 1) * 8) + "px";
     numpadEl.style.justifyContent = "";
     for (i = 0; i < btns.length; i++) {
       btns[i].style.width = "100%";
-      btns[i].style.height = "54px";
+      btns[i].style.height = btnH + "px";
+      btns[i].style.fontSize = Math.max(15, Math.round(btnH * 0.42)) + "px";
     }
   } else {
     numpadEl.style.display = "";
@@ -303,6 +311,7 @@ function applyNumpadGrid() {
     for (i = 0; i < btns.length; i++) {
       btns[i].style.width = "";
       btns[i].style.height = "";
+      btns[i].style.fontSize = "";
     }
   }
 }
