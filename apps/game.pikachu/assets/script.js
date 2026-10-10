@@ -505,11 +505,16 @@ function buildLevelBoard(lv) {
       const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
       const bc = document.querySelector(".pikachu-app .pkc-boardcol");
       const br = bc ? bc.getBoundingClientRect() : null;
+      const tb = document.querySelector(".pikachu-app .pkc-toolbar");
+      const tbr = tb ? tb.getBoundingClientRect() : null;
+      const ft = document.querySelector(".pikachu-app footer");
+      const ga = document.getElementById("pkc-gameArea");
       return "win=" + (winEl ? winEl.clientWidth + "x" + winEl.clientHeight : "?") +
         " col=" + (br ? Math.round(br.width) + "x" + Math.round(br.height) : "?") +
-        " frameTop=" + Math.round(boardFrame.getBoundingClientRect().top) +
-        " inner=" + window.innerWidth + "x" + window.innerHeight +
-        " mobile=" + window.IS_MOBILE;
+        " toolbar=" + (tbr ? Math.round(tbr.width) + "x" + Math.round(tbr.height) : "?") +
+        " foot=" + (ft ? (ft.style.display || "vis") : "?") +
+        " gameAreaH=" + (ga ? Math.round(ga.getBoundingClientRect().height) : "?") +
+        " inner=" + window.innerWidth + "x" + window.innerHeight;
     } catch(e){ return "err:" + e.message; }
   })();
   pkcDebug("pre-shape", "lv#" + lv.id + " lvRows=" + lv.rows + " lvCols=" + lv.cols + " cells=" + lv.cells + " | " + _dbgBefore);
