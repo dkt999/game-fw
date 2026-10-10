@@ -295,11 +295,10 @@ function boardCellSize() {
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
 
   if (window.IS_MOBILE === true) {
-    // Mobile: bàn cờ lấp vừa chiều ngang màn hình, không cuộn ngang.
-    // Trừ hao: padding window-content (10px x2) + padding board-frame (10px x2)
-    // + padding board (6px x2) + khe gap 3px giữa các ô.
-    const gap = 3;
-    const fitW = Math.floor((winW - 52 - gap * (C - 1)) / C);
+    // Mobile: do truc tiep khung board-frame (da tru padding san) thay vi doan so,
+    // tranh board bi tran nhe qua phai nhu truoc day.
+    const frameW = (boardFrame.clientWidth || (winW - 76));
+    const fitW = Math.floor((frameW - 2) / C);
     // Trừ hao chiều cao: titlebar 48 + padding + stats-row + footer ~ 240px.
     const fitH = Math.floor((winH - 240) / R);
     const size = Math.min(fitW, fitH);

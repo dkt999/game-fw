@@ -14,8 +14,10 @@ function computeSudokuBoardPx() {
       // Xoay ngang: board cao toi da (tru titlebar 48 + padding wrap/frame ~65)
       return Math.max(200, h - 115);
     }
-    // Man hinh doc: board lap vua chieu ngang
-    return Math.max(220, Math.min(w - 48, h - 380));
+    // Man hinh doc: do truc tiep khung board-frame (da tru padding san),
+    // khoi phai doan padding cua cac lop .wrap/.window-content
+    var frameW = (typeof boardFrame !== "undefined" && boardFrame.clientWidth) || (w - 72);
+    return Math.max(220, Math.min(frameW - 4, h - 380));
   }
   return Math.min(w, h) - 350;
 }
@@ -254,6 +256,7 @@ function buildNumpad(){
    Chi chinh lai kich thuoc + font chu, KHONG tao lai ban co (giu nguyen van choi). */
 function refitSudokuBoard() {
   if (!state || !boardEl || !boardEl.children.length || !cellEls.length) return;
+  if (document.getElementById("sdk-gameSudokuArea").style.display === "none") return;
   var boardPx = computeSudokuBoardPx();
   state.boardMax = boardPx;
   var N = state.N;
