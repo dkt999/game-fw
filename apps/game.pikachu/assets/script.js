@@ -163,6 +163,11 @@ const packLockNoteEl = document.getElementById("pkc-packLockNote");
 const packPrevBtn = document.getElementById("pkc-packPrev");
 const packNextBtn = document.getElementById("pkc-packNext");
 const rulesModal = document.getElementById("pkc-rulesModal");
+const winModal = document.getElementById("pkc-winModal");
+const winSub = document.getElementById("pkc-winSub");
+const winNote = document.getElementById("pkc-winNote");
+const winNext = document.getElementById("pkc-winNext");
+function hideWinModal() { winModal.style.display = "none"; }
 let viewPack = 0; // pack dang xem (0 = tu dong theo map vua choi)
 const boardEl = document.getElementById("pkc-board");
 const boardFrame = document.getElementById("pkc-boardFrame");
@@ -279,16 +284,14 @@ rulesModal.addEventListener("click", (e) => {
 
 document.getElementById("pkc-btnMenu").addEventListener("click", backToMenu);
 document.getElementById("pkc-btnNewGame").addEventListener("click", () => { if (level) startLevel(level); });
-const btnNextMap = document.getElementById("pkc-btnNextMap");
-btnNextMap.addEventListener("click", () => {
-  const next = LEVELS.find(l => l.id > level.id && isLevelUnlocked(l.id));
-  if (next) startLevel(next);
-});
+document.getElementById("pkc-winMenu").addEventListener("click", () => { hideWinModal(); backToMenu(); });
+document.getElementById("pkc-winReplay").addEventListener("click", () => { hideWinModal(); if (level) startLevel(level); });
 btnShuffle.addEventListener("click", doShuffle);
 btnHint.addEventListener("click", useHint);
 
 function backToMenu() {
   stopTimer();
+  hideWinModal();
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
@@ -346,6 +349,7 @@ function startLevel(lv) {
   totalPairs = (R * C) / 2;
   pairsLeft = totalPairs;
 
+  hideWinModal();
   mainMenu.style.display = "none";
   gameArea.style.display = "flex";
   resultBanner.classList.remove("show", "lose");
@@ -354,7 +358,6 @@ function startLevel(lv) {
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl) footEl.style.display = "none"; // cho board co them cho
   }
-  btnNextMap.style.display = "none";
 
   statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier] + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : "");
   hintBadge.textContent = hintsLeft;
@@ -762,6 +765,7 @@ function updateTimeDisplay() {
 function winGame() {
   locked = true;
   stopTimer();
+  resultBanner.classList.remove("show", "lose");
   // Đánh dấu map đã qua; nếu đủ 80% pack thì mở pack tiếp theo
   const curPack = packOf(level.id);
   const nextPack = curPack + 1;
@@ -769,27 +773,30 @@ function winGame() {
   progress.completed[level.id] = true;
   // Lưu kỷ lục thời gian của map này
   const prevBest = progress.best[level.id];
-  if (!prevBest || seconds < prevBest.time) {
+  const isRecord = !prevBest || seconds < prevBest.time;
+  if (isRecord) {
     progress.best[level.id] = { time: seconds };
   }
   saveProgress();
   const nowNextUnlocked = nextPack > packCount() || isPackUnlocked(nextPack);
-  let unlockMsg = "";
-  if (!wasNextUnlocked && nowNextUnlocked) {
-    unlockMsg = " · Đã mở khóa Pack " + nextPack + "!";
-  }
   refreshMapGrid();
-  resultTitle.textContent = "Hoàn thành!";
-  resultSub.textContent = "Bạn đã dọn sạch " + totalPairs + " cặp trong " + statTime.textContent + " · " + statMap.textContent + unlockMsg;
-  resultBanner.classList.remove("lose");
-  resultBanner.classList.add("show");
-  hankoEl.classList.add("show");
-  // Hiện nút chơi tiếp map mở gần nhất
+  // Popup chúc mừng giữa màn hình
+  winSub.textContent = "Map " + level.id + " · " + TIER_LABEL[level.tier] + " · " + fmtTime(seconds);
+  let note = "";
+  if (isRecord) note += "🏆 Kỷ lục mới! ";
+  if (!wasNextUnlocked && nowNextUnlocked) note += "🔓 Đã mở khóa Pack " + nextPack + "!";
+  winNote.textContent = note;
+  winNote.style.display = note ? "" : "none";
   const next = LEVELS.find(l => l.id > level.id && isLevelUnlocked(l.id));
   if (next) {
-    btnNextMap.textContent = "Chơi tiếp Map " + next.id + " →";
-    btnNextMap.style.display = "";
+    winNext.textContent = "Map " + next.id + " →";
+    winNext.style.display = "";
+    winNext.onclick = () => { hideWinModal(); startLevel(next); };
+  } else {
+    winNext.style.display = "none";
   }
+  winModal.style.display = "flex";
+  hankoEl.classList.add("show");
 }
 function loseGame(reason) {
   locked = true;

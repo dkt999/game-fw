@@ -99,9 +99,22 @@ function InitPikachuGame() {
             </div>
 
             <div class="result-banner" id="pkc-resultBanner">
-                <div class="title" id="pkc-resultTitle">Hoàn thành!</div>
+                <div class="title" id="pkc-resultTitle">Chưa xong ván này</div>
                 <div class="sub" id="pkc-resultSub"></div>
-                <button class="next-map-btn" id="pkc-btnNextMap" style="display:none;">Chơi tiếp →</button>
+            </div>
+
+            <div class="win-modal" id="pkc-winModal" style="display:none;">
+                <div class="win-card">
+                    <div class="win-emoji">🎉</div>
+                    <div class="win-title">Qua màn!</div>
+                    <div class="win-sub" id="pkc-winSub"></div>
+                    <div class="win-note" id="pkc-winNote" style="display:none;"></div>
+                    <div class="win-btns">
+                        <button class="win-btn" id="pkc-winMenu">Menu</button>
+                        <button class="win-btn" id="pkc-winReplay">Chơi lại</button>
+                        <button class="win-btn primary" id="pkc-winNext">Tiếp →</button>
+                    </div>
+                </div>
             </div>
         </div>
 
