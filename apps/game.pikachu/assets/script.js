@@ -375,7 +375,8 @@ function stopBoardResizeWatch() {
    thì xoay theo màn hình để tile luôn to nhất: màn ngang -> bàn rộng,
    màn dọc -> bàn cao. Desktop giữ shape cố định như cũ.
 ===================================================================== */
-const MIN_TILE_PX = 48; // Mobile: tile không nhỏ hơn mức này -> map khó nhiều ô sẽ tự giảm số ô
+const TARGET_TILE_PX = 48; // tile mong muốn trên mobile
+const MIN_TILE_PX = Math.floor(TARGET_TILE_PX * 0.8); // 38: tile tối thiểu khi fill đầy khung
 function computeAdaptiveShape(totalCells) {
   const winEl = (typeof boardFrame !== "undefined" && boardFrame.closest(".window"))
     || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
@@ -387,17 +388,41 @@ function computeAdaptiveShape(totalCells) {
   let top = 0;
   try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
   const availH = Math.max(120, winH - top - 32); // trừ padding dưới wrap (12) + frame/board (20)
-  // Map khó: giới hạn số ô để tile không nhỏ hơn MIN_TILE_PX (dễ thấy, dễ bấm)
-  const maxCells = Math.floor(availW / MIN_TILE_PX) * Math.floor(availH / MIN_TILE_PX);
-  let cells = Math.min(totalCells, maxCells);
-  if (cells % 2 !== 0) cells -= 1;
-  cells = Math.max(24, cells);
-  // Muốn tile vuông to nhất: tỉ lệ cols/rows ~ availW/availH
-  let cols = Math.round(Math.sqrt(cells * availW / availH));
+  // Fill đầy khung: làm tròn LÊN số hàng/cột, miễn tile không nhỏ hơn 80% target
+  let rows = Math.ceil(availH / TARGET_TILE_PX);
+  if (availH / rows < MIN_TILE_PX) rows = Math.floor(availH / TARGET_TILE_PX);
+  let cols = Math.ceil(availW / TARGET_TILE_PX);
+  if (availW / cols < MIN_TILE_PX) cols = Math.floor(availW / TARGET_TILE_PX);
+  rows = Math.max(4, rows);
   cols = Math.max(6, Math.min(40, cols));
-  let rows = Math.max(4, Math.ceil(cells / cols));
-  if ((cols * rows) % 2 !== 0) cols += 1; // luôn cần số ô chẵn
-  while (cols * rows < cells) cols += 2;
+  // Không dùng quá số ô của level: giảm chiều nào còn giữ tile to hơn
+  let guard = 0;
+  while (rows * cols > totalCells && (rows > 4 || cols > 6) && guard++ < 200) {
+    const tRow = rows > 4 ? Math.min(availW / cols, availH / (rows - 1)) : -1;
+    const tCol = cols > 6 ? Math.min(availW / (cols - 1), availH / rows) : -1;
+    if (tRow >= tCol && rows > 4) rows--;
+    else if (cols > 6) cols--;
+    else break;
+  }
+  // Tham lam mở rộng chiều đang trống nhiều hơn (tile vẫn >= 80% target, không vượt số ô level)
+  for (let gi = 0; gi < 4; gi++) {
+    const cell = Math.min(availW / cols, availH / rows);
+    const fillW = (cols * cell) / availW, fillH = (rows * cell) / availH;
+    let grew = false;
+    const tryGrow = (nr, nc) => {
+      if (nr * nc > totalCells) return false;
+      const ncell = Math.min(availW / nc, availH / nr);
+      if (ncell < MIN_TILE_PX) return false;
+      const nfill = ((nc * ncell) * (nr * ncell)) / (availW * availH);
+      const ofill = ((cols * cell) * (rows * cell)) / (availW * availH);
+      if (nfill > ofill + 0.01) { rows = nr; cols = nc; return true; }
+      return false;
+    };
+    if (fillW <= fillH) grew = tryGrow(rows, cols + 1) || tryGrow(rows + 1, cols);
+    else grew = tryGrow(rows + 1, cols) || tryGrow(rows, cols + 1);
+    if (!grew) break;
+  }
+  if ((rows * cols) % 2 !== 0) { if (cols < 40) cols++; else rows++; } // số ô chẵn
   return { rows, cols };
 }
 
