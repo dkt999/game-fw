@@ -178,6 +178,21 @@ const winModal = document.getElementById("pkc-winModal");
 const winSub = document.getElementById("pkc-winSub");
 const winNote = document.getElementById("pkc-winNote");
 const winNext = document.getElementById("pkc-winNext");
+const rotateHintEl = document.getElementById("pkc-rotateHint");
+let pausedByRotate = false;
+/* Man hinh doc khi dang choi: hien nhac xoay + tam dung dem gio */
+function updateRotateHint() {
+  if (!rotateHintEl) return;
+  if (!gameArea.closest(".window")) { rotateHintEl.style.display = "none"; return; } // cua so da dong
+  const inGame = gameArea.style.display !== "none";
+  const isPortrait = window.innerHeight >= window.innerWidth;
+  const show = window.IS_MOBILE === true && inGame && isPortrait;
+  rotateHintEl.style.display = show ? "flex" : "none";
+  if (show && timer && !pausedByRotate) { stopTimer(); pausedByRotate = true; }
+  else if (!show && pausedByRotate && !locked) { pausedByRotate = false; startTimer(); }
+}
+window.addEventListener("resize", updateRotateHint);
+window.addEventListener("orientationchange", () => setTimeout(updateRotateHint, 350));
 function hideWinModal() { winModal.style.display = "none"; }
 let viewPack = 0; // pack dang xem (0 = tu dong theo map vua choi)
 const boardEl = document.getElementById("pkc-board");
@@ -302,7 +317,9 @@ btnHint.addEventListener("click", useHint);
 
 function backToMenu() {
   stopTimer();
+  pausedByRotate = false;
   hideWinModal();
+  if (rotateHintEl) rotateHintEl.style.display = "none";
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
@@ -354,6 +371,7 @@ function startLevel(lv) {
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
   let shape = { rows: lv.rows, cols: lv.cols };
   if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
+  updateRotateHint();
   R = shape.rows; C = shape.cols;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;

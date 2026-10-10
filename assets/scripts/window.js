@@ -10,7 +10,8 @@ function createWindow({
     top = 50,
     left = 50,
     allowResize = true,
-    fullScreenApp = false
+    fullScreenApp = false,
+    onClose = null
     } = {}) {
     // Tren mobile: moi cua so luon mo fullscreen, khong keo-tha/resize.
     var _isMobileWin = (typeof window !== 'undefined') && window.IS_MOBILE === true;
@@ -99,6 +100,7 @@ function createWindow({
         taskbarIcon.remove();
         $('#taskbar').show();
         $('#desktop').css('height', '');
+        if (typeof onClose === "function") { try { onClose(); } catch (e) {} }
     });
     let taskbarIcon = addTaskbarIcon(title, iconUrl, uniqueId);
     

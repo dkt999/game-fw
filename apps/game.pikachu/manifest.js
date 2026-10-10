@@ -15,12 +15,22 @@ function openPikachuGame() {
     }
     loadAppStylesheet("./apps/game.pikachu/assets/style.css");
     // Game luôn mở fullscreen (giống Sudoku); chế độ cửa sổ để dành cho app sau này.
+    // Co gang khoa man hinh ngang (chi duoc tren PWA/fullscreen Android; that bai thi bo qua,
+    // se hien man hinh nhac xoay thay the).
+    try {
+        if (window.IS_MOBILE === true && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(function(){});
+        }
+    } catch (e) {}
     pikachuWindowId = createWindow({
         title: 'Pikachu',
         iconUrl: "assets/icons/defaultGameIcon2.svg",
         additionClass: "pikachu-app",
         allowResize: false,
-        fullScreenApp: true
+        fullScreenApp: true,
+        onClose: function() {
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+        }
     });
     InitPikachuGame();
     loadAppScript("./apps/game.pikachu/assets/script.js", function() {})
@@ -103,6 +113,12 @@ function InitPikachuGame() {
                 <div class="sub" id="pkc-resultSub"></div>
             </div>
 
+            <div class="rotate-hint" id="pkc-rotateHint" style="display:none;">
+                <div class="rotate-card">
+                    <div class="rotate-icon">📱</div>
+                    <div>Xoay ngang điện thoại để chơi</div>
+                </div>
+            </div>
             <div class="win-modal" id="pkc-winModal" style="display:none;">
                 <div class="win-card">
                     <div class="win-emoji">🎉</div>
