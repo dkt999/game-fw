@@ -30,5 +30,26 @@
     }
     /* Version asset de chong cache: moi lan push code moi thi tang version nay
        (va ?v= tren index.html) de dien thoai khong dung file CSS/JS cu. */
-    window.APP_VERSION = "20261011j";
+    window.APP_VERSION = "20261011k";
+
+    /* Wake Lock: giữ màn hình không tự tắt khi chơi (app/PWA).
+       Trình duyệt tự huỷ khi ẩn app -> xin lại khi hiện lên. */
+    var _wakeLock = null;
+    function requestWakeLock() {
+        try {
+            if (!("wakeLock" in navigator) || !navigator.wakeLock.request) return;
+            // Chỉ giữ khi app đang hiển thị
+            if (document.visibilityState !== "visible") return;
+            navigator.wakeLock.request("screen").then(function(lock) {
+                _wakeLock = lock;
+                lock.addEventListener("release", function() { _wakeLock = null; });
+            }).catch(function() { /* thiết bị không cho -> bỏ qua */ });
+        } catch (e) { /* không hỗ trợ -> bỏ qua */ }
+    }
+    if (window.IS_MOBILE) {
+        requestWakeLock();
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === "visible") requestWakeLock();
+        });
+    }
 })();
