@@ -105,8 +105,7 @@ function InitPikachuGame() {
                 </div>
                 <div class="pkc-boardcol">
             <div class="board-frame" id="pkc-boardFrame">
-                <div class="board" id="pkc-board"></div>
-                <div class="link-layer" id="pkc-linkLayer"></div>
+                <div class="board" id="pkc-board"><div class="link-layer" id="pkc-linkLayer"></div></div>
                 <div class="hanko" id="pkc-hanko"><span>完</span></div>
             </div>
                 </div>

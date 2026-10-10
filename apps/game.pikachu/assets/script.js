@@ -204,6 +204,7 @@ let viewPack = 0; // pack dang xem (0 = tu dong theo map vua choi)
 const boardEl = document.getElementById("pkc-board");
 const boardFrame = document.getElementById("pkc-boardFrame");
 const linkLayer = document.getElementById("pkc-linkLayer");
+let boardPad = 4; // padding động của board = margin cho đường nối đi ngoài
 const hankoEl = document.getElementById("pkc-hanko");
 const loseModal = document.getElementById("pkc-loseModal");
 const loseSub = document.getElementById("pkc-loseSub");
@@ -519,11 +520,13 @@ function shuffleArray(arr) {
    RENDER
 ===================================================================== */
 function renderBoard() {
+  const cellPx = boardCellSize();
+  boardPad = Math.ceil(cellPx * 0.6); // margin cho đường nối vòng ngoài board
   boardEl.style.gridTemplateColumns = `repeat(${C}, minmax(0,1fr))`;
   boardEl.style.gridTemplateRows = `repeat(${R}, minmax(0,1fr))`;
-  const cellPx = boardCellSize();
-  boardEl.style.width = (cellPx * C) + "px";
-  boardEl.style.height = (cellPx * R) + "px";
+  boardEl.style.padding = boardPad + "px";
+  boardEl.style.width = (cellPx * C + boardPad * 2) + "px";
+  boardEl.style.height = (cellPx * R + boardPad * 2) + "px";
 
   let html = "";
   for (let r = 0; r < R; r++) {
@@ -538,6 +541,7 @@ function renderBoard() {
     }
   }
   boardEl.innerHTML = html;
+  boardEl.appendChild(linkLayer); // innerHTML xoá mất link-layer -> gắn lại
 }
 
 function boardCellSize() {
@@ -550,14 +554,14 @@ function boardCellSize() {
     // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
     const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
     const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
-    const fitW = Math.floor((colW - 20) / C); // tru padding board-frame (6*2) + board (4*2)
+    const fitW = Math.floor((colW - 20) / (C + 1.2)); // tru padding frame (6*2)+board (4*2); +1.2 o margin duong noi
     let top = 0;
     try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
     let belowH = 0;
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
     const availH = winH - top - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
-    const fitH = Math.floor(availH / R);
+    const fitH = Math.floor(availH / (R + 1.2)); // +1.2 o margin duong noi
     const size = Math.min(fitW, fitH);
     return Math.max(14, Math.min(64, size));
   }
@@ -566,7 +570,7 @@ function boardCellSize() {
   const availW = (winW * 0.8) - 40; // trừ hao padding/border của board-frame
   const availH = (winH * 0.8) - 40;
 
-  const size = Math.floor(Math.min(availW / C, availH / R));
+  const size = Math.floor(Math.min(availW / (C + 1.2), availH / (R + 1.2))); // +1.2 o margin duong noi
   return Math.max(22, size); // bỏ trần 52px để ô hình lớn theo window
 }
 
@@ -799,14 +803,14 @@ function findOneMove() {
 ===================================================================== */
 function drawLinkPath(path) {
   const cellPx = boardCellSize();
-  const gap = 0;
   const toXY = (p) => ({
-    x: (p.c + 0.5) * (cellPx + gap) - gap / 2,
-    y: (p.r + 0.5) * (cellPx + gap) - gap / 2
+    x: boardPad + (p.c + 0.5) * cellPx,
+    y: boardPad + (p.r + 0.5) * cellPx
   });
   const pts = path.map(toXY);
   const d = "M " + pts.map(p => `${p.x},${p.y}`).join(" L ");
-  linkLayer.innerHTML = `<svg viewBox="0 0 ${C * (cellPx + gap)} ${R * (cellPx + gap)}" preserveAspectRatio="none"><path class="link-path" d="${d}"/></svg>`;
+  const W = C * cellPx + boardPad * 2, H = R * cellPx + boardPad * 2;
+  linkLayer.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path class="link-path" d="${d}"/></svg>`;
   setTimeout(() => { linkLayer.innerHTML = ""; }, 420);
 }
 

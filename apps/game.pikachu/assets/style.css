@@ -165,7 +165,7 @@
 .pikachu-app .board{
   position:relative; display:grid; gap:0;
   background-color: var(--paper);
-  border-radius: 6px; padding:4px;
+  border-radius: 6px;
   box-shadow: inset 0 0 0 1px rgba(94,74,44,0.35), inset 0 2px 10px rgba(94,74,44,0.18);
   user-select:none;
 }
@@ -194,7 +194,7 @@
   animation: bonusFloat 1.05s ease-out forwards;
 }
 @keyframes bonusFloat{ 0%{ opacity:0; transform:translate(-50%,8px);} 20%{ opacity:1; } 100%{ opacity:0; transform:translate(-50%,-26px);} }
-.pikachu-app .link-layer{ position:absolute; inset:14px; pointer-events:none; z-index:5; }
+.pikachu-app .link-layer{ position:absolute; inset:0; pointer-events:none; z-index:5; }
 .pikachu-app .link-layer svg{ width:100%; height:100%; overflow:visible; }
 .pikachu-app .link-path{
   fill:none; stroke: var(--vermillion); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
@@ -253,8 +253,7 @@ footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66;
 .is-mobile .pikachu-app .btn-square{ width:38px; height:38px; }
 .is-mobile .pikachu-app .stat .val{ font-size:15px; }
 .is-mobile .pikachu-app .board-frame{ padding:6px; }
-/* link-layer canh theo padding mới của board-frame (6px) + board (4px) */
-.is-mobile .pikachu-app .link-layer{ inset:10px; }
+
 /* Tắt hover dính trên màn hình cảm ứng */
 @media (hover: none){
   .pikachu-app .tile:hover{ transform:none; }
