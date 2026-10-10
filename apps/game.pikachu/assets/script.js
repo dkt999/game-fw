@@ -404,11 +404,13 @@ function computeAdaptiveShape(totalCells) {
   const winW = winEl ? winEl.clientWidth : window.innerWidth;
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
   const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
-  const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
+  // Đo boardcol (khung flex cố định), KHÔNG đo boardFrame vì nó có margin:auto
+  // -> lúc board trống/chưa render sẽ bị căn giữa, top đo sai
+  const colRect = boardCol ? boardCol.getBoundingClientRect() : null;
+  const colW = (colRect && colRect.width > 0) ? colRect.width : (((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW));
+  const colH = (colRect && colRect.height > 0) ? colRect.height : winH;
   const availW = Math.max(200, colW - 20); // trừ padding frame (6*2) + board (4*2)
-  let top = 0;
-  try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
-  const availH = Math.max(120, winH - top - 32); // trừ padding dưới wrap (12) + frame/board (20)
+  const availH = Math.max(120, colH - 32); // trừ padding frame/board + margin dưới
   // Fill đầy khung: làm tròn LÊN số hàng/cột, miễn tile không nhỏ hơn 80% target
   let rows = Math.ceil(availH / TARGET_TILE_PX);
   if (availH / rows < MIN_TILE_PX) rows = Math.floor(availH / TARGET_TILE_PX);
@@ -488,8 +490,9 @@ function buildLevelBoard(lv) {
     try {
       const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
       const bc = document.querySelector(".pikachu-app .pkc-boardcol");
+      const br = bc ? bc.getBoundingClientRect() : null;
       return "win=" + (winEl ? winEl.clientWidth + "x" + winEl.clientHeight : "?") +
-        " colW=" + (bc ? bc.clientWidth : "?") +
+        " col=" + (br ? Math.round(br.width) + "x" + Math.round(br.height) : "?") +
         " frameTop=" + Math.round(boardFrame.getBoundingClientRect().top) +
         " inner=" + window.innerWidth + "x" + window.innerHeight +
         " mobile=" + window.IS_MOBILE;
@@ -614,12 +617,14 @@ function boardCellSize() {
     const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
     const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
     const fitW = Math.floor((colW - 20) / (C + 1.2)); // tru padding frame (6*2)+board (4*2); +1.2 o margin duong noi
-    let top = 0;
-    try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
+    // Dung chieu cao boardcol (on dinh), khong dung boardFrame.top (sai khi board trong do margin:auto)
+    let colH = 0;
+    try { const br = boardCol ? boardCol.getBoundingClientRect() : null; if (br && br.height > 0) colH = br.height; } catch (e) {}
+    if (!colH) { try { colH = winH - (boardFrame.getBoundingClientRect().top || 0); } catch (e) {} }
     let belowH = 0;
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
-    const availH = winH - top - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
+    const availH = colH - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
     const fitH = Math.floor(availH / (R + 1.2)); // +1.2 o margin duong noi
     const size = Math.min(fitW, fitH);
     return Math.max(14, Math.min(64, size));
