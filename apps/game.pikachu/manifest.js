@@ -107,6 +107,7 @@ function InitPikachuGame() {
             <div class="board-frame" id="pkc-boardFrame">
                 <div class="board" id="pkc-board"><div class="link-layer" id="pkc-linkLayer"></div></div>
                 <div class="hanko" id="pkc-hanko"><span>完</span></div>
+                <div class="shuffle-modal" id="pkc-shuffleModal" style="display:none;"><span class="spin">🔀</span> Đang xáo hình...</div>
             </div>
                 </div>
             </div>

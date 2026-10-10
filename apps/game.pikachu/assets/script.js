@@ -205,6 +205,8 @@ const boardEl = document.getElementById("pkc-board");
 const boardFrame = document.getElementById("pkc-boardFrame");
 const linkLayer = document.getElementById("pkc-linkLayer");
 let boardPad = 4; // padding động của board = margin cho đường nối đi ngoài
+let isShuffling = false; // đang chạy hiệu ứng xáo -> khóa click tile
+const shuffleModal = document.getElementById("pkc-shuffleModal");
 const hankoEl = document.getElementById("pkc-hanko");
 const loseModal = document.getElementById("pkc-loseModal");
 const loseSub = document.getElementById("pkc-loseSub");
@@ -578,7 +580,7 @@ function boardCellSize() {
 
 boardEl.addEventListener("click", (e) => {
   const tileEl = e.target.closest(".tile");
-  if (!tileEl || locked) return;
+  if (!tileEl || locked || isShuffling) return;
   const r = Number(tileEl.dataset.r), c = Number(tileEl.dataset.c);
   if (grid[r][c] === 0) return;
   onTileClick(r, c, tileEl);
@@ -708,12 +710,9 @@ function resolveMatch(a, b, path) {
     if (!hasAnyMove()) {
       // Bí đường sau khi nối (hoặc sau khi board rơi): tự động xáo miễn phí cứu ván
       setTimeout(() => {
-        showTimeBonus("🔀 Hết nước đi, tự xáo!");
-        setTimeout(() => {
-          if (hasAnyMove()) return; // đã có nước (tự xáo tay trong lúc chờ)
-          if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
-        }, 700);
-      }, 400);
+        if (hasAnyMove()) return; // đã có nước (tự xáo tay trong lúc chờ)
+        if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
+      }, 450);
     }
   }, 140);
 }
@@ -868,34 +867,78 @@ function shuffleGrid() {
   let k = 0;
   for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) grid[r][c] = remaining[k++];
 }
-function doShuffle(silent) {
-  if (locked) return;
-  if (shufflesLeft <= 0 && !silent) return;
-  if (!silent) shufflesLeft--;
+function showShuffleModal() { if (shuffleModal) shuffleModal.style.display = "flex"; }
+function hideShuffleModal() { if (shuffleModal) shuffleModal.style.display = "none"; }
+/* Hiệu ứng xáo: modal "Đang xáo..." + tile bay từ vị trí cũ sang mới trong ~1s.
+   fn() thực hiện xáo grid + renderBoard (đồng bộ) ở giữa. */
+function performShuffleVisualThen(fn, onDone) {
+  const DUR = 900;
+  isShuffling = true;
+  showShuffleModal();
+  // Chụp vị trí cũ
+  const boardRect = boardEl.getBoundingClientRect();
+  const oldTiles = [...boardEl.querySelectorAll('.tile:not(.cleared)')];
+  const oldCenters = oldTiles.map(el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - boardRect.left + r.width / 2, y: r.top - boardRect.top + r.height / 2 };
+  });
+  const order = oldCenters.map((_, i) => i);
+  shuffleArray(order);
+  // Xáo thật + vẽ lại
+  fn();
+  // Bay từ vị trí cũ ngẫu nhiên tới vị trí mới
+  const newTiles = [...boardEl.querySelectorAll('.tile:not(.cleared)')];
+  const nr = boardEl.getBoundingClientRect();
+  newTiles.forEach((el, i) => {
+    const from = oldCenters[order[i % order.length]];
+    const r = el.getBoundingClientRect();
+    const dx = from.x - (r.left - nr.left + r.width / 2);
+    const dy = from.y - (r.top - nr.top + r.height / 2);
+    el.style.transition = "none";
+    el.style.transform = `translate(${dx}px,${dy}px) scale(.55)`;
+    el.style.opacity = ".35";
+  });
+  boardEl.offsetHeight; // ép reflow
+  newTiles.forEach(el => {
+    el.style.transition = `transform ${DUR}ms cubic-bezier(.2,.8,.25,1), opacity ${DUR}ms`;
+    el.style.transform = "translate(0,0) scale(1)";
+    el.style.opacity = "1";
+  });
+  setTimeout(() => {
+    newTiles.forEach(el => { el.style.transition = ""; el.style.transform = ""; el.style.opacity = ""; });
+    hideShuffleModal();
+    isShuffling = false;
+    if (onDone) onDone();
+  }, DUR + 80);
+}
+function doShuffle() {
+  if (locked || isShuffling || shufflesLeft <= 0) return;
+  shufflesLeft--;
   shuffleBadge.textContent = shufflesLeft;
-
-  shuffleGrid();
-  renderBoard();
-  clearSelectionClasses();
-  selected = null;
-
-  if (!hasAnyMove()) {
-    // Xáo tay vẫn bí: tự xáo miễn phí tiếp, chỉ thua khi thực sự hết cứu
-    if (!autoRescueShuffle()) loseGame();
-  }
+  performShuffleVisualThen(() => {
+    shuffleGrid();
+    renderBoard();
+    clearSelectionClasses();
+    selected = null;
+  }, () => {
+    if (!hasAnyMove() && !autoRescueShuffle()) loseGame();
+  });
 }
 /* Bí đường sau khi nối: tự động xáo MIỄN PHÍ đến khi có nước đi (không trừ lượt xáo) */
 function autoRescueShuffle() {
+  if (locked || isShuffling) return true; // đang xáo/busy -> bỏ qua, coi như đã cứu
+  let found = false;
   for (let i = 0; i < 50; i++) {
     shuffleGrid();
-    if (hasAnyMove()) {
-      renderBoard();
-      clearSelectionClasses();
-      selected = null;
-      return true;
-    }
+    if (hasAnyMove()) { found = true; break; }
   }
-  return false; // xáo 50 lần vẫn bí -> thực sự hết cứu
+  if (!found) return false; // xáo 50 lần vẫn bí -> thực sự hết cứu
+  performShuffleVisualThen(() => {
+    renderBoard();
+    clearSelectionClasses();
+    selected = null;
+  });
+  return true;
 }
 
 function useHint() {
