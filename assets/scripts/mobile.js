@@ -30,5 +30,5 @@
     }
     /* Version asset de chong cache: moi lan push code moi thi tang version nay
        (va ?v= tren index.html) de dien thoai khong dung file CSS/JS cu. */
-    window.APP_VERSION = "20261010m";
+    window.APP_VERSION = "20261010n";
 })();

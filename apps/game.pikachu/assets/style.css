@@ -203,6 +203,7 @@
   transition: opacity .4s ease, transform .4s ease, max-height .4s ease, margin .4s ease;
 }
 .pikachu-app .result-banner.show{ opacity:1; transform:translateY(0); max-height:140px; }
+.pikachu-app .result-banner:not(.show){ padding-top:0; padding-bottom:0; margin-top:0; }
 .pikachu-app .result-banner.lose{ background: linear-gradient(180deg, rgba(193,68,45,0.18), rgba(193,68,45,0.05)); border-color: rgba(193,68,45,0.45); }
 .pikachu-app .result-banner .title{ font-family:"Spectral", serif; font-weight:700; font-size: 20px; color: var(--paper-soft); }
 .pikachu-app .result-banner .sub{ margin-top:4px; font-size: 12.5px; color:#d9cca3; }
@@ -218,7 +219,7 @@ footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.is-mobile .pikachu-app .stats-row{ gap:8px; }
+.is-mobile .pikachu-app .stats-row{ gap:8px; padding-bottom:8px; }
 .is-mobile .pikachu-app .stats-container{ gap:10px; }
 .is-mobile .pikachu-app .board-frame{ padding:8px; }
 /* link-layer canh theo padding mới của board-frame (8px) + board (6px) */

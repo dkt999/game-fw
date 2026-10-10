@@ -220,6 +220,8 @@ function backToMenu() {
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
   refreshMapGrid();
+  const footEl = document.querySelector(".pikachu-app footer");
+  if (footEl) footEl.style.display = "";
 }
 
 /* =====================================================================
@@ -271,6 +273,10 @@ function startLevel(lv) {
   gameArea.style.display = "flex";
   resultBanner.classList.remove("show", "lose");
   hankoEl.classList.remove("show");
+  if (window.IS_MOBILE === true) {
+    const footEl = document.querySelector(".pikachu-app footer");
+    if (footEl) footEl.style.display = "none"; // cho board co them cho
+  }
   btnNextMap.style.display = "none";
 
   statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier];
@@ -348,14 +354,20 @@ function boardCellSize() {
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
 
   if (window.IS_MOBILE === true) {
-    // Mobile: do truc tiep khung board-frame (da tru padding san) thay vi doan so,
-    // tranh board bi tran nhe qua phai nhu truoc day.
-    const frameW = (boardFrame.clientWidth || (winW - 76));
-    const fitW = Math.floor((frameW - 2) / C);
-    // Trừ hao chiều cao: titlebar 48 + padding + stats-row + footer ~ 240px.
-    const fitH = Math.floor((winH - 240) / R);
+    // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
+    const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
+    const frameW = areaW - 24; // tru padding ngang .wrap (mobile 12px moi ben)
+    const fitW = Math.floor((frameW - 28) / C); // tru padding board-frame (8*2) + board (6*2)
+    let top = 0;
+    try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
+    let belowH = 0;
+    const footEl = document.querySelector(".pikachu-app footer");
+    if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
+    if (resultBanner.classList.contains("show")) belowH += resultBanner.offsetHeight + 18;
+    const availH = winH - top - 40 - belowH - 28; // 40: padding duoi wrap, 28: padding frame+board
+    const fitH = Math.floor(availH / R);
     const size = Math.min(fitW, fitH);
-    return Math.max(14, Math.min(56, size));
+    return Math.max(14, Math.min(64, size));
   }
 
   // Desktop: cho bàn cờ chiếm tới 80% chiều rộng/cao của window.
