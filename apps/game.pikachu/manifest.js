@@ -36,11 +36,13 @@ function InitPikachuGame() {
                     <path d="M4 8 C 60 2, 120 12, 170 6 S 280 2, 336 9"/>
                 </svg>
                 <div class="subtitle">Nối hai ô giống nhau bằng một đường thẳng không quá 2 lần rẽ.</div>
+                <button class="rules-btn" id="pkc-rulesBtn" title="Cách chơi">?</button>
             </header>
 
-            <details class="rules">
-                <summary>Cách chơi</summary>
-                <ul>
+            <div class="rules-modal" id="pkc-rulesModal" style="display:none;">
+                <div class="rules-card">
+                    <div class="rules-card-head"><span>Cách chơi</span><button class="rules-close" id="pkc-rulesClose" title="Đóng">✕</button></div>
+                    <ul>
                     <li>Chọn hai ô có <b>hình giống hệt nhau</b> để nối chúng lại và loại bỏ khỏi bàn cờ.</li>
                     <li>Đường nối giữa hai ô chỉ được phép <b>rẽ tối đa 2 lần</b>, không được đi xuyên qua ô còn hình khác.</li>
                     <li>Bí đường? Nhấn <b>Xáo bài</b> để xáo lại các ô còn lại (không đổi số lần xáo còn hạn chế ở mức khó cao).</li>
@@ -49,19 +51,19 @@ function InitPikachuGame() {
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>
                     <li>Từ map <b>Chuyên gia</b>: mỗi lần nối xong, toàn bộ hình còn lại sẽ <b>rơi/dịch chuyển</b> — lúc đầu rơi cố định xuống dưới, sau đảo lên/xuống qua lại, cuối cùng ngẫu nhiên 4 hướng.</li>
                 </ul>
-            </details>
+                </div>
+            </div>
 
             <div class="controls">
-                <div class="diff-row" id="pkc-diffRow">
-                    <button class="diff-btn" data-diff="easy">Dễ</button>
-                    <button class="diff-btn" data-diff="medium">Trung bình</button>
-                    <button class="diff-btn" data-diff="hard">Khó</button>
-                    <button class="diff-btn" data-diff="expert">Chuyên gia</button>
+                <div class="pack-picker">
+                    <div class="pack-nav">
+                        <button class="pack-arrow" id="pkc-packPrev" title="Pack trước">◀</button>
+                        <div class="pack-title"><span id="pkc-packName">Pack 1</span><span class="pack-progress" id="pkc-packProg">0/10</span></div>
+                        <button class="pack-arrow" id="pkc-packNext" title="Pack sau">▶</button>
+                    </div>
+                    <div class="pack-grid" id="pkc-mapGrid"></div>
+                    <div class="pack-locknote" id="pkc-packLockNote" style="display:none;"></div>
                 </div>
-                <details class="map-picker">
-                    <summary>Chọn map cụ thể (<span id="pkc-mapCount">0</span> map đã qua)</summary>
-                    <div class="map-grid" id="pkc-mapGrid"></div>
-                </details>
             </div>
         </div>
 

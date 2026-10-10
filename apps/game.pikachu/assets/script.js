@@ -156,9 +156,14 @@ let progress = loadProgress();
 ===================================================================== */
 const mainMenu = document.getElementById("pkc-mainMenu");
 const gameArea = document.getElementById("pkc-gameArea");
-const diffRow = document.getElementById("pkc-diffRow");
 const mapGrid = document.getElementById("pkc-mapGrid");
-const mapCountEl = document.getElementById("pkc-mapCount");
+const packNameEl = document.getElementById("pkc-packName");
+const packProgEl = document.getElementById("pkc-packProg");
+const packLockNoteEl = document.getElementById("pkc-packLockNote");
+const packPrevBtn = document.getElementById("pkc-packPrev");
+const packNextBtn = document.getElementById("pkc-packNext");
+const rulesModal = document.getElementById("pkc-rulesModal");
+let viewPack = 0; // pack dang xem (0 = tu dong theo map vua choi)
 const boardEl = document.getElementById("pkc-board");
 const boardFrame = document.getElementById("pkc-boardFrame");
 const linkLayer = document.getElementById("pkc-linkLayer");
@@ -201,37 +206,49 @@ function fmtTime(sec) {
 function buildMapGrid() {
   refreshMapGrid();
 }
-function refreshMapGrid() {
-  mapCountEl.textContent = totalCompleted() + "/" + LEVELS.length;
+function currentViewPack() {
   const np = packCount();
+  let p = viewPack;
+  if (!p || p < 1 || p > np) {
+    p = progress.lastPlayed ? packOf(progress.lastPlayed) : 1;
+    if (p < 1) p = 1;
+    if (p > np) p = np;
+  }
+  return p;
+}
+function refreshMapGrid() {
+  const np = packCount();
+  const p = currentViewPack();
+  viewPack = p;
+  const { from, to } = packRange(p);
+  const unlocked = isPackUnlocked(p);
+  const done = packCompleted(p);
+  const size = to - from + 1;
+  packNameEl.textContent = "Pack " + p + "/" + np;
+  if (unlocked) {
+    packProgEl.textContent = done + "/" + size + " đã qua";
+    packLockNoteEl.style.display = "none";
+  } else {
+    packProgEl.textContent = "🔒 " + done + "/" + size;
+    packLockNoteEl.style.display = "";
+    packLockNoteEl.textContent = "Hoàn thành " + PACK_NEED + "/" + PACK_SIZE + " map của Pack " + (p - 1) + " để mở khóa pack này.";
+  }
+  packPrevBtn.disabled = (p <= 1);
+  packNextBtn.disabled = (p >= np);
+  const lastId = progress.lastPlayed || 0;
   let html = "";
-  for (let p = 1; p <= np; p++) {
-    const { from, to } = packRange(p);
-    const unlocked = isPackUnlocked(p);
-    const done = packCompleted(p);
-    const size = to - from + 1;
-    const headNote = unlocked
-      ? `<span class="pack-progress">${done}/${size}</span>`
-      : `<span class="pack-progress">🔒 qua ${PACK_NEED}/${PACK_SIZE} Pack ${p - 1} để mở</span>`;
-    html += `<div class="pack${unlocked ? "" : " locked-pack"}"><div class="pack-head"><span>Pack ${p}</span>${headNote}</div><div class="pack-grid">`;
-    for (let id = from; id <= to; id++) {
-      const lv = LEVELS[id - 1];
-      const isDone = !!progress.completed[id];
-      const best = progress.best[id];
-      const tip = unlocked
-        ? (TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
-        : ("Hoàn thành " + PACK_NEED + "/" + PACK_SIZE + " map của Pack " + (p - 1) + " để mở khóa");
-      html += `<button class="map-btn tier-${lv.tier}${unlocked ? "" : " locked"}${isDone ? " done" : ""}" data-level="${id}"${unlocked ? "" : " disabled"} title="${tip}">${unlocked ? id : "🔒"}</button>`;
-    }
-    html += `</div></div>`;
+  for (let id = from; id <= to; id++) {
+    const lv = LEVELS[id - 1];
+    const isDone = !!progress.completed[id];
+    const best = progress.best[id];
+    const tip = unlocked
+      ? ("Map " + id + " · " + TIER_LABEL[lv.tier] + " · " + lv.cols + "x" + lv.rows + (best ? " · Kỷ lục " + fmtTime(best.time) : "") + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : ""))
+      : "Pack chưa mở khóa";
+    html += `<button class="map-btn tier-${lv.tier}${unlocked ? "" : " locked"}${isDone ? " done" : ""}${id === lastId ? " last" : ""}" data-level="${id}"${unlocked ? "" : " disabled"} title="${tip}">${unlocked ? id : "🔒"}</button>`;
   }
   mapGrid.innerHTML = html;
-  // Nut do kho chi sang khi tier do co it nhat 1 map da mo
-  diffRow.querySelectorAll(".diff-btn").forEach(b => {
-    const hasOpen = LEVELS.some(l => l.tier === b.dataset.diff && isLevelUnlocked(l.id));
-    b.disabled = !hasOpen;
-  });
 }
+buildMapGrid();
 buildMapGrid();
 
 mapGrid.addEventListener("click", (e) => {
@@ -242,16 +259,22 @@ mapGrid.addEventListener("click", (e) => {
   startLevel(lv);
 });
 
-diffRow.addEventListener("click", (e) => {
-  const btn = e.target.closest(".diff-btn");
-  if (!btn) return;
-  diffRow.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  const tier = btn.dataset.diff;
-  const pool = LEVELS.filter(l => l.tier === tier && isLevelUnlocked(l.id));
-  if (!pool.length) return;
-  const lv = pool[Math.floor(Math.random() * pool.length)];
-  startLevel(lv);
+packPrevBtn.addEventListener("click", () => {
+  const p = currentViewPack();
+  if (p > 1) { viewPack = p - 1; refreshMapGrid(); }
+});
+packNextBtn.addEventListener("click", () => {
+  const p = currentViewPack();
+  if (p < packCount()) { viewPack = p + 1; refreshMapGrid(); }
+});
+document.getElementById("pkc-rulesBtn").addEventListener("click", () => {
+  rulesModal.style.display = "flex";
+});
+document.getElementById("pkc-rulesClose").addEventListener("click", () => {
+  rulesModal.style.display = "none";
+});
+rulesModal.addEventListener("click", (e) => {
+  if (e.target === rulesModal) rulesModal.style.display = "none";
 });
 
 document.getElementById("pkc-btnMenu").addEventListener("click", backToMenu);
@@ -307,6 +330,9 @@ function stopBoardResizeWatch() {
 ===================================================================== */
 function startLevel(lv) {
   level = lv;
+  progress.lastPlayed = lv.id;
+  viewPack = packOf(lv.id);
+  saveProgress();
   R = lv.rows; C = lv.cols;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;
