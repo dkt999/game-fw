@@ -375,7 +375,7 @@ function stopBoardResizeWatch() {
    thì xoay theo màn hình để tile luôn to nhất: màn ngang -> bàn rộng,
    màn dọc -> bàn cao. Desktop giữ shape cố định như cũ.
 ===================================================================== */
-const MIN_TILE_PX = 32; // Mobile: tile không nhỏ hơn mức này -> map khó nhiều ô sẽ tự giảm số ô
+const MIN_TILE_PX = 48; // Mobile: tile không nhỏ hơn mức này -> map khó nhiều ô sẽ tự giảm số ô
 function computeAdaptiveShape(totalCells) {
   const winEl = (typeof boardFrame !== "undefined" && boardFrame.closest(".window"))
     || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
