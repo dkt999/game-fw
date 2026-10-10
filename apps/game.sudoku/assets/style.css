@@ -291,29 +291,29 @@
   .sudoku-app .tool-btn:hover{ background:none; }
 }
 
-/* ---------- Mobile xoay ngang: board trai cao toi da, moi thu khac sang phai ---------- */
-@media (orientation: landscape) and (max-height: 540px) {
-  .is-mobile .sudoku-app .wrap{ padding: 12px 10px 24px; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea{
-    display:grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "board nav"
-      "board stats"
-      "board numpad"
-      "board tools";
-    gap: 8px 16px;
-    align-items:start;
-    justify-items:start;
-    width:100%;
-  }
-  /* "Xoa" stats-row de 2 cum con (nut dieu huong / thong ke) thanh item rieng cua grid */
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row{ display:contents; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row .stats-container:first-child{ grid-area:nav; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .stats-row .stats-container:last-child{ grid-area:stats; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .board-frame{ grid-area:board; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .numpad-row{ grid-area:numpad; margin-top:0; max-width:380px; justify-content:flex-start; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .tool-row{ grid-area:tools; margin-top:0; justify-content:flex-start; }
-  .is-mobile .sudoku-app #sdk-gameSudokuArea .result-banner{ grid-column:1 / -1; width:100%; }
-  .is-mobile .sudoku-app .num-btn{ width:40px; height:46px; }
+/* ---------- Mobile xoay ngang: board trai cao toi da, moi thu khac sang phai ----------
+   (JS tu gan class sdk-landscape khi innerWidth > innerHeight, khong phu thuoc media query) */
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape{
+  display:grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "board nav"
+    "board stats"
+    "board numpad"
+    "board tools";
+  gap: 8px 16px;
+  align-items:start;
+  justify-items:start;
+  width:100%;
 }
+/* "Xoa" stats-row de 2 cum con (nut dieu huong / thong ke) thanh item rieng cua grid */
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .stats-row{ display:contents; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .stats-row .stats-container:first-child{ grid-area:nav; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .stats-row .stats-container:last-child{ grid-area:stats; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .board-frame{ grid-area:board; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .numpad-row{ grid-area:numpad; margin-top:0; max-width:380px; justify-content:flex-start; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .tool-row{ grid-area:tools; margin-top:0; justify-content:flex-start; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .result-banner{ grid-column:1 / -1; width:100%; }
+.is-mobile .sudoku-app #sdk-gameSudokuArea.sdk-landscape .num-btn{ width:40px; height:46px; }
+/* Giam padding wrap khi dang o che do ngang */
+.is-mobile .sudoku-app .wrap:has(#sdk-gameSudokuArea.sdk-landscape){ padding:12px 10px 24px; }

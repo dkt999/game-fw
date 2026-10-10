@@ -270,8 +270,19 @@ function debounceSdk(fn, ms) {
   var t;
   return function () { clearTimeout(t); t = setTimeout(fn, ms); };
 }
-window.addEventListener("resize", debounceSdk(refitSudokuBoard, 150));
-window.addEventListener("orientationchange", function () { setTimeout(refitSudokuBoard, 300); });
+/* Gan/go class sdk-landscape theo huong man hinh that te (khong phu thuoc media query) */
+function updateSudokuOrientationClass() {
+  var area = document.getElementById("sdk-gameSudokuArea");
+  if (!area) return;
+  var isLandscape = window.innerWidth > window.innerHeight;
+  area.classList.toggle("sdk-landscape", isLandscape && window.IS_MOBILE === true);
+}
+function onSudokuViewportChange() {
+  updateSudokuOrientationClass();
+  refitSudokuBoard();
+}
+window.addEventListener("resize", debounceSdk(onSudokuViewportChange, 150));
+window.addEventListener("orientationchange", function () { setTimeout(onSudokuViewportChange, 300); });
 
 function startNewGame(diffKey){
   const mode = MODES[selectedMode];
@@ -279,6 +290,7 @@ function startNewGame(diffKey){
   document.querySelector('.controls').style.display = "none";
   document.querySelector('details.rules').style.display = "none";
   document.getElementById("sdk-gameSudokuArea").style.display = "flex";
+  updateSudokuOrientationClass();
   currentDiff = diffKey;
   setActiveDiffButton(diffKey);
 
@@ -625,6 +637,7 @@ function restoreGame(data){
   document.querySelector('.controls').style.display = "none";
   document.querySelector('details.rules').style.display = "none";
   document.getElementById("sdk-gameSudokuArea").style.display = "flex";
+  updateSudokuOrientationClass();
 
   const N = data.N;
   state = {
