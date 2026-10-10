@@ -78,8 +78,8 @@ function InitPikachuGame() {
         </div>
 
         <div id="pkc-gameArea" style="display:none;">
-            <div class="stats-row">
-                <div class="stats-container">
+            <div class="pkc-game-layout">
+                <div class="pkc-toolbar">
                     <div class="btn-square" id="pkc-btnClose" title="Đóng game">
                         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
                     </div>
@@ -88,6 +88,7 @@ function InitPikachuGame() {
                     </div>
                     <div class="btn-square" id="pkc-btnShuffle" title="Xáo bài">
                         <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+                        <span class="badge" id="pkc-shuffleBadge">1</span>
                     </div>
                     <div class="btn-square" id="pkc-btnHint" title="Gợi ý">
                         <svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>
@@ -97,19 +98,19 @@ function InitPikachuGame() {
                         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
                     </div>
                 </div>
-                <div class="stats-container">
-                    <div class="stat"><span class="val" id="pkc-statTime">00:00</span><span class="lbl">Thời gian</span></div>
-                    <div class="stat"><span class="val" id="pkc-statPairs">0/0</span><span class="lbl">Cặp còn lại</span></div>
-                    <div class="stat"><span class="val" id="pkc-statShuffle">-</span><span class="lbl">Xáo còn lại</span></div>
-                    <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span><span class="lbl">Map</span></div>
-                </div>
-            </div>
-
+                <div class="pkc-boardcol">
+                    <div class="pkc-topstats">
+                        <div class="stat"><span class="val" id="pkc-statTime">00:00</span><span class="lbl">Thời gian</span></div>
+                        <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span><span class="lbl">Map</span></div>
+                    </div>
             <div class="board-frame" id="pkc-boardFrame">
                 <div class="board" id="pkc-board"></div>
                 <div class="link-layer" id="pkc-linkLayer"></div>
                 <div class="hanko" id="pkc-hanko"><span>完</span></div>
             </div>
+                </div>
+            </div>
+        </div>
 
             <div class="result-banner" id="pkc-resultBanner">
                 <div class="title" id="pkc-resultTitle">Chưa xong ván này</div>

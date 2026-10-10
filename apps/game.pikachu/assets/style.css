@@ -127,11 +127,10 @@
 
 /* ---------- Game area ---------- */
 .pikachu-app #pkc-gameArea{ width:100%; display:flex; flex-direction:column; align-items:center; }
-.pikachu-app .stats-row{
-  display:flex; gap: 10px; width:100%; max-width: 100%; justify-content:space-between; align-items:center;
-  padding: 0 4px 12px; flex-wrap:wrap;
-}
-.pikachu-app .stats-container{ display:flex; gap: 14px; align-items:center; }
+.pikachu-app .pkc-game-layout{ display:flex; flex-direction:row; gap:12px; width:100%; align-items:stretch; }
+.pikachu-app .pkc-toolbar{ display:flex; flex-direction:column; gap:10px; flex:none; }
+.pikachu-app .pkc-boardcol{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.pikachu-app .pkc-topstats{ display:flex; gap:18px; justify-content:flex-end; align-items:center; padding: 0 4px 8px; }
 .pikachu-app .btn-square{
   height: 38px; width: 38px; border-radius: 9px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
@@ -230,15 +229,14 @@ footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.is-mobile .pikachu-app .stats-row{ gap:8px; padding-bottom:8px; }
-.is-mobile .pikachu-app .stats-container{ gap:10px; }
-.is-mobile .pikachu-app .board-frame{ padding:8px; }
+.is-mobile .pikachu-app .pkc-game-layout{ gap:10px; }
+.is-mobile .pikachu-app .pkc-toolbar{ gap:8px; }
+.is-mobile .pikachu-app .pkc-topstats{ padding-bottom:6px; }
 /* Pikachu mobile: an titlebar window de board cao het co (dung nut X trong game) */
 .is-mobile .window:has(.pikachu-app) .window-titlebar{ display:none; }
 .is-mobile .window:has(.pikachu-app) .window-content{ height:100%; }
 /* Gon chrome cho board co nhieu cho nhat */
 .is-mobile .pikachu-app .wrap{ padding: 8px 12px 12px; }
-.is-mobile .pikachu-app .stats-row{ padding-bottom:6px; }
 .is-mobile .pikachu-app .btn-square{ width:38px; height:38px; }
 .is-mobile .pikachu-app .stat .val{ font-size:15px; }
 .is-mobile .pikachu-app .board-frame{ padding:6px; }

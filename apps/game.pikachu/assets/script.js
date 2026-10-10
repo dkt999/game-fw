@@ -204,8 +204,7 @@ const resultBanner = document.getElementById("pkc-resultBanner");
 const resultTitle = document.getElementById("pkc-resultTitle");
 const resultSub = document.getElementById("pkc-resultSub");
 const statTime = document.getElementById("pkc-statTime");
-const statPairs = document.getElementById("pkc-statPairs");
-const statShuffle = document.getElementById("pkc-statShuffle");
+const shuffleBadge = document.getElementById("pkc-shuffleBadge");
 const statMap = document.getElementById("pkc-statMap");
 const hintBadge = document.getElementById("pkc-hintBadge");
 const btnHint = document.getElementById("pkc-btnHint");
@@ -374,8 +373,9 @@ function computeAdaptiveShape(totalCells) {
     || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
   const winW = winEl ? winEl.clientWidth : window.innerWidth;
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
-  const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
-  const availW = Math.max(200, areaW - 44); // trừ padding wrap (12*2) + frame/board (20)
+  const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
+  const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
+  const availW = Math.max(200, colW - 20); // trừ padding frame (6*2) + board (4*2)
   let top = 0;
   try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
   const availH = Math.max(120, winH - top - 32); // trừ padding dưới wrap (12) + frame/board (20)
@@ -426,8 +426,7 @@ function startLevel(lv) {
 
   statMap.textContent = "#" + lv.id + " · " + TIER_LABEL[lv.tier] + (lv.shift ? " · " + SHIFT_LABEL[lv.shift] : "");
   hintBadge.textContent = hintsLeft;
-  statShuffle.textContent = shufflesLeft;
-  updatePairsStat();
+  shuffleBadge.textContent = shufflesLeft;
   renderBoard();
   startTimer();
   watchBoardResize();
@@ -500,9 +499,9 @@ function boardCellSize() {
 
   if (window.IS_MOBILE === true) {
     // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
-    const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
-    const frameW = areaW - 24; // tru padding ngang .wrap (mobile 12px moi ben)
-    const fitW = Math.floor((frameW - 20) / C); // tru padding board-frame (6*2) + board (4*2)
+    const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
+    const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
+    const fitW = Math.floor((colW - 20) / C); // tru padding board-frame (6*2) + board (4*2)
     let top = 0;
     try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
     let belowH = 0;
@@ -586,7 +585,6 @@ function resolveMatch(a, b, path) {
   grid[a.r][a.c] = 0;
   grid[b.r][b.c] = 0;
   pairsLeft--;
-  updatePairsStat();
   setTimeout(() => {
     if (pairsLeft <= 0) {
       if (elA) elA.classList.add("cleared");
@@ -610,10 +608,6 @@ function resolveMatch(a, b, path) {
       setTimeout(() => loseGame("Hết đường nối! Nhớ xáo bài trước khi bí."), 400);
     }
   }, 140);
-}
-
-function updatePairsStat() {
-  statPairs.textContent = pairsLeft + "/" + totalPairs;
 }
 
 /* =====================================================================
@@ -763,7 +757,7 @@ function doShuffle(silent) {
   if (locked) return;
   if (shufflesLeft <= 0 && !silent) return;
   if (!silent) shufflesLeft--;
-  statShuffle.textContent = shufflesLeft;
+  shuffleBadge.textContent = shufflesLeft;
 
   const remaining = [];
   for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] !== 0) remaining.push(grid[r][c]);
