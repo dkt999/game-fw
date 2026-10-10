@@ -1,16 +1,24 @@
 (function(){
 "use strict";
 
-const $sdk_game_sudoku_window = $(`#${sudokuWindowId}`);
-// Mobile: bàn cờ lấp vừa chiều ngang màn hình (trừ hao padding);
-// desktop giữ công thức cũ.
-const sdk_game_sudoku_boardPx = (function () {
-    var w = $sdk_game_sudoku_window.width(), h = $sdk_game_sudoku_window.height();
-    if (typeof window !== "undefined" && window.IS_MOBILE === true) {
-        return Math.max(220, Math.min(w - 48, h - 380));
+/* Do kich thuoc board LIVE moi khi can (tao van moi / xoay man hinh),
+   khong tinh 1 lan luc load script nua - tranh truong hop do sai thoi diem
+   khien board bi teo tren dien thoai. */
+function computeSudokuBoardPx() {
+  var $win = $(`#${sudokuWindowId}`);
+  var w = $win.width() || window.innerWidth;
+  var h = $win.height() || window.innerHeight;
+  var landscape = w > h;
+  if (typeof window !== "undefined" && window.IS_MOBILE === true) {
+    if (landscape) {
+      // Xoay ngang: board vua theo chieu cao (tru titlebar + stats-row + padding)
+      return Math.max(200, h - 170);
     }
-    return Math.min(w, h) - 350;
-})();
+    // Man hinh doc: board lap vua chieu ngang
+    return Math.max(220, Math.min(w - 48, h - 380));
+  }
+  return Math.min(w, h) - 350;
+}
 const MODES = {
   classic: {
     B: 3, N: 9,
@@ -18,7 +26,6 @@ const MODES = {
     clues:  { easy: 42, medium: 34, hard: 28, expert: 24 },
     hints:  { easy: 5,  medium: 4,  hard: 3,  expert: 2 },
     maxStepsPerCheck: 60000,
-    boardMax: sdk_game_sudoku_boardPx,
     label: "9×9"
   },
   hex: {
@@ -27,7 +34,6 @@ const MODES = {
     clues:  { easy: 190, medium: 160, hard: 140, expert: 118 },
     hints:  { easy: 7,   medium: 6,   hard: 5,   expert: 4 },
     maxStepsPerCheck: 120000,
-    boardMax: sdk_game_sudoku_boardPx,
     label: "16×16"
   }
 };
@@ -244,6 +250,29 @@ function buildNumpad(){
   }
 }
 
+/* ---------------- Refit board khi xoay / doi kich thuoc man hinh ----------------
+   Chi chinh lai kich thuoc + font chu, KHONG tao lai ban co (giu nguyen van choi). */
+function refitSudokuBoard() {
+  if (!state || !boardEl || !boardEl.children.length || !cellEls.length) return;
+  var boardPx = computeSudokuBoardPx();
+  state.boardMax = boardPx;
+  var N = state.N;
+  boardEl.style.width = "min(96vw, " + boardPx + "px)";
+  boardEl.style.height = "min(96vw, " + boardPx + "px)";
+  var cellPx = boardPx / N;
+  var cellFont = Math.max(9, Math.min(32, cellPx * 0.52));
+  for (var i = 0; i < cellEls.length; i++) {
+    cellEls[i].style.fontSize = "clamp(9px, calc(min(96vw," + boardPx + "px) / " + N + " * 0.52), " + cellFont + "px)";
+  }
+  if (typeof renderAll === "function") renderAll(); // ve lai notes cho khop font moi
+}
+function debounceSdk(fn, ms) {
+  var t;
+  return function () { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+window.addEventListener("resize", debounceSdk(refitSudokuBoard, 150));
+window.addEventListener("orientationchange", function () { setTimeout(refitSudokuBoard, 300); });
+
 function startNewGame(diffKey){
   const mode = MODES[selectedMode];
   $(`#${sudokuWindowId} header`).css('display', 'none');
@@ -259,7 +288,7 @@ function startNewGame(diffKey){
     const { puzzle, solution } = generatePuzzle(mode.N, mode.B, mode.clues[diffKey], mode.maxStepsPerCheck);
 
     state = {
-      N: mode.N, B: mode.B, symbols: mode.symbols, boardMax: mode.boardMax,
+      N: mode.N, B: mode.B, symbols: mode.symbols, boardMax: computeSudokuBoardPx(),
       puzzle, solution,
       grid: puzzle.slice(),
       given: puzzle.map(v => v !== 0),
@@ -599,7 +628,7 @@ function restoreGame(data){
 
   const N = data.N;
   state = {
-    N: data.N, B: data.B, symbols: data.symbols, boardMax: data.boardMax,
+    N: data.N, B: data.B, symbols: data.symbols, boardMax: computeSudokuBoardPx(),
     puzzle: data.puzzle,
     solution: data.solution,
     grid: data.grid,
