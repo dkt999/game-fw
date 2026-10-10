@@ -131,7 +131,11 @@
 .pikachu-app .pkc-toolbar{ display:flex; flex-direction:column; gap:10px; flex:none; }
 .pikachu-app .pkc-boardcol{ flex:1; min-width:0; display:flex; flex-direction:column; }
 .pikachu-app .board-frame{ margin:auto; }
-.pikachu-app .pkc-topstats{ display:flex; gap:18px; justify-content:flex-end; align-items:center; padding: 0 4px 8px; }
+.pikachu-app .pkc-toolstats{ margin-top:auto; display:flex; flex-direction:column; gap:10px; align-items:center; padding-top:6px; }
+.pikachu-app .pkc-toolstats .stat{ min-width:0; }
+.pikachu-app .pkc-toolstats .stat .val{ font-size:13px; }
+.pikachu-app .pkc-toolstats .stat .lbl{ font-size:8px; }
+.pikachu-app .pkc-toolbar{ align-items:center; }
 .pikachu-app .btn-square{
   height: 38px; width: 38px; border-radius: 9px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
@@ -176,11 +180,20 @@
 .pikachu-app .tile.hint{ animation: hintPulse 0.9s ease-in-out infinite; }
 @keyframes hintPulse{ 0%,100%{ box-shadow: 0 0 0 3px rgba(201,162,39,0.15);} 50%{ box-shadow: 0 0 0 3px rgba(201,162,39,0.85);} }
 .pikachu-app .tile.cleared{ visibility:hidden; pointer-events:none; }
+.pikachu-app .tile.special{ box-shadow: 0 0 0 2px rgba(201,162,39,0.9), 0 0 10px rgba(201,162,39,0.55); }
+.pikachu-app .tile.special.selected{ box-shadow: 0 0 0 3px var(--vermillion), 0 0 12px rgba(201,162,39,0.7); }
 .pikachu-app .tile.wrong{ animation: shakeTile .35s ease; }
 @keyframes shakeTile{ 20%{transform:translateX(-4px);} 40%{transform:translateX(4px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} 100%{transform:translateX(0);} }
 .pikachu-app .tile.pop{ animation: popOut .12s ease-in forwards; }
 @keyframes popOut{ to{ transform: scale(0); opacity:0; } }
 
+.pikachu-app .time-bonus{
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  font-family:"Spectral", serif; font-weight:700; font-size:20px; color:#7bc47f;
+  text-shadow:0 2px 6px rgba(0,0,0,0.5); pointer-events:none; z-index:8;
+  animation: bonusFloat 1.05s ease-out forwards;
+}
+@keyframes bonusFloat{ 0%{ opacity:0; transform:translate(-50%,8px);} 20%{ opacity:1; } 100%{ opacity:0; transform:translate(-50%,-26px);} }
 .pikachu-app .link-layer{ position:absolute; inset:14px; pointer-events:none; z-index:5; }
 .pikachu-app .link-layer svg{ width:100%; height:100%; overflow:visible; }
 .pikachu-app .link-path{
@@ -232,7 +245,6 @@ footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66;
 }
 .is-mobile .pikachu-app .pkc-game-layout{ gap:10px; }
 .is-mobile .pikachu-app .pkc-toolbar{ gap:8px; }
-.is-mobile .pikachu-app .pkc-topstats{ padding-bottom:6px; }
 /* Pikachu mobile: an titlebar window de board cao het co (dung nut X trong game) */
 .is-mobile .window:has(.pikachu-app) .window-titlebar{ display:none; }
 .is-mobile .window:has(.pikachu-app) .window-content{ height:100%; }

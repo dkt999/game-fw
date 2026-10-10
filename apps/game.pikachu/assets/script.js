@@ -8,6 +8,8 @@
    tăng TILE_COUNT tương ứng — không cần sửa gì khác.
 ===================================================================== */
 const TILE_COUNT = 200;
+const TILE_STAR = 173;   // ⭐ ăn cặp này -> được cắn thêm 1 cặp ngẫu nhiên (trước hiệu ứng map)
+const TILE_HEART = 186;  // 💚 ăn cặp này -> +60 giây
 const TILE_BASE_PATH = "./apps/game.pikachu/assets/titles/";
 function tileSrc(n) {
   return TILE_BASE_PATH + "tile" + String(n).padStart(3, "0") + ".svg";
@@ -77,7 +79,8 @@ function generateLevels(count) {
       copies,
       shuffles,
       hints,
-      timeLimit // giây, 0 = không giới hạn
+      timeLimit, // giây, 0 = không giới hạn
+      timeBonusPerPair: tier === "expert" ? 5 : 0 // expert: mỗi cặp +5s
     });
   }
   EXTRA_LEVELS.forEach(x => {
@@ -195,14 +198,14 @@ function updateRotateHint() {
 window.addEventListener("resize", updateRotateHint);
 window.addEventListener("orientationchange", () => setTimeout(updateRotateHint, 350));
 function hideWinModal() { winModal.style.display = "none"; }
+function hideLoseModal() { loseModal.style.display = "none"; }
 let viewPack = 0; // pack dang xem (0 = tu dong theo map vua choi)
 const boardEl = document.getElementById("pkc-board");
 const boardFrame = document.getElementById("pkc-boardFrame");
 const linkLayer = document.getElementById("pkc-linkLayer");
 const hankoEl = document.getElementById("pkc-hanko");
-const resultBanner = document.getElementById("pkc-resultBanner");
-const resultTitle = document.getElementById("pkc-resultTitle");
-const resultSub = document.getElementById("pkc-resultSub");
+const loseModal = document.getElementById("pkc-loseModal");
+const loseSub = document.getElementById("pkc-loseSub");
 const statTime = document.getElementById("pkc-statTime");
 const shuffleBadge = document.getElementById("pkc-shuffleBadge");
 const statMap = document.getElementById("pkc-statMap");
@@ -318,6 +321,8 @@ document.getElementById("pkc-btnClose").addEventListener("click", () => {
 document.getElementById("pkc-btnNewGame").addEventListener("click", () => { if (level) startLevel(level); });
 document.getElementById("pkc-winMenu").addEventListener("click", () => { hideWinModal(); backToMenu(); });
 document.getElementById("pkc-winReplay").addEventListener("click", () => { hideWinModal(); if (level) startLevel(level); });
+document.getElementById("pkc-loseMenu").addEventListener("click", () => { hideLoseModal(); backToMenu(); });
+document.getElementById("pkc-loseRetry").addEventListener("click", () => { hideLoseModal(); if (level) startLevel(level); });
 btnShuffle.addEventListener("click", doShuffle);
 btnHint.addEventListener("click", useHint);
 
@@ -325,6 +330,7 @@ function backToMenu() {
   stopTimer();
   pausedByRotate = false;
   hideWinModal();
+  hideLoseModal();
   if (rotateHintEl) rotateHintEl.style.display = "none";
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
@@ -398,6 +404,7 @@ function startLevel(lv) {
   saveProgress();
   // Hiện gameArea trước để đo được kích thước thật (cho computeAdaptiveShape)
   hideWinModal();
+  hideLoseModal();
   mainMenu.style.display = "none";
   gameArea.style.display = "flex";
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
@@ -413,11 +420,10 @@ function startLevel(lv) {
   locked = false;
   shiftCount = 0;
 
-  grid = buildSolvedGrid(R, C, lv.variety, lv.copies);
+  grid = buildSolvedGrid(R, C, lv.variety, lv.copies, lv.tier);
   totalPairs = (R * C) / 2;
   pairsLeft = totalPairs;
 
-  resultBanner.classList.remove("show", "lose");
   hankoEl.classList.remove("show");
   if (window.IS_MOBILE === true) {
     const footEl = document.querySelector(".pikachu-app footer");
@@ -434,12 +440,21 @@ function startLevel(lv) {
 
 // Tạo bàn cờ: chọn `variety` mã hình ngẫu nhiên trong 200 hình, lặp mỗi
 // mã `copies` lần (bù thêm ngẫu nhiên cho đủ số ô chẵn), rồi xáo vị trí.
-function buildSolvedGrid(rows, cols, variety, copies) {
+function buildSolvedGrid(rows, cols, variety, copies, tier) {
   const totalCells = rows * cols;
   const codes = [];
   for (let i = 1; i <= TILE_COUNT; i++) codes.push(i);
   shuffleArray(codes);
   const chosen = codes.slice(0, variety);
+  // Map Chuyên gia: luôn có tile đặc biệt (sao 173, tim 186).
+  // Pool lấy tile từ đầu mảng chosen -> đưa đặc biệt lên đầu cho chắc chắn có mặt.
+  if (tier === "expert") {
+    [TILE_STAR, TILE_HEART].forEach(sp => {
+      const at = chosen.indexOf(sp);
+      if (at >= 0) chosen.splice(at, 1);
+      chosen.unshift(sp);
+    });
+  }
 
   const pool = [];
   let idx = 0;
@@ -484,7 +499,8 @@ function renderBoard() {
       if (code === 0) {
         html += `<div class="tile cleared" data-r="${r}" data-c="${c}"></div>`;
       } else {
-        html += `<div class="tile" data-r="${r}" data-c="${c}"><img src="${tileSrc(code)}" draggable="false" alt=""></div>`;
+        const sp = (code === TILE_STAR || code === TILE_HEART) ? " special" : "";
+        html += `<div class="tile${sp}" data-r="${r}" data-c="${c}"><img src="${tileSrc(code)}" draggable="false" alt=""></div>`;
       }
     }
   }
@@ -507,7 +523,6 @@ function boardCellSize() {
     let belowH = 0;
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
-    if (resultBanner.classList.contains("show")) belowH += resultBanner.offsetHeight + 18;
     const availH = winH - top - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
     const fitH = Math.floor(availH / R);
     const size = Math.min(fitW, fitH);
@@ -577,18 +592,68 @@ function flashWrong(a, b) {
   });
 }
 
+/* Chữ +Ns bay lên khi được cộng giờ */
+function showTimeBonus(text) {
+  const el = document.createElement("div");
+  el.className = "time-bonus";
+  el.textContent = text;
+  boardFrame.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+/* Tìm 1 cặp ngẫu nhiên còn trên bàn (cho hiệu ứng sao) */
+function findRandomPair() {
+  const byCode = {};
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+    const code = grid[r][c];
+    if (code !== 0) (byCode[code] = byCode[code] || []).push({ r, c });
+  }
+  const codes = Object.keys(byCode).filter(k => byCode[k].length >= 2);
+  if (!codes.length) return null;
+  const arr = byCode[codes[Math.floor(Math.random() * codes.length)]];
+  const i = Math.floor(Math.random() * arr.length);
+  let j = Math.floor(Math.random() * (arr.length - 1));
+  if (j >= i) j++;
+  return { p1: arr[i], p2: arr[j] };
+}
 function resolveMatch(a, b, path) {
   drawLinkPath(path);
+  const code = grid[a.r][a.c];
+  // Map Expert: mỗi cặp +5s
+  if (timeLimit > 0 && level.timeBonusPerPair) {
+    timeLimit += level.timeBonusPerPair;
+    updateTimeDisplay();
+    showTimeBonus("+" + level.timeBonusPerPair + "s");
+  }
+  // Tile tim: +60s
+  if (code === TILE_HEART && timeLimit > 0) {
+    timeLimit += 60;
+    updateTimeDisplay();
+    showTimeBonus("+1:00");
+  }
   const elA = boardEl.querySelector(`.tile[data-r="${a.r}"][data-c="${a.c}"]`);
   const elB = boardEl.querySelector(`.tile[data-r="${b.r}"][data-c="${b.c}"]`);
   [elA, elB].forEach(el => el && el.classList.add("pop"));
   grid[a.r][a.c] = 0;
   grid[b.r][b.c] = 0;
   pairsLeft--;
+  // Tile sao: cắn thêm 1 cặp ngẫu nhiên TRƯỚC khi hiệu ứng map (rơi/dịch) chạy
+  let bonus = null;
+  if (code === TILE_STAR && pairsLeft > 0) {
+    bonus = findRandomPair();
+    if (bonus) {
+      const be1 = boardEl.querySelector(`.tile[data-r="${bonus.p1.r}"][data-c="${bonus.p1.c}"]`);
+      const be2 = boardEl.querySelector(`.tile[data-r="${bonus.p2.r}"][data-c="${bonus.p2.c}"]`);
+      [be1, be2].forEach(el => el && el.classList.add("pop"));
+      grid[bonus.p1.r][bonus.p1.c] = 0;
+      grid[bonus.p2.r][bonus.p2.c] = 0;
+      pairsLeft--;
+      bonus.els = [be1, be2];
+    }
+  }
+  const clearEls = [elA, elB].concat(bonus && bonus.els ? bonus.els : []);
   setTimeout(() => {
     if (pairsLeft <= 0) {
-      if (elA) elA.classList.add("cleared");
-      if (elB) elB.classList.add("cleared");
+      clearEls.forEach(el => el && el.classList.add("cleared"));
       winGame();
       return;
     }
@@ -599,8 +664,7 @@ function resolveMatch(a, b, path) {
       clearSelectionClasses();
       selected = null;
     } else {
-      if (elA) elA.classList.add("cleared");
-      if (elB) elB.classList.add("cleared");
+      clearEls.forEach(el => el && el.classList.add("cleared"));
     }
     if (!hasAnyMove()) {
       // Bí đường sau khi nối (hoặc sau khi board rơi): thua luôn —
@@ -824,7 +888,6 @@ function updateTimeDisplay() {
 function winGame() {
   locked = true;
   stopTimer();
-  resultBanner.classList.remove("show", "lose");
   // Đánh dấu map đã qua; nếu đủ 80% pack thì mở pack tiếp theo
   const curPack = packOf(level.id);
   const nextPack = curPack + 1;
@@ -860,9 +923,9 @@ function winGame() {
 function loseGame(reason) {
   locked = true;
   stopTimer();
-  resultTitle.textContent = "Chưa xong ván này";
-  resultSub.textContent = (reason || "Hết cách nối và hết lượt xáo bài.") + " Còn lại " + pairsLeft + " cặp.";
-  resultBanner.classList.add("show", "lose");
+  loseSub.textContent = (reason || "Hết cách nối và hết lượt xáo bài.")
+    + " · Map " + level.id + " · Còn lại " + pairsLeft + " cặp.";
+  loseModal.style.display = "flex";
 }
 
 })();

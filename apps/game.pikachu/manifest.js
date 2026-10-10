@@ -60,6 +60,7 @@ function InitPikachuGame() {
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>
                     <li>Từ map <b>Chuyên gia</b>: mỗi lần nối xong, toàn bộ hình còn lại sẽ <b>rơi/dịch chuyển</b> — lúc đầu rơi cố định xuống dưới, sau đảo lên/xuống qua lại, cuối cùng ngẫu nhiên 4 hướng.</li>
+                    <li>Map Chuyên gia: mỗi cặp nối được <b>+5 giây</b>. Tile <b>⭐ ngôi sao</b> (viền vàng): ăn cặp này được <b>cắn thêm 1 cặp ngẫu nhiên</b> ngay trong lượt đó. Tile <b>💚 trái tim</b> (viền vàng): <b>+1 phút</b>.</li>
                 </ul>
                 </div>
             </div>
@@ -97,12 +98,12 @@ function InitPikachuGame() {
                     <div class="btn-square" id="pkc-btnNewGame" title="Ván mới cùng map">
                         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
                     </div>
+                    <div class="pkc-toolstats">
+                        <div class="stat"><span class="val" id="pkc-statTime">00:00</span></div>
+                        <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span></div>
+                    </div>
                 </div>
                 <div class="pkc-boardcol">
-                    <div class="pkc-topstats">
-                        <div class="stat"><span class="val" id="pkc-statTime">00:00</span><span class="lbl">Thời gian</span></div>
-                        <div class="stat"><span class="badge-mode" id="pkc-statMap">-</span><span class="lbl">Map</span></div>
-                    </div>
             <div class="board-frame" id="pkc-boardFrame">
                 <div class="board" id="pkc-board"></div>
                 <div class="link-layer" id="pkc-linkLayer"></div>
@@ -111,11 +112,6 @@ function InitPikachuGame() {
                 </div>
             </div>
         </div>
-
-            <div class="result-banner" id="pkc-resultBanner">
-                <div class="title" id="pkc-resultTitle">Chưa xong ván này</div>
-                <div class="sub" id="pkc-resultSub"></div>
-            </div>
 
             <div class="rotate-hint" id="pkc-rotateHint" style="display:none;">
                 <div class="rotate-card">
@@ -133,6 +129,17 @@ function InitPikachuGame() {
                         <button class="win-btn" id="pkc-winMenu">Menu</button>
                         <button class="win-btn" id="pkc-winReplay">Chơi lại</button>
                         <button class="win-btn primary" id="pkc-winNext">Tiếp →</button>
+                    </div>
+                </div>
+            </div>
+            <div class="win-modal" id="pkc-loseModal" style="display:none;">
+                <div class="win-card">
+                    <div class="win-emoji">😞</div>
+                    <div class="win-title">Thua rồi!</div>
+                    <div class="win-sub" id="pkc-loseSub"></div>
+                    <div class="win-btns">
+                        <button class="win-btn" id="pkc-loseMenu">Menu</button>
+                        <button class="win-btn primary" id="pkc-loseRetry">Chơi lại</button>
                     </div>
                 </div>
             </div>
