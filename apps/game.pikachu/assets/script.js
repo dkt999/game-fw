@@ -70,8 +70,9 @@ function generateLevels(count) {
       id: i,
       name: "Map " + i,
       tier,
-      rows,
+      rows,   // shape tham khảo (desktop dùng trực tiếp)
       cols,
+      cells: rows * cols, // độ khó thật: tổng số ô (mobile tự xoay tỉ lệ theo màn hình)
       variety,
       copies,
       shuffles,
@@ -309,6 +310,12 @@ rulesModal.addEventListener("click", (e) => {
 });
 
 document.getElementById("pkc-btnMenu").addEventListener("click", backToMenu);
+document.getElementById("pkc-btnClose").addEventListener("click", () => {
+  // Dong cua so game qua nut X goc (se kich hoat onClose: mo khoa xoay)
+  const winEl = boardFrame.closest(".window");
+  const closer = winEl ? winEl.querySelector(".btn-icon-close") : null;
+  if (closer) closer.click();
+});
 document.getElementById("pkc-btnNewGame").addEventListener("click", () => { if (level) startLevel(level); });
 document.getElementById("pkc-winMenu").addEventListener("click", () => { hideWinModal(); backToMenu(); });
 document.getElementById("pkc-winReplay").addEventListener("click", () => { hideWinModal(); if (level) startLevel(level); });
@@ -354,6 +361,31 @@ function watchBoardResize() {
 function stopBoardResizeWatch() {
   if (boardResizeObserver) { boardResizeObserver.disconnect(); boardResizeObserver = null; }
   if (boardResizeRaf) { cancelAnimationFrame(boardResizeRaf); boardResizeRaf = null; }
+}
+
+/* =====================================================================
+   BOARD SHAPE THEO MÀN HÌNH (mobile)
+   Độ khó nằm ở `cells` (tổng số ô) + variety/copies — còn tỉ lệ rows/cols
+   thì xoay theo màn hình để tile luôn to nhất: màn ngang -> bàn rộng,
+   màn dọc -> bàn cao. Desktop giữ shape cố định như cũ.
+===================================================================== */
+function computeAdaptiveShape(totalCells) {
+  const winEl = (typeof boardFrame !== "undefined" && boardFrame.closest(".window"))
+    || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
+  const winW = winEl ? winEl.clientWidth : window.innerWidth;
+  const winH = winEl ? winEl.clientHeight : window.innerHeight;
+  const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
+  const availW = Math.max(200, areaW - 44); // trừ padding wrap (12*2) + frame/board (20)
+  let top = 0;
+  try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
+  const availH = Math.max(120, winH - top - 32); // trừ padding dưới wrap (12) + frame/board (20)
+  // Muốn tile vuông to nhất: tỉ lệ cols/rows ~ availW/availH
+  let cols = Math.round(Math.sqrt(totalCells * availW / availH));
+  cols = Math.max(6, Math.min(40, cols));
+  let rows = Math.max(4, Math.ceil(totalCells / cols));
+  if ((cols * rows) % 2 !== 0) cols += 1; // luôn cần số ô chẵn
+  while (cols * rows < totalCells) cols += 2;
+  return { rows, cols };
 }
 
 /* =====================================================================
@@ -470,14 +502,14 @@ function boardCellSize() {
     // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
     const areaW = (typeof gameArea !== "undefined" && gameArea.clientWidth) || winW;
     const frameW = areaW - 24; // tru padding ngang .wrap (mobile 12px moi ben)
-    const fitW = Math.floor((frameW - 24) / C); // tru padding board-frame (8*2) + board (4*2)
+    const fitW = Math.floor((frameW - 20) / C); // tru padding board-frame (6*2) + board (4*2)
     let top = 0;
     try { top = boardFrame.getBoundingClientRect().top || 0; } catch (e) {}
     let belowH = 0;
     const footEl = document.querySelector(".pikachu-app footer");
     if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
     if (resultBanner.classList.contains("show")) belowH += resultBanner.offsetHeight + 18;
-    const availH = winH - top - 40 - belowH - 24; // 40: padding duoi wrap, 24: padding frame+board
+    const availH = winH - top - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
     const fitH = Math.floor(availH / R);
     const size = Math.min(fitW, fitH);
     return Math.max(14, Math.min(64, size));

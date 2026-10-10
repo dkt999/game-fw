@@ -80,6 +80,9 @@ function InitPikachuGame() {
         <div id="pkc-gameArea" style="display:none;">
             <div class="stats-row">
                 <div class="stats-container">
+                    <div class="btn-square" id="pkc-btnClose" title="Đóng game">
+                        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </div>
                     <div class="btn-square" id="pkc-btnMenu" title="Về menu">
                         <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
                     </div>
