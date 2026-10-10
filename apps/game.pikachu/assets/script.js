@@ -150,6 +150,17 @@ function saveProgress() {
   try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (e) {}
 }
 let progress = loadProgress();
+/* Cheat mở khóa nhanh cho dev/test: thêm ?pikachu_unlock=N (mở map 1..N)
+   hoặc ?pikachu_unlock=all (mở hết) vào URL rồi tải lại trang là xong. */
+try {
+  const __uq = new URLSearchParams(window.location.search).get("pikachu_unlock");
+  if (__uq) {
+    const __n = __uq === "all" ? LEVELS.length : Math.max(0, parseInt(__uq, 10) || 0);
+    for (let i = 1; i <= __n && i <= LEVELS.length; i++) progress.completed[i] = true;
+    if (__n > 0) progress.lastPlayed = Math.min(__n + 1, LEVELS.length);
+    saveProgress();
+  }
+} catch (e) {}
 
 /* =====================================================================
    DOM REFS
