@@ -492,6 +492,12 @@ function startLevel(lv) {
   }));
 }
 function buildLevelBoard(lv) {
+  // Ẩn footer TRƯỚC khi đo để boardcol có chiều cao ổn định
+  // (nếu đo lúc footer còn hiện, boardcol lùn hơn ~12px -> tính thiếu hàng)
+  if (window.IS_MOBILE === true) {
+    const footEl0 = document.querySelector(".pikachu-app footer");
+    if (footEl0) footEl0.style.display = "none";
+  }
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
   let shape = { rows: lv.rows, cols: lv.cols };
   const _dbgBefore = (function(){
@@ -528,10 +534,6 @@ function buildLevelBoard(lv) {
   for (let i = 0; i < 50 && !hasAnyMove(); i++) shuffleGrid();
 
   hankoEl.classList.remove("show");
-  if (window.IS_MOBILE === true) {
-    const footEl = document.querySelector(".pikachu-app footer");
-    if (footEl) footEl.style.display = "none"; // cho board co them cho
-  }
 
   statMap.textContent = "#" + lv.id;
   document.getElementById("pkc-statTier").textContent = TIER_LABEL[lv.tier] + (lv.shift ? " " + SHIFT_ICON[lv.shift] : "");
