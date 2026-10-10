@@ -1,0 +1,9 @@
+.btn-icon-maximize{
+    background-image: url('../icons/btnMaximizer.svg');
+}
+.btn-icon-minimize{
+    background-image: url('../icons/btnMinimizer.svg');
+}
+.btn-icon-close{
+    background-image: url('../icons/btnClose.svg');
+}

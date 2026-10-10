@@ -1,0 +1,40 @@
+body{
+    padding:0;
+    margin:0;
+    background: linear-gradient(-45deg, #0f0c29, #302b63, #4a154b, #1d2b64);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+.resizer {
+    position: absolute;
+    z-index: 10;
+}
+
+/* 4 Cạnh */
+.resizer-n { top: -2px; left: 5px; right: 5px; height: 5px; cursor: n-resize; } /* Cạnh trên (North) */
+.resizer-s { bottom: -2px; left: 5px; right: 5px; height: 5px; cursor: s-resize; } /* Cạnh dưới (South) */
+.resizer-e { top: 5px; bottom: 5px; right: -2px; width: 5px; cursor: e-resize; } /* Cạnh phải (East) */
+.resizer-w { top: 5px; bottom: 5px; left: -2px; width: 5px; cursor: w-resize; } /* Cạnh trái (West) */
+
+/* 4 Góc */
+.resizer-ne { top: -2px; right: -2px; width: 8px; height: 8px; cursor: ne-resize; } /* Góc trên-phải (North-East) */
+.resizer-nw { top: -2px; left: -2px; width: 8px; height: 8px; cursor: nw-resize; } /* Góc trên-trái (North-West) */
+.resizer-se { bottom: -2px; right: -2px; width: 8px; height: 8px; cursor: se-resize; } /* Góc dưới-phải (South-East) */
+.resizer-sw { bottom: -2px; left: -2px; width: 8px; height: 8px; cursor: sw-resize; } /* Góc dưới-trái (South-West) */

@@ -1,0 +1,34 @@
+#desktop{
+    width:100vw;
+    height:calc(100% - 35px);
+    position:relative;
+    overflow:hidden;
+    z-index: 1;
+}
+#icon-layout{
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    margin: 8px;
+}
+.icon-item{
+    padding: 8px;
+    border-radius: 4px;
+    height:80px;
+    width: 80px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+.icon-item:hover{
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.icon-item-logo{
+    width: 80%;
+}
+.icon-item-text{
+    color:aliceblue
+}

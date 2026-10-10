@@ -1,0 +1,14 @@
+[
+  {
+    "id": "game.shikaku",
+    "manifest": "apps/game.shikaku/manifest.js"
+  },
+  {
+    "id": "game.sudoku",
+    "manifest": "apps/game.sudoku/manifest.js"
+  },
+  {
+    "id": "game.pikachu",
+    "manifest": "apps/game.pikachu/manifest.js"
+  }
+]

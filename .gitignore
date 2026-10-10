@@ -1,0 +1,5 @@
+.well-known/
+cgi-bin/
+.htaccess
+php.ini
+.user.ini
