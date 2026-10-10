@@ -336,7 +336,6 @@ function backToMenu() {
   hideWinModal();
   hideLoseModal();
   if (rotateHintEl) rotateHintEl.style.display = "none";
-  levelBuildToken++; // hủy buildLevelBoard đang chờ (nếu có)
   gameArea.style.display = "none";
   mainMenu.style.display = "block";
   stopBoardResizeWatch();
@@ -353,7 +352,6 @@ function backToMenu() {
    ở size cũ (để trống viền quanh bàn).
 ===================================================================== */
 let boardResizeObserver = null;
-let boardColObserver = null, boardColRaf = null, lastColW = 0, lastColH = 0, colWatchGuard = 0;
 let boardResizeRaf = null;
 
 function watchBoardResize() {
@@ -363,24 +361,7 @@ function watchBoardResize() {
   boardResizeObserver = new ResizeObserver(() => {
     if (boardResizeRaf) cancelAnimationFrame(boardResizeRaf);
     boardResizeRaf = requestAnimationFrame(() => {
-      if (gameArea.style.display === "none" || !grid.length) return;
-      // Window thay đổi kích thước lớn (vừa xoay xong / vừa mở app):
-      // tính lại shape, nếu khác thì dựng lại bàn cho đúng
-      if (window.IS_MOBILE === true && level && level.cells) {
-        const winEl2 = boardFrame.closest(".window") || boardFrame.closest(".window-content");
-        const w2 = winEl2 ? winEl2.clientWidth : 0, h2 = winEl2 ? winEl2.clientHeight : 0;
-        if (Math.abs(w2 - lastBoardWinW) > 120 || Math.abs(h2 - lastBoardWinH) > 120) {
-          const sh = computeAdaptiveShape(level.cells);
-          pkcDebug("resize", "w2=" + w2 + " h2=" + h2 + " last=" + lastBoardWinW + "x" + lastBoardWinH + " newShape=" + sh.rows + "x" + sh.cols + " cur=" + R + "x" + C);
-          if ((sh.rows !== R || sh.cols !== C) && pairsLeft === totalPairs) {
-            pkcDebug("rebuild", "dung lai ban voi shape moi");
-            buildLevelBoard(level); // chưa đi nước nào -> dựng lại an toàn
-            return;
-          }
-          lastBoardWinW = w2; lastBoardWinH = h2;
-        }
-      }
-      renderBoard();
+      if (gameArea.style.display !== "none" && grid.length) renderBoard();
     });
   });
   boardResizeObserver.observe(winEl);
@@ -389,33 +370,6 @@ function watchBoardResize() {
 function stopBoardResizeWatch() {
   if (boardResizeObserver) { boardResizeObserver.disconnect(); boardResizeObserver = null; }
   if (boardResizeRaf) { cancelAnimationFrame(boardResizeRaf); boardResizeRaf = null; }
-  if (boardColObserver) { boardColObserver.disconnect(); boardColObserver = null; }
-  if (boardColRaf) { cancelAnimationFrame(boardColRaf); boardColRaf = null; }
-}
-/* Theo dõi boardcol: nếu size đổi đáng kể sau khi dựng (layout chưa ổn định,
-   vd toolbar từ 38px -> 64px khi CSS mobile áp xong) thì dựng lại bàn */
-function watchBoardColResize() {
-  if (boardColObserver) boardColObserver.disconnect();
-  const colEl = document.querySelector(".pikachu-app .pkc-boardcol");
-  if (!colEl || typeof ResizeObserver === "undefined") return;
-  const r = colEl.getBoundingClientRect();
-  lastColW = r.width; lastColH = r.height;
-  colWatchGuard = 0;
-  boardColObserver = new ResizeObserver(() => {
-    if (boardColRaf) cancelAnimationFrame(boardColRaf);
-    boardColRaf = requestAnimationFrame(() => {
-      if (gameArea.style.display === "none" || !grid.length) return;
-      const rr = colEl.getBoundingClientRect();
-      const dw = Math.abs(rr.width - lastColW), dh = Math.abs(rr.height - lastColH);
-      if ((dw > 20 || dh > 20) && colWatchGuard++ < 3) {
-        pkcDebug("colwatch", "layout doi " + Math.round(lastColW) + "x" + Math.round(lastColH) + " -> " + Math.round(rr.width) + "x" + Math.round(rr.height) + " -> dung lai");
-        lastColW = rr.width; lastColH = rr.height;
-        if (pairsLeft === totalPairs && level) { buildLevelBoard(level); return; }
-      }
-      lastColW = rr.width; lastColH = rr.height;
-    });
-  });
-  boardColObserver.observe(colEl);
 }
 
 /* =====================================================================
@@ -427,18 +381,11 @@ function watchBoardColResize() {
 const TARGET_TILE_PX = 48; // tile mong muốn trên mobile
 const MIN_TILE_PX = Math.floor(TARGET_TILE_PX * 0.8); // 38: tile tối thiểu khi fill đầy khung
 function computeAdaptiveShape(totalCells) {
-  const winEl = (typeof boardFrame !== "undefined" && boardFrame.closest(".window"))
-    || (typeof boardFrame !== "undefined" && boardFrame.closest(".window-content"));
-  const winW = winEl ? winEl.clientWidth : window.innerWidth;
-  const winH = winEl ? winEl.clientHeight : window.innerHeight;
-  const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
-  // Đo boardcol (khung flex cố định), KHÔNG đo boardFrame vì nó có margin:auto
-  // -> lúc board trống/chưa render sẽ bị căn giữa, top đo sai
-  const colRect = boardCol ? boardCol.getBoundingClientRect() : null;
-  const colW = (colRect && colRect.width > 0) ? colRect.width : (((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW));
-  const colH = (colRect && colRect.height > 0) ? colRect.height : winH;
-  const availW = Math.max(200, colW - 20); // trừ padding frame (6*2) + board (4*2)
-  const availH = Math.max(120, colH - 32); // trừ padding frame/board + margin dưới
+  // ĐƠN GIẢN: dùng kích thước window (ổn định), trừ margin cố định.
+  // Không đo element vì layout lúc mới mở chưa ổn định (toolbar/CSS chưa áp xong).
+  const winW = window.innerWidth, winH = window.innerHeight;
+  const availW = Math.max(200, winW - 130); // trừ toolbar dọc + padding/gap
+  const availH = Math.max(120, winH - 115); // trừ titlebar + padding app
   // Board có margin 0.6 ô mỗi bên cho đường nối vòng ngoài -> kích thước thật
   // là (cols+1.2)*cell x (rows+1.2)*cell. Tính shape theo cell HIỆU DỤNG này.
   const MG = 1.2;
@@ -484,7 +431,6 @@ function computeAdaptiveShape(totalCells) {
 /* =====================================================================
    LEVEL START / BOARD GENERATION
 ===================================================================== */
-let levelBuildToken = 0; // chống race khi đổi màn nhanh
 const PKC_DEBUG = (function(){ try { return /[?&]pikachu_debug=1/.test(location.search); } catch(e){ return false; } })();
 let pkcDebugLog = [];
 function pkcDebug(tag, info) {
@@ -511,13 +457,7 @@ function startLevel(lv) {
   mainMenu.style.display = "none";
   gameArea.style.display = "flex";
   updateRotateHint();
-  // Đợi 2 frame cho layout ổn định (vừa hiện gameArea / vừa xoay màn hình
-  // do orientation.lock) rồi mới đo kích thước thật để tính shape
-  const token = ++levelBuildToken;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (token !== levelBuildToken) return; // đã chuyển màn khác
-    buildLevelBoard(lv);
-  }));
+  buildLevelBoard(lv); // tính theo window (ổn định), không cần đợi layout
 }
 function buildLevelBoard(lv) {
   // Ẩn footer TRƯỚC khi đo để boardcol có chiều cao ổn định
@@ -528,31 +468,9 @@ function buildLevelBoard(lv) {
   }
   // Mobile: xoay tỉ lệ bàn theo màn hình; desktop: giữ shape gốc
   let shape = { rows: lv.rows, cols: lv.cols };
-  const _dbgBefore = (function(){
-    try {
-      const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
-      const bc = document.querySelector(".pikachu-app .pkc-boardcol");
-      const br = bc ? bc.getBoundingClientRect() : null;
-      const tb = document.querySelector(".pikachu-app .pkc-toolbar");
-      const tbr = tb ? tb.getBoundingClientRect() : null;
-      const ft = document.querySelector(".pikachu-app footer");
-      const ga = document.getElementById("pkc-gameArea");
-      return "win=" + (winEl ? winEl.clientWidth + "x" + winEl.clientHeight : "?") +
-        " col=" + (br ? Math.round(br.width) + "x" + Math.round(br.height) : "?") +
-        " toolbar=" + (tbr ? Math.round(tbr.width) + "x" + Math.round(tbr.height) : "?") +
-        " foot=" + (ft ? (ft.style.display || "vis") : "?") +
-        " gameAreaH=" + (ga ? Math.round(ga.getBoundingClientRect().height) : "?") +
-        " inner=" + window.innerWidth + "x" + window.innerHeight +
-        " htmlClass=" + (document.documentElement ? document.documentElement.className : "?");
-    } catch(e){ return "err:" + e.message; }
-  })();
-  pkcDebug("pre-shape", "lv#" + lv.id + " lvRows=" + lv.rows + " lvCols=" + lv.cols + " cells=" + lv.cells + " | " + _dbgBefore);
-  if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
+  pkcDebug("pre-shape", "lv#" + lv.id + " cells=" + lv.cells + " win=" + window.innerWidth + "x" + window.innerHeight);  if (window.IS_MOBILE === true && lv.cells) shape = computeAdaptiveShape(lv.cells);
   pkcDebug("post-shape", "R=" + shape.rows + " C=" + shape.cols + " cellPx=" + boardCellSize());
   R = shape.rows; C = shape.cols;
-  const winEl = boardFrame.closest(".window") || boardFrame.closest(".window-content");
-  lastBoardWinW = winEl ? winEl.clientWidth : 0;
-  lastBoardWinH = winEl ? winEl.clientHeight : 0;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;
   timeLimit = lv.timeLimit;
@@ -576,7 +494,6 @@ function buildLevelBoard(lv) {
   renderBoard();
   startTimer();
   watchBoardResize();
-  watchBoardColResize();
 }
 
 // Tạo bàn cờ: chọn `variety` mã hình ngẫu nhiên trong 200 hình, lặp mỗi
@@ -658,19 +575,11 @@ function boardCellSize() {
   const winH = winEl ? winEl.clientHeight : window.innerHeight;
 
   if (window.IS_MOBILE === true) {
-    // Mobile: do khong gian KHA DUNG THAT thay vi tru hao cung 240px.
-    const boardCol = document.querySelector(".pikachu-app .pkc-boardcol");
-    const colW = (boardCol && boardCol.clientWidth) || ((typeof gameArea !== "undefined" && gameArea.clientWidth) || winW);
-    const fitW = Math.floor((colW - 20) / (C + 1.2)); // tru padding frame (6*2)+board (4*2); +1.2 o margin duong noi
-    // Dung chieu cao boardcol (on dinh), khong dung boardFrame.top (sai khi board trong do margin:auto)
-    let colH = 0;
-    try { const br = boardCol ? boardCol.getBoundingClientRect() : null; if (br && br.height > 0) colH = br.height; } catch (e) {}
-    if (!colH) { try { colH = winH - (boardFrame.getBoundingClientRect().top || 0); } catch (e) {} }
-    let belowH = 0;
-    const footEl = document.querySelector(".pikachu-app footer");
-    if (footEl && footEl.style.display !== "none") belowH += footEl.offsetHeight + 28;
-    const availH = colH - 12 - belowH - 20; // 12: padding duoi wrap, 20: padding frame+board
-    const fitH = Math.floor(availH / (R + 1.2)); // +1.2 o margin duong noi
+    // Đơn giản: dùng window trừ margin cố định (ổn định, không phụ thuộc layout)
+    const availW = window.innerWidth - 130;
+    const availH = window.innerHeight - 115;
+    const fitW = Math.floor(availW / (C + 1.2)); // +1.2 ô margin đường nối
+    const fitH = Math.floor(availH / (R + 1.2));
     const size = Math.min(fitW, fitH);
     return Math.max(14, Math.min(64, size));
   }
