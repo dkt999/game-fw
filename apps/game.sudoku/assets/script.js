@@ -336,7 +336,10 @@ function updateSudokuOrientationClass() {
     area.style.alignItems = "stretch";
     area.style.justifyItems = "start";
     area.style.width = "100%";
-    if (wrap) wrap.style.padding = "10px 10px 16px";
+    if (wrap) {
+      wrap.style.padding = "10px 10px 16px";
+      wrap.style.maxWidth = "none"; /* xoay ngang: full width, khong gioi han */
+    }
     if (statsRow) statsRow.style.display = "none";
     if (frame) {
       frame.style.gridArea = "board";
@@ -382,7 +385,10 @@ function updateSudokuOrientationClass() {
     area.style.alignItems = "";
     area.style.justifyItems = "";
     area.style.width = "";
-    if (wrap) wrap.style.padding = "";
+    if (wrap) {
+      wrap.style.padding = "";
+      wrap.style.maxWidth = "";
+    }
     if (frame) {
       frame.style.gridArea = "";
       frame.style.alignSelf = "";
