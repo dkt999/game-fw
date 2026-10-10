@@ -176,16 +176,14 @@
 .pikachu-app .tile.cleared{ visibility:hidden; pointer-events:none; }
 .pikachu-app .tile.wrong{ animation: shakeTile .35s ease; }
 @keyframes shakeTile{ 20%{transform:translateX(-4px);} 40%{transform:translateX(4px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(3px);} 100%{transform:translateX(0);} }
-.pikachu-app .tile.pop{ animation: popOut .28s ease forwards; }
-@keyframes popOut{ to{ transform: scale(0.2); opacity:0; } }
+.pikachu-app .tile.pop{ animation: popOut .12s ease-in forwards; }
+@keyframes popOut{ to{ transform: scale(0); opacity:0; } }
 
 .pikachu-app .link-layer{ position:absolute; inset:14px; pointer-events:none; z-index:5; }
 .pikachu-app .link-layer svg{ width:100%; height:100%; overflow:visible; }
 .pikachu-app .link-path{
   fill:none; stroke: var(--vermillion); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
-  stroke-dasharray: 400; stroke-dashoffset: 400; animation: drawLink .3s ease forwards;
 }
-@keyframes drawLink{ to{ stroke-dashoffset:0; } }
 
 .pikachu-app .hanko{
   position:absolute; top: 8px; right: 8px; width: 62px; height:62px; border-radius: 50%;

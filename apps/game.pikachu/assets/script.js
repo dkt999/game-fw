@@ -544,7 +544,7 @@ function resolveMatch(a, b, path) {
       // người chơi phải chủ động xáo TRƯỚC khi bí, game không tự cứu.
       setTimeout(() => loseGame("Hết đường nối! Nhớ xáo bài trước khi bí."), 400);
     }
-  }, 260);
+  }, 140);
 }
 
 function updatePairsStat() {
