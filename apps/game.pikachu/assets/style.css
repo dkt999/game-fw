@@ -221,6 +221,8 @@ footer{ margin-top: 28px; font-size: 11px; letter-spacing:0.05em; color:#8a7f66;
 .is-mobile .pikachu-app .stats-row{ gap:8px; }
 .is-mobile .pikachu-app .stats-container{ gap:10px; }
 .is-mobile .pikachu-app .board-frame{ padding:8px; }
+/* link-layer canh theo padding mới của board-frame (8px) + board (6px) */
+.is-mobile .pikachu-app .link-layer{ inset:14px; }
 /* Tắt hover dính trên màn hình cảm ứng */
 @media (hover: none){
   .pikachu-app .tile:hover{ transform:none; }
