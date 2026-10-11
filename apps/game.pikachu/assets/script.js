@@ -12,7 +12,8 @@ const TILE_STAR = 173;   // ⭐ ăn cặp này -> được cắn thêm 1 cặp n
 const TILE_HEART = 186;  // 💚 ăn cặp này -> +60 giây
 const TILE_BASE_PATH = "./apps/game.pikachu/assets/titles/";
 function tileSrc(n) {
-  return TILE_BASE_PATH + "tile" + String(n).padStart(3, "0") + ".svg";
+  const v = (typeof window !== "undefined" && window.APP_VERSION) ? window.APP_VERSION : "1";
+  return TILE_BASE_PATH + "tile" + String(n).padStart(3, "0") + ".svg?v=" + v;
 }
 
 /* =====================================================================
