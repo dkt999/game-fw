@@ -11,15 +11,81 @@ const TILE_BASE = "./apps/game.pikachu/assets/titles/";
 const TILE_COUNT = 200;
 function tileSrc(n) { return TILE_BASE + "tile" + String(n).padStart(3, "0") + ".svg"; }
 
-// Layout: các lớp hình chữ nhật xếp chồng, lớp trên thu nhỏ và căn giữa.
-// layers: [{w,h}] — lớp 0 ở đáy.
-const LAYOUTS = {
-  easy:   { name: "Dễ", layers: [{ w: 10, h: 6 }, { w: 6, h: 4 }] },
-  medium: { name: "Vừa", layers: [{ w: 12, h: 7 }, { w: 8, h: 5 }, { w: 4, h: 3 }] },
-  hard:   { name: "Khó", layers: [{ w: 14, h: 8 }, { w: 10, h: 6 }, { w: 6, h: 4 }, { w: 2, h: 2 }] },
-};
-const DIFF_TILE_POOL = { easy: 60, medium: 120, hard: 200 }; // số hình khác nhau tối đa dùng
-const DIFF_BOOST = { easy: { shuffles: 4, hints: 4 }, medium: { shuffles: 3, hints: 3 }, hard: { shuffles: 2, hints: 2 } };
+/* ---------- Hệ thống Pack/Map (10 pack x 10 map) ---------- */
+// Ý tưởng của fen: board có 2 vùng — vùng CAO TẦNG (nhiều lớp, khó) và vùng HỖ TRỢ (1 lớp, dễ).
+// Càng lên pack cao: càng nhiều tháp cao tầng, vùng hỗ trợ càng mỏng, tile càng nhiều loại.
+const PACK_COUNT = 10, MAPS_PER_PACK = 10, TOTAL_MAPS = 100;
+const BOARD_W = 12, BOARD_H = 8; // lưới cơ sở
+
+// Seeded RNG để mỗi map luôn sinh cùng 1 layout
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Sinh layout cho map: trả về mảng {x,y,z}
+function generateMapLayout(pack, mapIdx) {
+  const t = (pack - 1) / (PACK_COUNT - 1); // 0 (dễ) -> 1 (khó)
+  const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1); // 0 -> 1 trong pack
+  const diff = Math.min(1, t * 0.85 + tm * 0.15); // độ khó tổng hợp
+  const rng = mulberry32(pack * 1000 + mapIdx * 37 + 11);
+
+  const pos = [];
+  // Vùng HỖ TRỢ: lớp đáy phủ kín board (1 lớp)
+  for (let y = 0; y < BOARD_H; y++) for (let x = 0; x < BOARD_W; x++) {
+    pos.push({ x, y, z: 0 });
+  }
+  // Vùng CAO TẦNG: các tháp nhiều lớp
+  const towerCount = 1 + Math.round(diff * 3);        // 1 -> 4 tháp
+  const towerLayers = 2 + Math.round(diff * 3);       // mỗi tháp 2 -> 5 lớp (kể cả đáy)
+  const baseTW = 5 + Math.round(diff * 2);            // rộng 5 -> 7
+  const baseTH = 4 + Math.round(diff * 2);            // cao 4 -> 6
+  for (let i = 0; i < towerCount; i++) {
+    const tw = Math.max(3, baseTW - Math.floor(rng() * 2));
+    const th = Math.max(3, baseTH - Math.floor(rng() * 2));
+    const ox = Math.floor(rng() * (BOARD_W - tw + 1));
+    const oy = Math.floor(rng() * (BOARD_H - th + 1));
+    // Tháp dạng kim tự tháp: mỗi lớp trên thu nhỏ vào 1 ô mỗi bên (cách lớp)
+    for (let z = 1; z < towerLayers; z++) {
+      const shrink = Math.floor(z / 2);
+      const w = tw - shrink * 2, h = th - shrink * 2;
+      if (w < 2 || h < 2) break;
+      const cx = ox + shrink, cy = oy + shrink;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        pos.push({ x: cx + x, y: cy + y, z });
+      }
+    }
+  }
+  if (pos.length % 2 !== 0) pos.pop();
+  return pos;
+}
+
+// Thông số theo pack
+function packParams(pack) {
+  const t = (pack - 1) / (PACK_COUNT - 1);
+  return {
+    name: "Pack " + pack,
+    tilePool: Math.round(40 + t * 110),              // 40 -> 150 loại hình
+    shuffles: Math.max(2, Math.round(4 - t * 2)),    // 4 -> 2
+    hints: Math.max(2, Math.round(4 - t * 2)),       // 4 -> 2
+  };
+}
+
+// Tiến trình: map cao nhất đã mở (1-100)
+const PROG_KEY = "mahjong-progress-v1";
+function getProgress() {
+  try { return Math.max(1, Math.min(TOTAL_MAPS, parseInt(localStorage.getItem(PROG_KEY) || "1", 10))); }
+  catch (e) { return 1; }
+}
+function setProgress(n) {
+  try { localStorage.setItem(PROG_KEY, String(Math.max(1, Math.min(TOTAL_MAPS, n)))); } catch (e) {}
+}
+function mapToPack(m) { return { pack: Math.ceil(m / MAPS_PER_PACK), idx: ((m - 1) % MAPS_PER_PACK) + 1 }; }
 
 /* ---------- State ---------- */
 let tiles = [];        // {id,x,y,z,face,removed,free,el}
@@ -27,7 +93,7 @@ let selected = null;
 let shufflesLeft = 0, hintsLeft = 0;
 let pairsLeft = 0;
 let timer = null, seconds = 0;
-let diff = "medium";
+let curPack = 1, curMapIdx = 1, curMapNum = 1;
 let locked = false;
 
 /* ---------- DOM ---------- */
@@ -37,18 +103,6 @@ const statTime = $("#mj-statTime"), statLeft = $("#mj-statLeft"), statDiff = $("
 const shuffleBadge = $("#mj-shuffleBadge"), hintBadge = $("#mj-hintBadge");
 
 /* ---------- Layout & Deal ---------- */
-function buildPositions(layout) {
-  const pos = [];
-  layout.layers.forEach((L, z) => {
-    const below = layout.layers[0];
-    const ox = Math.floor((below.w - L.w) / 2), oy = Math.floor((below.h - L.h) / 2);
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      pos.push({ x: x + ox, y: y + oy, z });
-    }
-  });
-  return pos;
-}
-
 function shuffleArr(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -58,11 +112,10 @@ function shuffleArr(a) {
 }
 
 function dealTiles() {
-  const layout = LAYOUTS[diff];
-  const pos = buildPositions(layout);
-  if (pos.length % 2 !== 0) pos.pop(); // đảm bảo chẵn
+  const pos = generateMapLayout(curPack, curMapIdx);
   const pairCount = pos.length / 2;
-  const poolSize = Math.min(DIFF_TILE_POOL[diff], TILE_COUNT, pairCount);
+  const params = packParams(curPack);
+  const poolSize = Math.min(params.tilePool, TILE_COUNT, pairCount);
 
   // Thử deal tối đa 60 lần để có ít nhất 1 nước đi lúc mở màn
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -196,9 +249,33 @@ function refreshTileClasses() {
 function updateStats() {
   statTime.textContent = "⏱ " + fmtTime(seconds);
   statLeft.textContent = "🀄 " + tiles.filter(t => !t.removed).length;
-  statDiff.textContent = LAYOUTS[diff].name;
+  statDiff.textContent = "P" + curPack + "-" + curMapIdx;
   shuffleBadge.textContent = shufflesLeft;
   hintBadge.textContent = hintsLeft;
+  updateMoveWarning();
+}
+/* Đếm số cặp có thể gỡ (mỗi face có N tile tự do -> floor(N/2) nước) */
+function countAvailableMoves() {
+  const cnt = {};
+  for (const t of tiles) {
+    if (t.removed || !t.free) continue;
+    cnt[t.face] = (cnt[t.face] || 0) + 1;
+  }
+  let moves = 0;
+  for (const k in cnt) moves += Math.floor(cnt[k] / 2);
+  return moves;
+}
+/* Cảnh báo khi sắp bí (<3 nước) để người chơi dùng booster */
+function updateMoveWarning() {
+  const w = document.getElementById("mj-warnBar");
+  if (!w) return;
+  const m = countAvailableMoves();
+  if (m > 0 && m < 3 && pairsLeft > 0) {
+    w.style.display = "flex";
+    w.innerHTML = `⚠️ Chỉ còn <b>&nbsp;${m} nước đi&nbsp;</b> — dùng <b>&nbsp;Xáo&nbsp;</b> hoặc <b>&nbsp;Gợi ý</b>!`;
+  } else {
+    w.style.display = "none";
+  }
 }
 function fmtTime(s) {
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
@@ -291,9 +368,11 @@ function startTimer() {
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function winGame() {
   stopTimer();
+  if (curMapNum >= getProgress() && curMapNum < TOTAL_MAPS) setProgress(curMapNum + 1);
+  renderPackMenu(); // cap nhat tien trinh menu
   $("#mj-endEmoji").textContent = "🎉";
   $("#mj-endTitle").textContent = "Thắng rồi!";
-  $("#mj-endSub").textContent = `${LAYOUTS[diff].name} · ${fmtTime(seconds)}`;
+  $("#mj-endSub").textContent = `Pack ${curPack} · Map ${curMapIdx} · ${fmtTime(seconds)}`;
   $("#mj-endModal").style.display = "flex";
 }
 function loseGame(msg) {
@@ -308,28 +387,58 @@ function loseGame(msg) {
 function newGame() {
   $("#mj-endModal").style.display = "none";
   selected = null; locked = false;
-  const b = DIFF_BOOST[diff];
-  shufflesLeft = b.shuffles; hintsLeft = b.hints;
+  const prm = packParams(curPack);
+  shufflesLeft = prm.shuffles; hintsLeft = prm.hints;
   dealTiles();
   renderBoard();
   startTimer();
+}
+function startMap(pack, idx) {
+  curPack = pack; curMapIdx = idx;
+  curMapNum = (pack - 1) * MAPS_PER_PACK + idx;
+  $("#mj-mainMenu").style.display = "none";
+  $("#mj-game").style.display = "flex";
+  newGame();
+}
+
+/* ---------- Menu Pack/Map ---------- */
+let menuPack = 1;
+function renderPackMenu() {
+  const prog = getProgress();
+  menuPack = Math.max(1, Math.min(PACK_COUNT, menuPack));
+  document.getElementById("mj-packName").textContent = "Pack " + menuPack;
+  const grid = document.getElementById("mj-mapGrid");
+  grid.innerHTML = "";
+  for (let i = 1; i <= MAPS_PER_PACK; i++) {
+    const mNum = (menuPack - 1) * MAPS_PER_PACK + i;
+    const b = document.createElement("button");
+    b.className = "map-cell" + (mNum <= prog ? "" : " locked");
+    b.textContent = i;
+    if (mNum < prog) b.classList.add("done");
+    if (mNum <= prog) {
+      b.addEventListener("click", () => startMap(menuPack, i));
+    }
+    grid.appendChild(b);
+  }
+  const progInPack = Math.max(0, Math.min(MAPS_PER_PACK, prog - (menuPack - 1) * MAPS_PER_PACK));
+  document.getElementById("mj-packProg").textContent = progInPack + "/" + MAPS_PER_PACK;
+  const note = document.getElementById("mj-packLockNote");
+  if (progInPack <= 0 && menuPack > 1) {
+    note.style.display = "block";
+    note.textContent = "Hoàn thành Pack " + (menuPack - 1) + " để mở pack này.";
+  } else note.style.display = "none";
 }
 
 /* ---------- Wire UI ---------- */
 document.getElementById("mj-rulesBtn").addEventListener("click", () => $("#mj-rulesModal").style.display = "flex");
 document.getElementById("mj-rulesClose").addEventListener("click", () => $("#mj-rulesModal").style.display = "none");
-document.querySelectorAll(".diff-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".diff-btn").forEach(x => x.classList.remove("active"));
-    btn.classList.add("active");
-    diff = btn.dataset.diff;
-  });
+document.getElementById("mj-packPrev").addEventListener("click", () => {
+  if (menuPack > 1) { menuPack--; renderPackMenu(); }
 });
-document.getElementById("mj-startBtn").addEventListener("click", () => {
-  $("#mj-mainMenu").style.display = "none";
-  $("#mj-game").style.display = "flex";
-  newGame();
+document.getElementById("mj-packNext").addEventListener("click", () => {
+  if (menuPack < PACK_COUNT) { menuPack++; renderPackMenu(); }
 });
+renderPackMenu();
 document.getElementById("mj-btnClose").addEventListener("click", () => {
   stopTimer();
   try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}

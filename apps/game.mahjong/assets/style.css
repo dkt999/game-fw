@@ -41,3 +41,19 @@
 .mahjong-app .mj-sub{ opacity:.7; font-size:14px; margin-bottom:16px; }
 .mahjong-app .mj-btn{ padding:10px 28px; border-radius:10px; border:none; background:#c9a227; color:#0f1a2b; font-weight:800; font-size:15px; cursor:pointer; margin:0 6px; }
 .mahjong-app .mj-btn.ghost{ background:transparent; border:1px solid #2c3e5d; color:#e8eef7; }
+
+/* Pack/Map menu */
+.mahjong-app .pack-picker{ display:flex; flex-direction:column; gap:12px; align-items:center; }
+.mahjong-app .pack-nav{ display:flex; gap:14px; align-items:center; }
+.mahjong-app .pack-arrow{ width:40px; height:40px; border-radius:10px; border:1px solid #2c3e5d; background:#16233a; color:#e8eef7; font-size:18px; cursor:pointer; }
+.mahjong-app .pack-title{ font-size:20px; font-weight:800; display:flex; gap:10px; align-items:center; }
+.mahjong-app .pack-progress{ font-size:14px; color:#c9a227; font-weight:700; }
+.mahjong-app .pack-grid{ display:grid; grid-template-columns:repeat(5, 56px); gap:10px; }
+.mahjong-app .map-cell{ width:56px; height:56px; border-radius:12px; border:1px solid #2c3e5d; background:#16233a; color:#e8eef7; font-size:18px; font-weight:700; cursor:pointer; }
+.mahjong-app .map-cell.done{ border-color:#4caf50; color:#4caf50; }
+.mahjong-app .map-cell.locked{ opacity:.3; cursor:default; }
+.mahjong-app .map-cell:not(.locked):hover{ border-color:#c9a227; }
+.mahjong-app .pack-locknote{ font-size:13px; opacity:.6; }
+/* Warning bar */
+.mahjong-app .mj-warnbar{ position:absolute; top:44px; left:60px; right:0; z-index:10; display:flex; justify-content:center; padding:8px; background:rgba(180,40,40,.92); color:#fff; font-size:14px; font-weight:600; animation:mj-warnpulse 1s ease-in-out infinite; }
+@keyframes mj-warnpulse{ 50%{ background:rgba(220,60,60,.92); } }

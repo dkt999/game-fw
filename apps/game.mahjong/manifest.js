@@ -52,16 +52,21 @@ function InitMahjongGame() {
                     <li>Bí đường: dùng <b>Xáo</b> để trộn lại các hình còn lại (số lượt giới hạn).</li>
                     <li>Dùng <b>Gợi ý</b> để máy chỉ một cặp có thể gỡ.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn.</li>
+                    <li>Game có <b>10 pack × 10 map</b> (100 map). Càng lên pack cao càng nhiều <b>tháp cao tầng</b>, vùng hỗ trợ càng mỏng, càng nhiều loại hình.</li>
+                    <li>Qua 1 map sẽ mở map tiếp theo. Tiến trình lưu trên máy.</li>
                     </ul>
                 </div>
             </div>
             <div class="controls">
-                <div class="diff-picker">
-                    <button class="diff-btn" data-diff="easy">Dễ</button>
-                    <button class="diff-btn active" data-diff="medium">Vừa</button>
-                    <button class="diff-btn" data-diff="hard">Khó</button>
+                <div class="pack-picker">
+                    <div class="pack-nav">
+                        <button class="pack-arrow" id="mj-packPrev" title="Pack trước">◀</button>
+                        <div class="pack-title"><span id="mj-packName">Pack 1</span><span class="pack-progress" id="mj-packProg">0/10</span></div>
+                        <button class="pack-arrow" id="mj-packNext" title="Pack sau">▶</button>
+                    </div>
+                    <div class="pack-grid" id="mj-mapGrid"></div>
+                    <div class="pack-locknote" id="mj-packLockNote" style="display:none;"></div>
                 </div>
-                <button class="start-btn" id="mj-startBtn">Chơi ngay</button>
             </div>
         </div>
         <div id="mj-game" style="display:none;">
@@ -77,6 +82,7 @@ function InitMahjongGame() {
                 <span id="mj-statLeft">🀄 0</span>
                 <span id="mj-statDiff">Vừa</span>
             </div>
+            <div class="mj-warnbar" id="mj-warnBar" style="display:none;"></div>
             <div class="mj-boardFrame" id="mj-boardFrame">
                 <div class="mj-board" id="mj-board"></div>
             </div>
