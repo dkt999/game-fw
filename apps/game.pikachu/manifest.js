@@ -57,7 +57,7 @@ function InitPikachuGame() {
                     <li>Đường nối giữa hai ô chỉ được phép <b>rẽ tối đa 2 lần</b>, không được đi xuyên qua ô còn hình khác.</li>
                     <li>Bí đường (không còn cặp nối được): game sẽ <b>tự động xáo bài miễn phí</b> cứu ván. Bạn cũng có thể chủ động nhấn <b>Xáo bài</b> bất cứ lúc nào (số lượt có giới hạn).</li>
                     <li>Booster <b>Gỡ cặp</b> 🗑️: bấm nút rồi chọn 2 hình giống nhau để xóa luôn (không cần nối được).</li>
-                    <li>Tile đặc biệt: <b>⭐</b> ăn cặp được xóa thêm 1 cặp ngẫu nhiên; <b>💣</b> (164) cũng vậy; <b>❤️</b> được +1 phút.</li>
+                    <li>Tile đặc biệt: <b>🚀</b> (164) ăn cặp thì tên lửa bay đi xóa 1 cặp ngẫu nhiên; <b>❤️</b> được +1 phút.</li>
                     <li>Dùng <b>Gợi ý</b> để bàn cờ tự tìm và nhấp nháy một cặp có thể nối — số lần gợi ý có giới hạn.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>

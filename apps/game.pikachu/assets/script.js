@@ -8,7 +8,7 @@
    tăng TILE_COUNT tương ứng — không cần sửa gì khác.
 ===================================================================== */
 const TILE_COUNT = 200;
-const TILE_STAR = 173;   // ⭐ ăn cặp này -> được cắn thêm 1 cặp ngẫu nhiên (trước hiệu ứng map)
+const TILE_STAR = 173;   // ⭐ (tạm chưa có effect, để sau)
 const TILE_HEART = 186;  // 💚 ăn cặp này -> +60 giây
 const TILE_BOMB = 164;   // 💣 ăn cặp này -> loại 1 cặp ngẫu nhiên (không cần hợp lệ)
 const TILE_BASE_PATH = "./apps/game.pikachu/assets/titles/";
@@ -678,8 +678,8 @@ function onTileClick(r, c, tileEl) {
     setTimeout(() => {
       grid[a.r][a.c] = 0; grid[b.r][b.c] = 0;
       pairsLeft--;
-      // Kích hoạt effect tile đặc biệt nếu gỡ trúng (bom/sao/tim)
-      if (code === TILE_BOMB || code === TILE_STAR) {
+      // Kích hoạt effect tile đặc biệt nếu gỡ trúng (bom/tim)
+      if (code === TILE_BOMB) {
         const bonus = findRandomPair();
         if (bonus && pairsLeft > 0) {
           grid[bonus.p1.r][bonus.p1.c] = 0; grid[bonus.p2.r][bonus.p2.c] = 0;
@@ -797,20 +797,7 @@ function resolveMatch(a, b, path) {
   grid[a.r][a.c] = 0;
   grid[b.r][b.c] = 0;
   pairsLeft--;
-  // Tile sao: cắn thêm 1 cặp ngẫu nhiên ngay (như cũ)
-  let bonus = null;
-  if (code === TILE_STAR && pairsLeft > 0) {
-    bonus = findRandomPair();
-    if (bonus) {
-      const be1 = boardEl.querySelector(`.tile[data-r="${bonus.p1.r}"][data-c="${bonus.p1.c}"]`);
-      const be2 = boardEl.querySelector(`.tile[data-r="${bonus.p2.r}"][data-c="${bonus.p2.c}"]`);
-      [be1, be2].forEach(el => el && el.classList.add("pop"));
-      grid[bonus.p1.r][bonus.p1.c] = 0;
-      grid[bonus.p2.r][bonus.p2.c] = 0;
-      pairsLeft--;
-      bonus.els = [be1, be2];
-    }
-  }
+  // (Tile sao 173: tạm bỏ effect xóa cặp để không trùng với bom 164)
   // Tile bom (164): tên lửa tách ra, bay tới cặp ngẫu nhiên rồi mới nổ
   if (code === TILE_BOMB && pairsLeft > 0) {
     const rb = findRandomPair();
