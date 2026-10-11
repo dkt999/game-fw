@@ -10,6 +10,7 @@
 const TILE_COUNT = 200;
 const TILE_STAR = 173;   // ⭐ ăn cặp này -> được cắn thêm 1 cặp ngẫu nhiên (trước hiệu ứng map)
 const TILE_HEART = 186;  // 💚 ăn cặp này -> +60 giây
+const TILE_BOMB = 164;   // 💣 ăn cặp này -> loại 1 cặp ngẫu nhiên (không cần hợp lệ)
 const TILE_BASE_PATH = "./apps/game.pikachu/assets/titles/";
 function tileSrc(n) {
   const v = (typeof window !== "undefined" && window.APP_VERSION) ? window.APP_VERSION : "1";
@@ -70,6 +71,7 @@ function generateLevels(count) {
 
     const shuffles = Math.max(1, Math.round(4 - t * 3));      // 4 -> 1 lần xáo (ít hơn = khó hơn)
     const hints = Math.max(1, Math.round(4 - t * 3));         // 4 -> 1 lượt gợi ý
+    const removes = Math.max(1, Math.round(3 - t * 2));       // 3 -> 1 lượt gỡ cặp
     const timeLimit = tier === "easy" ? 0 : Math.round(400 - t * 280); // dễ: không giới hạn, còn lại 400s -> 120s
 
     levels.push({
@@ -83,6 +85,7 @@ function generateLevels(count) {
       copies,
       shuffles,
       hints,
+      removes,
       timeLimit, // giây, 0 = không giới hạn
       timeBonusPerPair: tier === "expert" ? 5 : 0 // expert: mỗi cặp +5s
     });
@@ -226,6 +229,8 @@ const statMap = document.getElementById("pkc-statMap");
 const hintBadge = document.getElementById("pkc-hintBadge");
 const btnHint = document.getElementById("pkc-btnHint");
 const btnShuffle = document.getElementById("pkc-btnShuffle");
+const btnRemove = document.getElementById("pkc-btnRemove");
+const removeBadge = document.getElementById("pkc-removeBadge");
 
 /* =====================================================================
    GAME STATE
@@ -236,6 +241,8 @@ let R = 0, C = 0;
 let selected = null;   // {r,c}
 let hintsLeft = 0;
 let shufflesLeft = 0;
+let removesLeft = 0;
+let removeMode = false; // booster Gỡ cặp: bấm nút rồi chọn 2 hình giống nhau để xóa
 let timer = null;
 let seconds = 0;
 let timeLimit = 0;
@@ -339,6 +346,12 @@ document.getElementById("pkc-loseMenu").addEventListener("click", () => { hideLo
 document.getElementById("pkc-loseRetry").addEventListener("click", () => { hideLoseModal(); if (level) startLevel(level); });
 btnShuffle.addEventListener("click", doShuffle);
 btnHint.addEventListener("click", useHint);
+btnRemove.addEventListener("click", () => {
+  if (locked || isShuffling || isShifting || removesLeft <= 0) return;
+  removeMode = !removeMode;
+  btnRemove.classList.toggle("active", removeMode);
+  if (removeMode) { clearSelectionClasses(); selected = null; }
+});
 
 function backToMenu() {
   stopTimer();
@@ -483,6 +496,8 @@ function buildLevelBoard(lv) {
   R = shape.rows; C = shape.cols;
   hintsLeft = lv.hints;
   shufflesLeft = lv.shuffles;
+  removesLeft = lv.removes || 0;
+  removeMode = false;
   timeLimit = lv.timeLimit;
   seconds = 0;
   selected = null;
@@ -501,6 +516,7 @@ function buildLevelBoard(lv) {
   document.getElementById("pkc-statTier").textContent = TIER_LABEL[lv.tier] + (lv.shift ? " " + SHIFT_ICON[lv.shift] : "");
   hintBadge.textContent = hintsLeft;
   shuffleBadge.textContent = shufflesLeft;
+  removeBadge.textContent = removesLeft;
   renderBoard();
   startTimer();
   watchBoardResize();
@@ -514,10 +530,10 @@ function buildSolvedGrid(rows, cols, variety, copies, tier) {
   for (let i = 1; i <= TILE_COUNT; i++) codes.push(i);
   shuffleArray(codes);
   const chosen = codes.slice(0, variety);
-  // Map Chuyên gia: luôn có tile đặc biệt (sao 173, tim 186).
+  // Map Chuyên gia: luôn có tile đặc biệt (sao 173, tim 186, bom 164).
   // Pool lấy tile từ đầu mảng chosen -> đưa đặc biệt lên đầu cho chắc chắn có mặt.
   if (tier === "expert") {
-    [TILE_STAR, TILE_HEART].forEach(sp => {
+    [TILE_STAR, TILE_HEART, TILE_BOMB].forEach(sp => {
       const at = chosen.indexOf(sp);
       if (at >= 0) chosen.splice(at, 1);
       chosen.unshift(sp);
@@ -569,7 +585,7 @@ function renderBoard() {
       if (code === 0) {
         html += `<div class="tile cleared" data-r="${r}" data-c="${c}"></div>`;
       } else {
-        const sp = (code === TILE_STAR || code === TILE_HEART) ? " special" : "";
+        const sp = (code === TILE_STAR || code === TILE_HEART || code === TILE_BOMB) ? " special" : "";
         html += `<div class="tile${sp}" data-r="${r}" data-c="${c}"><img src="${tileSrc(code)}" draggable="false" alt=""></div>`;
       }
     }
@@ -631,6 +647,49 @@ function onTileClick(r, c, tileEl) {
     clearSelectionClasses();
     selected = { r, c };
     tileEl.classList.add("selected");
+    return;
+  }
+  // Booster Gỡ cặp: 2 hình giống nhau -> xóa luôn, không cần nối được
+  if (removeMode) {
+    removesLeft--;
+    removeBadge.textContent = removesLeft;
+    removeMode = false;
+    btnRemove.classList.remove("active");
+    clearSelectionClasses();
+    selected = null;
+    const code = grid[a.r][a.c];
+    const elA = boardEl.querySelector(`.tile[data-r="${a.r}"][data-c="${a.c}"]`);
+    const elB = boardEl.querySelector(`.tile[data-r="${b.r}"][data-c="${b.c}"]`);
+    [elA, elB].forEach(el => el && el.classList.add("pop"));
+    setTimeout(() => {
+      grid[a.r][a.c] = 0; grid[b.r][b.c] = 0;
+      pairsLeft--;
+      // Kích hoạt effect tile đặc biệt nếu gỡ trúng (bom/sao/tim)
+      if (code === TILE_BOMB || code === TILE_STAR) {
+        const bonus = findRandomPair();
+        if (bonus && pairsLeft > 0) {
+          grid[bonus.p1.r][bonus.p1.c] = 0; grid[bonus.p2.r][bonus.p2.c] = 0;
+          pairsLeft--;
+        }
+      }
+      if (code === TILE_HEART && timeLimit > 0) { seconds = Math.max(0, seconds - 60); }
+      if (level.shift) {
+        const oldCenters = captureTileCenters();
+        doBoardShift();
+        renderBoard();
+        isShifting = true;
+        animateShiftTiles(oldCenters, () => { isShifting = false; });
+      } else {
+        renderBoard();
+      }
+      if (pairsLeft <= 0) winGame();
+      else if (!hasAnyMove()) {
+        setTimeout(() => {
+          if (hasAnyMove()) return;
+          if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
+        }, 450);
+      }
+    }, 140);
     return;
   }
   const path = findConnectPath(a, b);
@@ -701,9 +760,9 @@ function resolveMatch(a, b, path) {
   grid[a.r][a.c] = 0;
   grid[b.r][b.c] = 0;
   pairsLeft--;
-  // Tile sao: cắn thêm 1 cặp ngẫu nhiên TRƯỚC khi hiệu ứng map (rơi/dịch) chạy
+  // Tile sao/bom: cắn thêm 1 cặp ngẫu nhiên TRƯỚC khi hiệu ứng map (rơi/dịch) chạy
   let bonus = null;
-  if (code === TILE_STAR && pairsLeft > 0) {
+  if ((code === TILE_STAR || code === TILE_BOMB) && pairsLeft > 0) {
     bonus = findRandomPair();
     if (bonus) {
       const be1 = boardEl.querySelector(`.tile[data-r="${bonus.p1.r}"][data-c="${bonus.p1.c}"]`);

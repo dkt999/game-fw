@@ -56,6 +56,8 @@ function InitPikachuGame() {
                     <li>Chọn hai ô có <b>hình giống hệt nhau</b> để nối chúng lại và loại bỏ khỏi bàn cờ.</li>
                     <li>Đường nối giữa hai ô chỉ được phép <b>rẽ tối đa 2 lần</b>, không được đi xuyên qua ô còn hình khác.</li>
                     <li>Bí đường (không còn cặp nối được): game sẽ <b>tự động xáo bài miễn phí</b> cứu ván. Bạn cũng có thể chủ động nhấn <b>Xáo bài</b> bất cứ lúc nào (số lượt có giới hạn).</li>
+                    <li>Booster <b>Gỡ cặp</b> 🗑️: bấm nút rồi chọn 2 hình giống nhau để xóa luôn (không cần nối được).</li>
+                    <li>Tile đặc biệt: <b>⭐</b> ăn cặp được xóa thêm 1 cặp ngẫu nhiên; <b>💣</b> (164) cũng vậy; <b>❤️</b> được +1 phút.</li>
                     <li>Dùng <b>Gợi ý</b> để bàn cờ tự tìm và nhấp nháy một cặp có thể nối — số lần gợi ý có giới hạn.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>
@@ -94,6 +96,10 @@ function InitPikachuGame() {
                     <div class="btn-square" id="pkc-btnHint" title="Gợi ý">
                         <svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>
                         <span class="badge" id="pkc-hintBadge">3</span>
+                    </div>
+                    <div class="btn-square" id="pkc-btnRemove" title="Gỡ cặp (chọn 2 hình giống nhau để xóa)">
+                        <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        <span class="badge" id="pkc-removeBadge">2</span>
                     </div>
                     <div class="btn-square" id="pkc-btnNewGame" title="Ván mới cùng map">
                         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
