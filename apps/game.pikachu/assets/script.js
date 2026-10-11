@@ -49,13 +49,16 @@ function generateLevels(count) {
     const t = (i - 1) / Math.max(1, count - 1); // 0 -> 1 độ khó tăng dần
     const tier = tierOf(i, count);
 
-    // Kích thước bàn tăng dần: 6x4 (24 ô) -> 22x16 (352 ô)
-    let cols = Math.round(6 + t * 16);
-    let rows = Math.round(4 + t * 12);
+    // Kích thước bàn: tăng dần trong 15 màn đầu (6x4=24 ô -> 22x16=352 ô),
+    // từ màn 16 trở đi giữ nguyên FULL. Độ khó sau đó do shift + tỉ lệ trùng tile.
+    const tb = Math.min(1, (i - 1) / 14); // 0 -> 1 trong 15 màn đầu
+    let cols = Math.round(6 + tb * 16);
+    let rows = Math.round(4 + tb * 12);
     if ((rows * cols) % 2 !== 0) cols += 1; // luôn cần số ô chẵn để chia cặp
 
-    // Số bản sao mỗi hình: dễ thì nhiều bản sao giống nhau (dễ tìm),
-    // khó thì ít bản sao hơn (khó tìm), tối thiểu 2 (phải chẵn).
+    // Số bản sao mỗi hình: càng lên cao càng ít bản trùng (khó tìm hơn),
+    // là thước đo độ khó chính sau khi board đã full từ màn 16.
+    // 1-15: 6->5 bản | 16-200: 5->2 bản (giảm dần đều).
     let copies = Math.round(6 - t * 4);
     if (copies < 2) copies = 2;
     if (copies % 2 !== 0) copies -= 1;
