@@ -798,16 +798,17 @@ function resolveMatch(a, b, path) {
   grid[b.r][b.c] = 0;
   pairsLeft--;
   // (Tile sao 173: tạm bỏ effect xóa cặp để không trùng với bom 164)
-  // Tile bom (164): tên lửa tách ra, bay tới cặp ngẫu nhiên rồi mới nổ
+  // Tile bom (164): chẻ 2 tên lửa, mỗi cái bay tới 1 tile của cặp ngẫu nhiên rồi nổ
   if (code === TILE_BOMB && pairsLeft > 0) {
     const rb = findRandomPair();
     if (rb) {
       const from = tileCenter(a.r, a.c) || tileCenter(b.r, b.c);
       const t1 = tileCenter(rb.p1.r, rb.p1.c), t2 = tileCenter(rb.p2.r, rb.p2.c);
-      const to = t1 && t2 ? { x: (t1.x + t2.x) / 2, y: (t1.y + t2.y) / 2 } : t1 || t2;
-      if (from && to) {
+      if (from && t1 && t2) {
         isShifting = true; // khóa click trong lúc tên lửa bay
-        launchRocket(from, to, () => {
+        let arrived = 0;
+        const onOneArrive = () => {
+          if (++arrived < 2) return;
           const be1 = boardEl.querySelector(`.tile[data-r="${rb.p1.r}"][data-c="${rb.p1.c}"]`);
           const be2 = boardEl.querySelector(`.tile[data-r="${rb.p2.r}"][data-c="${rb.p2.c}"]`);
           [be1, be2].forEach(el => el && el.classList.add("pop"));
@@ -816,8 +817,10 @@ function resolveMatch(a, b, path) {
           pairsLeft--;
           isShifting = false;
           setTimeout(() => afterMatch([elA, elB, be1, be2]), 140);
-        });
-        return; // đợi tên lửa tới rồi mới chạy afterMatch
+        };
+        launchRocket(from, t1, onOneArrive);
+        setTimeout(() => launchRocket(from, t2, onOneArrive), 130); // lệch pha cho đẹp
+        return; // đợi 2 tên lửa tới rồi mới chạy afterMatch
       }
     }
   }
