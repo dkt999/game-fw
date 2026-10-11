@@ -10,5 +10,9 @@
   {
     "id": "game.pikachu",
     "manifest": "apps/game.pikachu/manifest.js"
+  },
+  {
+    "id": "game.mahjong",
+    "manifest": "apps/game.mahjong/manifest.js"
   }
 ]
