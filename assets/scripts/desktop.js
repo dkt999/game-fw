@@ -34,8 +34,8 @@ function loadAppScript(scriptPath, callback) {
     }
 }
 $(document).ready(function() {
-    const desktopUrl = 'assets/config/desktop.json';
-    const appListUrl = 'assets/config/app_list.json';
+    const desktopUrl = assetUrl('assets/config/desktop.json');
+    const appListUrl = assetUrl('assets/config/app_list.json');
     $.getJSON(appListUrl)
         .done(function(manifestList) {
             let scriptPromises = manifestList.map(function(item) {
