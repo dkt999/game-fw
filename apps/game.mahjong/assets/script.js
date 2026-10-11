@@ -88,12 +88,12 @@ function dealTiles() {
 /* ---------- Luật tile tự do ---------- */
 // Đơn giản: tự do = không bị tile nào đè lên (kể cả đè 1 phần).
 // Kiểm tra bằng vùng hiển thị thực tế (getBoundingClientRect) để khớp với những gì người chơi nhìn thấy.
-function rectsOverlap(a, b, minOverlap = 0.15) {
+function rectsOverlap(a, b, minOverlap = 0.001) {
   const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
   const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
   if (ix <= 0 || iy <= 0) return false;
   const area = (a.right - a.left) * (a.bottom - a.top);
-  return (ix * iy) / area >= minOverlap; // đè từ 15% diện tích trở lên thì tính
+  return (ix * iy) / area >= minOverlap; // đè >0% là tính (1 phần nghìn để tránh sai số)
 }
 function computeFree(t, list) {
   if (t.removed) return false;
