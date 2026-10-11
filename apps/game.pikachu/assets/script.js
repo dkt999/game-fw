@@ -88,12 +88,17 @@ function generateLevels(count) {
     const idx = levels.findIndex(l => l.id === x.afterLevel);
     if (idx >= 0) levels.splice(idx + 1, 0, Object.assign({ id: levels.length + 1, tier: "expert" }, x.level));
   });
-  // Map Chuyên gia: sau mỗi cặp nối, board "rơi" theo trọng lực —
-  // 1/3 đầu rơi cố định 1 hướng, 1/3 giữa đảo qua lại, 1/3 cuối ngẫu nhiên.
-  const experts = levels.filter(l => l.tier === "expert");
-  experts.forEach((l, idx) => {
-    const e = idx / Math.max(1, experts.length - 1);
-    l.shift = e < 0.2 ? "fixed" : e < 0.4 ? "alternate" : e < 0.6 ? "symH" : e < 0.8 ? "symV" : "random";
+  // Chia đều hiệu ứng dịch chuyển theo độ khó (dễ -> khó):
+  // 1-30 (Dễ): không shift | 31-60: rơi cố định | 61-90: đảo lên/xuống |
+  // 91-120: đối xứng ngang | 121-150: đối xứng dọc | 151-200: ngẫu nhiên
+  levels.forEach(l => {
+    const id = l.id;
+    if (id <= 30) l.shift = null;
+    else if (id <= 60) l.shift = "fixed";
+    else if (id <= 90) l.shift = "alternate";
+    else if (id <= 120) l.shift = "symH";
+    else if (id <= 150) l.shift = "symV";
+    else l.shift = "random";
   });
   return levels;
 }

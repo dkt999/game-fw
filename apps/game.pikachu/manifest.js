@@ -59,7 +59,7 @@ function InitPikachuGame() {
                     <li>Dùng <b>Gợi ý</b> để bàn cờ tự tìm và nhấp nháy một cặp có thể nối — số lần gợi ý có giới hạn.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn cờ trước khi hết giờ (nếu map có giới hạn thời gian).</li>
                     <li>Map chia thành <b>Pack 10 map</b>: qua ít nhất <b>8/10</b> map của pack hiện tại mới mở pack tiếp theo. Tiến trình lưu trên máy.</li>
-                    <li>Từ map <b>Chuyên gia</b>: mỗi lần nối xong, toàn bộ hình còn lại sẽ <b>rơi/dịch chuyển</b> — rơi cố định ⬇️, đảo lên/xuống 🔃, <b>đối xứng ngang</b> ↔️ (dạt ra 2 bên), <b>đối xứng dọc</b> ↕️ (dạt lên/xuống), cuối cùng ngẫu nhiên 🔀.</li>
+                    <li>Từ map <b>31</b> trở đi, mỗi lần nối xong board sẽ <b>dịch chuyển</b>: 31–60 rơi cố định ⬇️, 61–90 đảo lên/xuống 🔃, 91–120 <b>đối xứng ngang</b> ↔️, 121–150 <b>đối xứng dọc</b> ↕️, 151–200 ngẫu nhiên 🔀.</li>
                     <li>Map Chuyên gia: mỗi cặp nối được <b>+5 giây</b>. Tile <b>⭐ ngôi sao</b> (viền vàng): ăn cặp này được <b>cắn thêm 1 cặp ngẫu nhiên</b> ngay trong lượt đó. Tile <b>💚 trái tim</b> (viền vàng): <b>+1 phút</b>.</li>
                 </ul>
                 </div>
