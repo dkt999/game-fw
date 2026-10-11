@@ -310,7 +310,7 @@ document.querySelectorAll(".diff-btn").forEach(btn => {
 });
 document.getElementById("mj-startBtn").addEventListener("click", () => {
   $("#mj-mainMenu").style.display = "none";
-  $("#mj-game").style.display = "block";
+  $("#mj-game").style.display = "flex";
   newGame();
 });
 document.getElementById("mj-btnClose").addEventListener("click", () => {
