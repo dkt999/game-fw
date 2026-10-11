@@ -455,6 +455,7 @@ function computeAdaptiveShape(totalCells) {
    LEVEL START / BOARD GENERATION
 ===================================================================== */
 const PKC_DEBUG = (function(){ try { return /[?&]pikachu_debug=1/.test(location.search); } catch(e){ return false; } })();
+const PIKACHU_ROCKET_TEST = (function(){ try { return /[?&]pikachu_rocket=1/.test(location.search); } catch(e){ return false; } })();
 let pkcDebugLog = [];
 function pkcDebug(tag, info) {
   if (tag === "pre-shape" && !pkcDebug._v) {
@@ -520,6 +521,18 @@ function buildLevelBoard(lv) {
   renderBoard();
   startTimer();
   watchBoardResize();
+  // Cheat test rocket: nhấp nháy vị trí tile164 trong 4s để dễ tìm
+  if (PIKACHU_ROCKET_TEST) {
+    setTimeout(() => {
+      document.querySelectorAll(".tile").forEach(el => {
+        const r = +el.dataset.r, c = +el.dataset.c;
+        if (grid[r] && grid[r][c] === TILE_BOMB) {
+          el.classList.add("hint");
+          setTimeout(() => el.classList.remove("hint"), 4000);
+        }
+      });
+    }, 300);
+  }
 }
 
 // Tạo bàn cờ: chọn `variety` mã hình ngẫu nhiên trong 200 hình, lặp mỗi
@@ -532,7 +545,8 @@ function buildSolvedGrid(rows, cols, variety, copies, tier) {
   const chosen = codes.slice(0, variety);
   // Map Chuyên gia: luôn có tile đặc biệt (sao 173, tim 186, bom 164).
   // Pool lấy tile từ đầu mảng chosen -> đưa đặc biệt lên đầu cho chắc chắn có mặt.
-  if (tier === "expert") {
+  // Cheat ?pikachu_rocket=1: ép bom 164 vào mọi màn để test tên lửa.
+  if (tier === "expert" || PIKACHU_ROCKET_TEST) {
     [TILE_STAR, TILE_HEART, TILE_BOMB].forEach(sp => {
       const at = chosen.indexOf(sp);
       if (at >= 0) chosen.splice(at, 1);
