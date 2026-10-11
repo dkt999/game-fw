@@ -144,6 +144,12 @@
 }
 .pikachu-app .btn-square:hover{ background: rgba(255,255,255,0.14); }
 .pikachu-app .btn-square:active{ transform: scale(0.92); }
+.pikachu-app .rocket-projectile{
+  position:absolute; width:38px; height:38px; z-index:30; pointer-events:none;
+  display:flex; align-items:center; justify-content:center; font-size:30px;
+  filter: drop-shadow(0 0 6px rgba(255,180,60,0.8));
+  will-change: transform;
+}
 .pikachu-app .btn-square.active{ background: rgba(201,162,39,0.35); border-color: var(--gold); box-shadow: 0 0 8px rgba(201,162,39,0.5); }
 .pikachu-app .btn-square svg{ width:18px; height:18px; stroke: var(--paper-soft); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .pikachu-app #pkc-btnClose{ display:none; }

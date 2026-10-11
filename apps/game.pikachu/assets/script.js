@@ -739,6 +739,29 @@ function findRandomPair() {
   if (j >= i) j++;
   return { p1: arr[i], p2: arr[j] };
 }
+/* Tên lửa tile164: tách khỏi tile, xoay hướng rồi bay tới cặp bị loại */
+function launchRocket(from, to, onArrive) {
+  const DUR = 650;
+  const el = document.createElement("div");
+  el.className = "rocket-projectile";
+  el.textContent = "🚀";
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const rot = angle + 45; // emoji 🚀 chỉ hướng đông-bắc (-45°)
+  const SZ = 38;
+  el.style.transform = `translate(${from.x - SZ/2}px, ${from.y - SZ/2}px) rotate(${rot}deg)`;
+  boardEl.appendChild(el);
+  el.offsetHeight; // ép reflow
+  el.style.transition = `transform ${DUR}ms cubic-bezier(.3,.7,.4,1)`;
+  el.style.transform = `translate(${to.x - SZ/2}px, ${to.y - SZ/2}px) rotate(${rot}deg)`;
+  setTimeout(() => { el.remove(); if (onArrive) onArrive(); }, DUR + 40);
+}
+function tileCenter(r, c) {
+  const el = boardEl.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
+  if (!el) return null;
+  const br = boardEl.getBoundingClientRect(), rc = el.getBoundingClientRect();
+  return { x: rc.left - br.left + rc.width / 2, y: rc.top - br.top + rc.height / 2 };
+}
 function resolveMatch(a, b, path) {
   drawLinkPath(path);
   const code = grid[a.r][a.c];
@@ -760,9 +783,9 @@ function resolveMatch(a, b, path) {
   grid[a.r][a.c] = 0;
   grid[b.r][b.c] = 0;
   pairsLeft--;
-  // Tile sao/bom: cắn thêm 1 cặp ngẫu nhiên TRƯỚC khi hiệu ứng map (rơi/dịch) chạy
+  // Tile sao: cắn thêm 1 cặp ngẫu nhiên ngay (như cũ)
   let bonus = null;
-  if ((code === TILE_STAR || code === TILE_BOMB) && pairsLeft > 0) {
+  if (code === TILE_STAR && pairsLeft > 0) {
     bonus = findRandomPair();
     if (bonus) {
       const be1 = boardEl.querySelector(`.tile[data-r="${bonus.p1.r}"][data-c="${bonus.p1.c}"]`);
@@ -774,33 +797,58 @@ function resolveMatch(a, b, path) {
       bonus.els = [be1, be2];
     }
   }
+  // Tile bom (164): tên lửa tách ra, bay tới cặp ngẫu nhiên rồi mới nổ
+  if (code === TILE_BOMB && pairsLeft > 0) {
+    const rb = findRandomPair();
+    if (rb) {
+      const from = tileCenter(a.r, a.c) || tileCenter(b.r, b.c);
+      const t1 = tileCenter(rb.p1.r, rb.p1.c), t2 = tileCenter(rb.p2.r, rb.p2.c);
+      const to = t1 && t2 ? { x: (t1.x + t2.x) / 2, y: (t1.y + t2.y) / 2 } : t1 || t2;
+      if (from && to) {
+        isShifting = true; // khóa click trong lúc tên lửa bay
+        launchRocket(from, to, () => {
+          const be1 = boardEl.querySelector(`.tile[data-r="${rb.p1.r}"][data-c="${rb.p1.c}"]`);
+          const be2 = boardEl.querySelector(`.tile[data-r="${rb.p2.r}"][data-c="${rb.p2.c}"]`);
+          [be1, be2].forEach(el => el && el.classList.add("pop"));
+          grid[rb.p1.r][rb.p1.c] = 0;
+          grid[rb.p2.r][rb.p2.c] = 0;
+          pairsLeft--;
+          isShifting = false;
+          setTimeout(() => afterMatch([elA, elB, be1, be2]), 140);
+        });
+        return; // đợi tên lửa tới rồi mới chạy afterMatch
+      }
+    }
+  }
   const clearEls = [elA, elB].concat(bonus && bonus.els ? bonus.els : []);
-  setTimeout(() => {
-    if (pairsLeft <= 0) {
-      clearEls.forEach(el => el && el.classList.add("cleared"));
-      winGame();
-      return;
-    }
-    if (level.shift) {
-      // Map khó: board rơi/dịch chuyển sau mỗi cặp nối, tile trượt tới vị trí mới
-      const oldCenters = captureTileCenters();
-      doBoardShift();
-      renderBoard();
-      clearSelectionClasses();
-      selected = null;
-      isShifting = true;
-      animateShiftTiles(oldCenters, () => { isShifting = false; });
-    } else {
-      clearEls.forEach(el => el && el.classList.add("cleared"));
-    }
-    if (!hasAnyMove()) {
-      // Bí đường sau khi nối (hoặc sau khi board rơi): tự động xáo miễn phí cứu ván
-      setTimeout(() => {
-        if (hasAnyMove()) return; // đã có nước (tự xáo tay trong lúc chờ)
-        if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
-      }, 450);
-    }
-  }, 140);
+  setTimeout(() => afterMatch(clearEls), 140);
+}
+/* Sau khi ăn cặp (và bom nổ xong nếu có): thắng / rơi board / kiểm tra bí */
+function afterMatch(clearEls) {
+  if (pairsLeft <= 0) {
+    clearEls.forEach(el => el && el.classList.add("cleared"));
+    winGame();
+    return;
+  }
+  if (level.shift) {
+    // Map khó: board rơi/dịch chuyển sau mỗi cặp nối, tile trượt tới vị trí mới
+    const oldCenters = captureTileCenters();
+    doBoardShift();
+    renderBoard();
+    clearSelectionClasses();
+    selected = null;
+    isShifting = true;
+    animateShiftTiles(oldCenters, () => { isShifting = false; });
+  } else {
+    clearEls.forEach(el => el && el.classList.add("cleared"));
+  }
+  if (!hasAnyMove()) {
+    // Bí đường sau khi nối (hoặc sau khi board rơi): tự động xáo miễn phí cứu ván
+    setTimeout(() => {
+      if (hasAnyMove()) return; // đã có nước (tự xáo tay trong lúc chờ)
+      if (!autoRescueShuffle()) loseGame("Bí đường hoàn toàn, xáo mãi không ra nước đi!");
+    }, 450);
+  }
 }
 
 /* =====================================================================
