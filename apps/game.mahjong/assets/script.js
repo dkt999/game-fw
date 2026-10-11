@@ -86,22 +86,14 @@ function dealTiles() {
 }
 
 /* ---------- Luật tile tự do ---------- */
-// Tự do = không bị đè (không có tile ở lớp trên cùng tọa độ) + hở ít nhất 1 bên (trái/phải).
+// Đơn giản: tự do = không bị tile nào đè lên (không xét kẹp 2 bên).
 function computeFree(t, list) {
   if (t.removed) return false;
   for (const o of list) {
     if (o.removed || o === t) continue;
     if (o.z === t.z + 1 && o.x === t.x && o.y === t.y) return false; // bị đè
   }
-  let leftBlocked = false, rightBlocked = false;
-  for (const o of list) {
-    if (o.removed || o === t || o.z !== t.z) continue;
-    if (o.y === t.y) {
-      if (o.x === t.x - 1) leftBlocked = true;
-      if (o.x === t.x + 1) rightBlocked = true;
-    }
-  }
-  return !leftBlocked || !rightBlocked;
+  return true;
 }
 function updateFreeStates() {
   for (const t of tiles) t.free = computeFree(t, tiles);

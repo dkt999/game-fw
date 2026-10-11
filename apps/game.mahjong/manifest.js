@@ -39,14 +39,14 @@ function InitMahjongGame() {
             <header>
                 <div class="eyebrow">🀄 MAHJONG</div>
                 <h1>Xếp <em>Hình</em></h1>
-                <div class="subtitle">Gỡ các cặp hình giống nhau. Chỉ được chọn hình <b>tự do</b> (không bị đè, hở ít nhất 1 bên).</div>
+                <div class="subtitle">Gỡ các cặp hình giống nhau. Chỉ được chọn hình <b>tự do</b> (không bị hình nào đè lên).</div>
                 <button class="rules-btn" id="mj-rulesBtn" title="Cách chơi">?</button>
             </header>
             <div class="rules-modal" id="mj-rulesModal" style="display:none;">
                 <div class="rules-card">
                     <div class="rules-card-head"><span>Cách chơi</span><button class="rules-close" id="mj-rulesClose" title="Đóng">✕</button></div>
                     <ul>
-                    <li>Các hình xếp chồng nhiều lớp. Chỉ được chọn hình <b>tự do</b>: <b>không bị hình nào đè lên</b> và <b>hở ít nhất một bên</b> (trái hoặc phải).</li>
+                    <li>Các hình xếp chồng nhiều lớp. Chỉ được chọn hình <b>tự do</b>: <b>không bị hình nào đè lên</b>.</li>
                     <li>Chọn 2 hình tự do <b>giống hệt nhau</b> để gỡ khỏi bàn.</li>
                     <li>Hình bị chặn sẽ tối đi, không chọn được.</li>
                     <li>Bí đường: dùng <b>Xáo</b> để trộn lại các hình còn lại (số lượt giới hạn).</li>
