@@ -92,12 +92,12 @@ function generateLevels(count) {
   const experts = levels.filter(l => l.tier === "expert");
   experts.forEach((l, idx) => {
     const e = idx / Math.max(1, experts.length - 1);
-    l.shift = e < 1/3 ? "fixed" : (e < 2/3 ? "alternate" : "random");
+    l.shift = e < 0.2 ? "fixed" : e < 0.4 ? "alternate" : e < 0.6 ? "symH" : e < 0.8 ? "symV" : "random";
   });
   return levels;
 }
-const SHIFT_LABEL = { fixed: "Rơi ↓", alternate: "Rơi ↕", random: "Rơi ngẫu nhiên" };
-const SHIFT_ICON = { fixed: "⬇️", alternate: "↕️", random: "🔀" };
+const SHIFT_LABEL = { fixed: "Rơi ↓", alternate: "Rơi ↕", symH: "Đối xứng ↔", symV: "Đối xứng ↕", random: "Rơi ngẫu nhiên" };
+const SHIFT_ICON = { fixed: "⬇️", alternate: "🔃", symH: "↔️", symV: "↕️", random: "🔀" };
 
 const LEVELS = generateLevels(LEVEL_COUNT);
 
@@ -206,6 +206,7 @@ const boardFrame = document.getElementById("pkc-boardFrame");
 const linkLayer = document.getElementById("pkc-linkLayer");
 let boardPad = 4; // padding động của board = margin cho đường nối đi ngoài
 let isShuffling = false; // đang chạy hiệu ứng xáo -> khóa click tile
+let isShifting = false; // đang chạy hiệu ứng dịch chuyển -> khóa click tile
 const shuffleModal = document.getElementById("pkc-shuffleModal");
 const hankoEl = document.getElementById("pkc-hanko");
 const loseModal = document.getElementById("pkc-loseModal");
@@ -594,7 +595,7 @@ function boardCellSize() {
 
 boardEl.addEventListener("click", (e) => {
   const tileEl = e.target.closest(".tile");
-  if (!tileEl || locked || isShuffling) return;
+  if (!tileEl || locked || isShuffling || isShifting) return;
   const r = Number(tileEl.dataset.r), c = Number(tileEl.dataset.c);
   if (grid[r][c] === 0) return;
   onTileClick(r, c, tileEl);
@@ -713,11 +714,14 @@ function resolveMatch(a, b, path) {
       return;
     }
     if (level.shift) {
-      // Map khó: board rơi/dịch chuyển sau mỗi cặp nối rồi mới vẽ lại
+      // Map khó: board rơi/dịch chuyển sau mỗi cặp nối, tile trượt tới vị trí mới
+      const oldCenters = captureTileCenters();
       doBoardShift();
       renderBoard();
       clearSelectionClasses();
       selected = null;
+      isShifting = true;
+      animateShiftTiles(oldCenters, () => { isShifting = false; });
     } else {
       clearEls.forEach(el => el && el.classList.add("cleared"));
     }
@@ -840,6 +844,36 @@ function drawLinkPath(path) {
    lên/xuống qua lại; random: hướng ngẫu nhiên mỗi lần.
 ===================================================================== */
 let shiftCount = 0; // đếm số lần đã shift trong ván hiện tại (cho alternate)
+/* Dịch chuyển đối xứng ngang: nửa trái dồn ra trái, nửa phải dồn ra phải */
+function applySymH() {
+  const midL = Math.floor(C / 2);
+  for (let r = 0; r < R; r++) {
+    const left = [];
+    for (let c = 0; c < midL; c++) if (grid[r][c] !== 0) left.push(grid[r][c]);
+    for (let c = 0; c < midL; c++) grid[r][c] = (c < left.length) ? left[c] : 0;
+    const right = [];
+    for (let c = midL; c < C; c++) if (grid[r][c] !== 0) right.push(grid[r][c]);
+    for (let c = midL; c < C; c++) {
+      const idx = c - (C - right.length);
+      grid[r][c] = (idx >= 0) ? right[idx] : 0;
+    }
+  }
+}
+/* Dịch chuyển đối xứng dọc: nửa trên dồn lên trên, nửa dưới dồn xuống dưới */
+function applySymV() {
+  const midT = Math.floor(R / 2);
+  for (let c = 0; c < C; c++) {
+    const top = [];
+    for (let r = 0; r < midT; r++) if (grid[r][c] !== 0) top.push(grid[r][c]);
+    for (let r = 0; r < midT; r++) grid[r][c] = (r < top.length) ? top[r] : 0;
+    const bot = [];
+    for (let r = midT; r < R; r++) if (grid[r][c] !== 0) bot.push(grid[r][c]);
+    for (let r = midT; r < R; r++) {
+      const idx = r - (R - bot.length);
+      grid[r][c] = (idx >= 0) ? bot[idx] : 0;
+    }
+  }
+}
 function applyGravity(dir) {
   if (dir === "down" || dir === "up") {
     for (let c = 0; c < C; c++) {
@@ -860,13 +894,53 @@ function applyGravity(dir) {
     }
   }
 }
+/* Chụp tâm các tile hiện tại (để làm hiệu ứng bay) */
+function captureTileCenters() {
+  const br = boardEl.getBoundingClientRect();
+  return [...boardEl.querySelectorAll(".tile:not(.cleared)")].map(el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - br.left + r.width / 2, y: r.top - br.top + r.height / 2 };
+  });
+}
+/* Hiệu ứng tile trượt từ vị trí cũ (gần nhất) tới vị trí mới sau khi dịch chuyển */
+function animateShiftTiles(oldCenters, onDone) {
+  const DUR = 450;
+  const newTiles = [...boardEl.querySelectorAll(".tile:not(.cleared)")];
+  const nr = boardEl.getBoundingClientRect();
+  const used = new Set();
+  newTiles.forEach(el => {
+    const r = el.getBoundingClientRect();
+    const nx = r.left - nr.left + r.width / 2, ny = r.top - nr.top + r.height / 2;
+    let bi = -1, bd = Infinity;
+    for (let i = 0; i < oldCenters.length; i++) {
+      if (used.has(i)) continue;
+      const oc = oldCenters[i], d = (oc.x - nx) * (oc.x - nx) + (oc.y - ny) * (oc.y - ny);
+      if (d < bd) { bd = d; bi = i; }
+    }
+    if (bi >= 0) used.add(bi);
+    const from = bi >= 0 ? oldCenters[bi] : { x: nx, y: ny };
+    el.style.transition = "none";
+    el.style.transform = `translate(${from.x - nx}px,${from.y - ny}px)`;
+  });
+  boardEl.offsetHeight; // ép reflow
+  newTiles.forEach(el => {
+    el.style.transition = `transform ${DUR}ms cubic-bezier(.25,.8,.3,1)`;
+    el.style.transform = "translate(0,0)";
+  });
+  setTimeout(() => {
+    newTiles.forEach(el => { el.style.transition = ""; el.style.transform = ""; });
+    if (onDone) onDone();
+  }, DUR + 60);
+}
 function doBoardShift() {
   const mode = level.shift;
+  shiftCount++;
+  if (mode === "symH") { applySymH(); return "symH"; }
+  if (mode === "symV") { applySymV(); return "symV"; }
   let dir;
   if (mode === "fixed") dir = "down";
   else if (mode === "alternate") dir = (shiftCount % 2 === 0) ? "down" : "up";
   else dir = ["up", "down", "left", "right"][Math.floor(Math.random() * 4)];
-  shiftCount++;
   applyGravity(dir);
   return dir;
 }
