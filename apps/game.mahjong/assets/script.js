@@ -126,7 +126,7 @@ function findOneMove() {
 }
 
 /* ---------- Render ---------- */
-const BASE_TW = 54, BASE_TH = 70, GAP = 4, DEPTH = 7; // DEPTH: độ lệch mỗi lớp tạo chiều sâu
+const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 16; // DEPTH: độ lệch mỗi lớp tạo chiều sâu (to để nhìn rõ)
 function renderBoard() {
   boardEl.innerHTML = "";
   // Kích thước thiết kế
@@ -155,6 +155,9 @@ function renderBoard() {
     el.style.left = (t.x * (BASE_TW + GAP) + t.z * DEPTH) + "px";
     el.style.top = (t.y * (BASE_TH + GAP) + (maxZ - t.z) * DEPTH) + "px";
     el.style.zIndex = t.z * 100 + t.y * 10 + t.x;
+    // Lớp càng cao càng sáng viền + bóng đổ đậm để thấy rõ đang đè lên lớp dưới
+    el.style.boxShadow = `${2 + t.z * 2}px ${3 + t.z * 3}px 0 rgba(0,0,0,${0.35 + t.z * 0.12})`;
+    el.style.borderColor = ["#b9a86a", "#d4b84a", "#e8c832", "#ffe066"][Math.min(t.z, 3)];
     const img = document.createElement("img");
     img.src = tileSrc(t.face);
     img.alt = "";
