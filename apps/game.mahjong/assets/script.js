@@ -357,14 +357,57 @@ function countAvailableMoves() {
   for (const k in cnt) moves += Math.floor(cnt[k] / 2);
   return moves;
 }
-/* Cảnh báo khi sắp bí (<3 nước) để người chơi dùng booster */
+/* Kiểm tra 1 tile có bị tile khác đè không (dùng visual) */
+function isCoveredBy(t, o) {
+  if (!t.el || !o.el || o.removed || o.z <= t.z) return false;
+  return rectsOverlap(t.el.getBoundingClientRect(), o.el.getBoundingClientRect());
+}
+/* Phát hiện BÍ THẬT: có face không thể gỡ hết được.
+   Ví dụ: 2 tile giống nhau đè lên nhau — không bao giờ chọn được cả 2.
+   Tổng quát: nếu 1 face còn tile mà tất cả đường gỡ đều bị chặn bởi chính face đó. */
+function isDeadlocked() {
+  const byFace = {};
+  for (const t of tiles) {
+    if (t.removed) continue;
+    (byFace[t.face] = byFace[t.face] || []).push(t);
+  }
+  for (const face in byFace) {
+    const group = byFace[face];
+    if (group.length === 0) continue;
+    // Thử mô phỏng: gỡ tham lam các cặp free. Nếu còn tile mà không gỡ được nữa -> bí.
+    const remaining = new Set(group);
+    let progress = true;
+    while (progress && remaining.size > 0) {
+      progress = false;
+      // 1 tile free trong mô phỏng nếu không bị tile nào "còn trên board" đè.
+      // "Còn trên board" = chưa removed thật, và (nếu cùng face) chưa gỡ trong mô phỏng.
+      const isFreeSim = (t) => {
+        for (const o of tiles) {
+          if (o.removed || o === t) continue;
+          const oPresent = (o.face === t.face) ? remaining.has(o) : true;
+          if (!oPresent) continue;
+          if (isCoveredBy(t, o)) return false;
+        }
+        return true;
+      };
+      const freeTiles = [...remaining].filter(isFreeSim);
+      if (freeTiles.length >= 2) {
+        remaining.delete(freeTiles[0]);
+        remaining.delete(freeTiles[1]);
+        progress = true;
+      }
+    }
+    if (remaining.size > 0) return true; // face này không gỡ hết được -> bí
+  }
+  return false;
+}
+/* Cảnh báo CHỈ khi bí thật (không thể giải), để người chơi dùng Xáo */
 function updateMoveWarning() {
   const w = document.getElementById("mj-warnBar");
   if (!w) return;
-  const m = countAvailableMoves();
-  if (m > 0 && m < 3 && pairsLeft > 0) {
+  if (pairsLeft > 0 && hasAnyMove() && isDeadlocked()) {
     w.style.display = "flex";
-    w.innerHTML = `⚠️ Chỉ còn <b>&nbsp;${m} nước đi&nbsp;</b> — dùng <b>&nbsp;Xáo&nbsp;</b> hoặc <b>&nbsp;Gợi ý</b>!`;
+    w.innerHTML = `⚠️ Thế bí! Có tile không thể gỡ được — dùng <b>&nbsp;Xáo&nbsp;</b> để cứu ván!`;
   } else {
     w.style.display = "none";
   }
