@@ -250,19 +250,82 @@ function isSolvableState(tileList) {
 function dealTiles() {
   const pos = generateMapLayout(curPack, curMapIdx);
   const pairCount = pos.length / 2;
-  const params = packParams(curPack);
-  const poolSize = Math.min(params.tilePool, TILE_COUNT, pairCount);
-
-  // Chia 1 lần (tính khả thi kiểm tra ở newGame sau khi render có rect)
-  const faces = [];
-  const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
-  for (let i = 0; i < pairCount; i++) {
-    const f = codes[i % poolSize];
-    faces.push(f, f);
-  }
-  shuffleArr(faces);
-  tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: faces[i], removed: false, free: false, el: null, _rect: null }));
+  tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: 0, removed: false, free: false, el: null, _rect: null }));
   pairsLeft = pairCount;
+  // Chia hình đảm bảo giải được (by construction). Rớt về chia random nếu lỗi lạ.
+  if (!assignFacesByConstruction(tiles)) {
+    const params = packParams(curPack);
+    const poolSize = Math.min(params.tilePool, TILE_COUNT, pairCount);
+    const faces = [];
+    const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
+    for (let i = 0; i < pairCount; i++) {
+      const f = codes[i % poolSize];
+      faces.push(f, f);
+    }
+    shuffleArr(faces);
+    tiles.forEach((t, i) => { t.face = faces[i]; });
+  }
+}
+
+/* Chia hình đảm bảo giải được (by construction).
+   - Dựng quan hệ "đè" từ hình học render (công thức y hệt renderBoard, không phụ thuộc scale).
+   - Mô phỏng 1 thứ tự gỡ đơn hợp lệ: mỗi vòng lấy hết tile "khả dụng"
+     (mọi tile đè lên nó đã được xếp trước đó).
+   - Ghép cặp 2 tile LIÊN TIẾP trong thứ tự đó; nếu 1 tile đè trực tiếp lên tile kia
+     thì bỏ ván chia này, thử seed khác (tối đa 60 lần).
+   Vì mỗi cặp đều "sạch" (không đè nhau) nên thứ tự cặp chính là 1 đáp án đúng:
+   tới lượt cặp nào thì cả 2 tile đều tự do. Không bao giờ tạo blocking-pair
+   (cặp mà 1 tile đè lên tile kia — nguyên nhân gây bí thế vĩnh viễn). */
+function assignFacesByConstruction(list) {
+  const n = list.length;
+  if (!n) return false;
+  let maxZ = 0;
+  for (const t of list) maxZ = Math.max(maxZ, t.z);
+  const rects = list.map(t => {
+    const l = t.x * 60 + t.z * 16, tp = t.y * 76 + (maxZ - t.z) * 16;
+    return { left: l, top: tp, right: l + 54, bottom: tp + 70 };
+  });
+  const blockers = list.map((t, i) => {
+    const s = [];
+    for (let j = 0; j < n; j++) {
+      if (i === j || list[j].z <= t.z) continue;
+      if (rectsOverlap(rects[i], rects[j], 0.001)) s.push(j);
+    }
+    return s;
+  });
+  const pairCount = Math.floor(n / 2);
+  const poolSize = Math.min(packParams(curPack).tilePool, TILE_COUNT, pairCount);
+  if (poolSize < 1) return false;
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
+    const placed = new Array(n).fill(false);
+    const order = [];
+    while (order.length < n) {
+      const av = [];
+      for (let i = 0; i < n; i++) {
+        if (placed[i]) continue;
+        let ok = true;
+        for (const b of blockers[i]) if (!placed[b]) { ok = false; break; }
+        if (ok) av.push(i);
+      }
+      if (!av.length) break; // không xảy ra vì quan hệ đè là DAG theo z
+      shuffleArr(av);
+      for (const i of av) { placed[i] = true; order.push(i); }
+    }
+    if (order.length < n) continue;
+    const faces = new Array(n).fill(0);
+    let ci = 0, bad = false;
+    for (let k = 0; k < n; k += 2) {
+      const a = order[k], b = order[k + 1];
+      if (blockers[a].indexOf(b) >= 0 || blockers[b].indexOf(a) >= 0) { bad = true; break; }
+      const f = codes[(ci++) % poolSize];
+      faces[a] = f; faces[b] = f;
+    }
+    if (bad) continue;
+    list.forEach((t, i) => { t.face = faces[i]; });
+    return true;
+  }
+  return false;
 }
 
 /* ---------- Luật tile tự do ---------- */
@@ -469,11 +532,13 @@ function doShuffle(auto) {
   if (!auto && !confirm("Xáo trộn các hình còn lại?")) return;
   shufflesLeft--;
   const alive = tiles.filter(t => !t.removed);
-  const faces = shuffleArr(alive.map(t => t.face));
-  // Đảm bảo sau xáo giải được (thử tối đa 20 lần, mỗi lần render để có rect)
+  // Xáo bằng construction: ván sau xáo luôn giải được (thử tối đa 20 seed,
+  // mỗi lần render để có rect rồi kiểm tra lại bằng solver cho chắc)
   for (let k = 0; k < 20; k++) {
-    shuffleArr(faces);
-    alive.forEach((t, i) => t.face = faces[i]);
+    if (!assignFacesByConstruction(alive)) {
+      const faces = shuffleArr(alive.map(t => t.face));
+      alive.forEach((t, i) => t.face = faces[i]);
+    }
     selected = null;
     renderBoard();
     if (isSolvableState(tiles)) break;
