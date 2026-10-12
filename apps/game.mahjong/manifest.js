@@ -52,7 +52,7 @@ function InitMahjongGame() {
                     <li>Bí đường: dùng <b>Xáo</b> để trộn lại các hình còn lại (số lượt giới hạn).</li>
                     <li>Dùng <b>Gợi ý</b> để máy chỉ một cặp có thể gỡ.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn.</li>
-                    <li>Game có <b>10 pack × 10 map</b> (100 map). <b>Mỗi map 1 kiểu</b> xoay vòng: <b>Pháo đài</b> (tháp giữa + 4 cánh), <b>Song tháp</b>, <b>Kim tự tháp</b>, <b>Rải rác</b>, <b>Vòng vây</b>, <b>Chữ thập</b> — mỗi kiểu có chiến thuật riêng.</li>
+                    <li>Game có <b>10 pack × 10 map</b> (100 map). <b>5 map đầu</b> là thế cơ bản (<b>Mặt phẳng</b> → <b>Tháp đơn</b>) để làm quen. Từ map 6, <b>mỗi map 1 kiểu</b> xoay vòng: <b>Pháo đài</b>, <b>Song tháp</b>, <b>Kim tự tháp</b>, <b>Rải rác</b>, <b>Vòng vây</b>, <b>Chữ thập</b>.</li>
                     <li>Qua 1 map sẽ mở map tiếp theo. Tiến trình lưu trên máy.</li>
                     </ul>
                 </div>
