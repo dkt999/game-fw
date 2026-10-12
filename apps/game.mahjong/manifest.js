@@ -52,7 +52,7 @@ function InitMahjongGame() {
                     <li>Bí đường: dùng <b>Xáo</b> để trộn lại các hình còn lại (số lượt giới hạn).</li>
                     <li>Dùng <b>Gợi ý</b> để máy chỉ một cặp có thể gỡ.</li>
                     <li>Thắng khi dọn sạch toàn bộ bàn.</li>
-                    <li>Game có <b>10 pack × 10 map</b> (100 map). Càng lên pack cao càng nhiều <b>tháp cao tầng</b>, vùng hỗ trợ càng mỏng, càng nhiều loại hình.</li>
+                    <li>Game có <b>10 pack × 10 map</b> (100 map). Mỗi pack có <b>hình dạng riêng</b>: Vuông → Tròn → Thoi → Chữ thập → Vành. Càng lên pack cao càng nhiều <b>tháp cao tầng</b>, càng nhiều loại hình.</li>
                     <li>Qua 1 map sẽ mở map tiếp theo. Tiến trình lưu trên máy.</li>
                     </ul>
                 </div>
