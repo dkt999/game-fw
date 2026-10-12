@@ -206,17 +206,15 @@ function shuffleArr(a) {
 /* Solver kiểm tra tính khả thi: thử gỡ tham lam với thứ tự ngẫu nhiên.
    Trả về true nếu gỡ hết được (có ít nhất 1 cách giải). */
 function isSolvableState(tileList) {
-  // Copy nhẹ để mô phỏng (dùng index)
   const n = tileList.length;
   const removed = new Array(n).fill(false);
-  const rects = tileList.map(t => t._rect); // rect đã cache lúc render
+  // Đè theo lưới logic (x,y,z) — khớp với computeFree
   const isCovered = (i) => {
-    if (!rects[i]) return false;
+    const t = tileList[i];
     for (let j = 0; j < n; j++) {
       if (j === i || removed[j]) continue;
-      if (tileList[j].z <= tileList[i].z) continue;
-      if (!rects[j]) continue;
-      if (rectsOverlap(rects[i], rects[j], 0.001)) return true;
+      const o = tileList[j];
+      if (o.z > t.z && o.x === t.x && o.y === t.y) return true;
     }
     return false;
   };
@@ -329,31 +327,13 @@ function assignFacesByConstruction(list) {
 }
 
 /* ---------- Luật tile tự do ---------- */
-// Đơn giản: tự do = không bị tile nào đè lên (kể cả đè 1 phần).
-// Kiểm tra bằng vùng hiển thị thực tế (getBoundingClientRect) để khớp với những gì người chơi nhìn thấy.
-function rectsOverlap(a, b, minOverlap = 0.001) {
-  const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
-  const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-  if (ix <= 0 || iy <= 0) return false;
-  const area = (a.right - a.left) * (a.bottom - a.top);
-  return (ix * iy) / area >= minOverlap; // đè >0% là tính (1 phần nghìn để tránh sai số)
-}
+// Đơn giản: tự do = không bị tile nào đè lên.
+// Tính theo LƯỚI LOGIC (x,y,z) — hiệu ứng 3D chỉ để nhìn, không ảnh hưởng luật.
 function computeFree(t, list) {
   if (t.removed) return false;
-  if (!t.el) {
-    // Chưa render: fallback dùng lưới logic
-    for (const o of list) {
-      if (o.removed || o === t) continue;
-      if (o.z === t.z + 1 && o.x === t.x && o.y === t.y) return false;
-    }
-    return true;
-  }
-  const tr = t.el.getBoundingClientRect();
   for (const o of list) {
-    if (o.removed || o === t || !o.el) continue;
-    if (o.z <= t.z) continue; // chỉ lớp trên mới đè được
-    const or = o.el.getBoundingClientRect();
-    if (rectsOverlap(tr, or)) return false; // bị đè (kể cả 1 phần)
+    if (o.removed || o === t) continue;
+    if (o.z > t.z && o.x === t.x && o.y === t.y) return false; // bị đè (cùng ô lưới, lớp trên)
   }
   return true;
 }
