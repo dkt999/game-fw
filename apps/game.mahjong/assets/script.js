@@ -203,30 +203,65 @@ function shuffleArr(a) {
   return a;
 }
 
+/* Solver kiểm tra tính khả thi: thử gỡ tham lam với thứ tự ngẫu nhiên.
+   Trả về true nếu gỡ hết được (có ít nhất 1 cách giải). */
+function isSolvableState(tileList) {
+  // Copy nhẹ để mô phỏng (dùng index)
+  const n = tileList.length;
+  const removed = new Array(n).fill(false);
+  const rects = tileList.map(t => t._rect); // rect đã cache lúc render
+  const isCovered = (i) => {
+    if (!rects[i]) return false;
+    for (let j = 0; j < n; j++) {
+      if (j === i || removed[j]) continue;
+      if (tileList[j].z <= tileList[i].z) continue;
+      if (!rects[j]) continue;
+      if (rectsOverlap(rects[i], rects[j], 0.001)) return true;
+    }
+    return false;
+  };
+  for (let iter = 0; iter < 2000; iter++) {
+    // Tìm tất cả cặp free
+    const freeIdx = [];
+    for (let i = 0; i < n; i++) {
+      if (!removed[i] && !isCovered(i)) freeIdx.push(i);
+    }
+    if (freeIdx.length === 0) break;
+    const byFace = {};
+    let found = false;
+    // Xáo thứ tự để thử hướng khác nhau
+    for (let k = freeIdx.length - 1; k > 0; k--) {
+      const r = Math.floor(Math.random() * (k + 1));
+      [freeIdx[k], freeIdx[r]] = [freeIdx[r], freeIdx[k]];
+    }
+    for (const i of freeIdx) {
+      const f = tileList[i].face;
+      if (byFace[f] !== undefined) {
+        removed[i] = true; removed[byFace[f]] = true;
+        found = true;
+        break;
+      }
+      byFace[f] = i;
+    }
+    if (!found) break; // có tile free nhưng không ghép được cặp
+  }
+  return removed.every(Boolean);
+}
 function dealTiles() {
   const pos = generateMapLayout(curPack, curMapIdx);
   const pairCount = pos.length / 2;
   const params = packParams(curPack);
   const poolSize = Math.min(params.tilePool, TILE_COUNT, pairCount);
 
-  // Thử deal tối đa 60 lần để có ít nhất 1 nước đi lúc mở màn
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const faces = [];
-    const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
-    // Mỗi cặp lấy 1 face; nếu cặp nhiều hơn pool thì dùng lại face (4 lá giống nhau vẫn ăn theo cặp)
-    for (let i = 0; i < pairCount; i++) {
-      const f = codes[i % poolSize];
-      faces.push(f, f);
-    }
-    shuffleArr(faces);
-    tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: faces[i], removed: false, free: false, el: null }));
-    updateFreeStates();
-    if (hasAnyMove()) {
-      pairsLeft = pairCount;
-      return;
-    }
+  // Chia 1 lần (tính khả thi kiểm tra ở newGame sau khi render có rect)
+  const faces = [];
+  const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
+  for (let i = 0; i < pairCount; i++) {
+    const f = codes[i % poolSize];
+    faces.push(f, f);
   }
-  // Fallback: vẫn chơi được (có nút xáo cứu)
+  shuffleArr(faces);
+  tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: faces[i], removed: false, free: false, el: null, _rect: null }));
   pairsLeft = pairCount;
 }
 
@@ -321,6 +356,7 @@ function renderBoard() {
     el.addEventListener("click", () => onTileClick(t));
     boardEl.appendChild(el);
     t.el = el;
+    t._rect = el.getBoundingClientRect();
   }
   if (selected) {
     const s = tiles.find(t => t.id === selected.id && !t.removed);
@@ -357,59 +393,22 @@ function countAvailableMoves() {
   for (const k in cnt) moves += Math.floor(cnt[k] / 2);
   return moves;
 }
-/* Kiểm tra 1 tile có bị tile khác đè không (dùng visual) */
-function isCoveredBy(t, o) {
-  if (!t.el || !o.el || o.removed || o.z <= t.z) return false;
-  return rectsOverlap(t.el.getBoundingClientRect(), o.el.getBoundingClientRect());
-}
-/* Phát hiện BÍ THẬT: có face không thể gỡ hết được.
-   Ví dụ: 2 tile giống nhau đè lên nhau — không bao giờ chọn được cả 2.
-   Tổng quát: nếu 1 face còn tile mà tất cả đường gỡ đều bị chặn bởi chính face đó. */
-function isDeadlocked() {
-  const byFace = {};
-  for (const t of tiles) {
-    if (t.removed) continue;
-    (byFace[t.face] = byFace[t.face] || []).push(t);
-  }
-  for (const face in byFace) {
-    const group = byFace[face];
-    if (group.length === 0) continue;
-    // Thử mô phỏng: gỡ tham lam các cặp free. Nếu còn tile mà không gỡ được nữa -> bí.
-    const remaining = new Set(group);
-    let progress = true;
-    while (progress && remaining.size > 0) {
-      progress = false;
-      // 1 tile free trong mô phỏng nếu không bị tile nào "còn trên board" đè.
-      // "Còn trên board" = chưa removed thật, và (nếu cùng face) chưa gỡ trong mô phỏng.
-      const isFreeSim = (t) => {
-        for (const o of tiles) {
-          if (o.removed || o === t) continue;
-          const oPresent = (o.face === t.face) ? remaining.has(o) : true;
-          if (!oPresent) continue;
-          if (isCoveredBy(t, o)) return false;
-        }
-        return true;
-      };
-      const freeTiles = [...remaining].filter(isFreeSim);
-      if (freeTiles.length >= 2) {
-        remaining.delete(freeTiles[0]);
-        remaining.delete(freeTiles[1]);
-        progress = true;
-      }
-    }
-    if (remaining.size > 0) return true; // face này không gỡ hết được -> bí
-  }
-  return false;
-}
-/* Cảnh báo CHỈ khi bí thật (không thể giải), để người chơi dùng Xáo */
+/* Cảnh báo khi thế hiện tại không giải được (dùng solver kiểm tra) */
 function updateMoveWarning() {
   const w = document.getElementById("mj-warnBar");
   if (!w) return;
-  if (pairsLeft > 0 && hasAnyMove() && isDeadlocked()) {
+  w.style.display = "none";
+  // Chỉ kiểm tra khi còn ít tile (cuối ván) để không lag; không nước thì đã tự xáo
+  const remaining = tiles.filter(t => !t.removed);
+  if (pairsLeft <= 0 || !hasAnyMove() || remaining.length > 40) return;
+  // Chạy solver 2 lần (random khác nhau); cả 2 đều thất bại mới báo
+  let solvable = false;
+  for (let k = 0; k < 2 && !solvable; k++) {
+    if (isSolvableState(remaining)) solvable = true;
+  }
+  if (!solvable) {
     w.style.display = "flex";
     w.innerHTML = `⚠️ Thế bí! Có tile không thể gỡ được — dùng <b>&nbsp;Xáo&nbsp;</b> để cứu ván!`;
-  } else {
-    w.style.display = "none";
   }
 }
 function fmtTime(s) {
@@ -470,15 +469,14 @@ function doShuffle(auto) {
   shufflesLeft--;
   const alive = tiles.filter(t => !t.removed);
   const faces = shuffleArr(alive.map(t => t.face));
-  // Đảm bảo sau xáo có nước đi (thử tối đa 40 lần)
-  for (let k = 0; k < 40; k++) {
+  // Đảm bảo sau xáo giải được (thử tối đa 20 lần, mỗi lần render để có rect)
+  for (let k = 0; k < 20; k++) {
     shuffleArr(faces);
     alive.forEach((t, i) => t.face = faces[i]);
-    updateFreeStates();
-    if (hasAnyMove()) break;
+    selected = null;
+    renderBoard();
+    if (isSolvableState(tiles)) break;
   }
-  selected = null;
-  renderBoard();
 }
 function useHint() {
   if (locked || hintsLeft <= 0) return;
@@ -524,8 +522,12 @@ function newGame() {
   selected = null; locked = false;
   const prm = packParams(curPack);
   shufflesLeft = prm.shuffles; hintsLeft = prm.hints;
-  dealTiles();
-  renderBoard();
+  // Kiểm tra tính khả thi TRƯỚC khi cho chơi: deal lại nếu thế bí (tối đa 15 lần)
+  for (let attempt = 0; attempt < 15; attempt++) {
+    dealTiles();
+    renderBoard();
+    if (isSolvableState(tiles)) break;
+  }
   startTimer();
 }
 function startMap(pack, idx) {
