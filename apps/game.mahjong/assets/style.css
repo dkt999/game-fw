@@ -25,7 +25,7 @@
 .mahjong-app .mj-topbar{ position:absolute; top:0; left:60px; right:0; height:44px; display:flex; gap:18px; align-items:center; padding:0 16px; font-size:15px; font-weight:600; background:rgba(12,21,36,.85); z-index:4; border-bottom:1px solid #1d2c47; }
 .mahjong-app .mj-boardFrame{ position:absolute; inset:44px 0 0 60px; overflow:auto; display:flex; align-items:center; justify-content:center; }
 .mahjong-app .mj-board{ position:relative; }
-.mahjong-app .mj-tile{ position:absolute; border-width:2px; border-radius:6px; background:#f4efe4; border:1px solid #b9a86a; box-shadow:2px 3px 0 rgba(0,0,0,.35); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:filter .15s, transform .15s; user-select:none; -webkit-tap-highlight-color:transparent; }
+.mahjong-app .mj-tile{ position:absolute; border-width:2px; border-radius:6px; background:#f4efe4; border:1px solid #b9a86a; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:filter .15s, transform .15s; user-select:none; -webkit-tap-highlight-color:transparent; }
 .mahjong-app .mj-tile img{ width:82%; height:82%; pointer-events:none; }
 .mahjong-app .mj-tile.blocked{ cursor:default; }
 .mahjong-app .mj-tile.free:hover{ outline:2px solid #c9a227; outline-offset:-2px; }
