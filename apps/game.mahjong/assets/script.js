@@ -573,6 +573,16 @@ document.getElementById("mj-packPrev").addEventListener("click", () => {
 document.getElementById("mj-packNext").addEventListener("click", () => {
   if (menuPack < PACK_COUNT) { menuPack++; renderPackMenu(); }
 });
+/* Cheat: ?mahjong_unlock=all hoặc ?mahjong_unlock=N (mở khóa map để xem thử) */
+(function(){
+  try {
+    const m = location.search.match(/[?&]mahjong_unlock=(all|\d+)/);
+    if (m) {
+      const v = m[1] === "all" ? TOTAL_MAPS : parseInt(m[1], 10);
+      setProgress(Math.max(1, Math.min(TOTAL_MAPS, v)));
+    }
+  } catch(e){}
+})();
 renderPackMenu();
 document.getElementById("mj-btnClose").addEventListener("click", () => {
   stopTimer();
