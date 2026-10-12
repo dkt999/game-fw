@@ -357,13 +357,10 @@ function findOneMove() {
 
 /* ---------- Render ---------- */
 const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 16; // DEPTH: độ lệch mỗi lớp tạo chiều sâu (to để nhìn rõ)
-let maxZGlobal = 0;
-// Chìm càng sâu (z thấp) màu càng tối; tile bị chặn tối thêm
+// Sáng/tối: tile tự do luôn sáng; chỉ tile bị chặn (không chọn được) mới tối
 function setTileBrightness(t) {
   if (!t.el) return;
-  const depthF = Math.max(0.45, 1 - (maxZGlobal - t.z) * 0.14);
-  const blockedF = t.free ? 1 : 0.55;
-  t.el.style.filter = `brightness(${(depthF * blockedF).toFixed(2)})`;
+  t.el.style.filter = t.free ? "brightness(1)" : "brightness(0.52)";
 }
 function renderBoard() {
   boardEl.innerHTML = "";
@@ -384,7 +381,6 @@ function renderBoard() {
   boardEl.style.transform = "none";
 
   // Vẽ lớp dưới trước (z-index theo z)
-  maxZGlobal = maxZ;
   const sorted = [...tiles].sort((a, b) => (a.z - b.z) || (a.y - b.y) || (a.x - b.x));
   for (const t of sorted) {
     if (t.removed) continue;
