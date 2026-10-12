@@ -277,17 +277,13 @@ function dealTiles() {
 function assignFacesByConstruction(list) {
   const n = list.length;
   if (!n) return false;
-  let maxZ = 0;
-  for (const t of list) maxZ = Math.max(maxZ, t.z);
-  const rects = list.map(t => {
-    const l = t.x * 60 + t.z * 16, tp = t.y * 76 + (maxZ - t.z) * 16;
-    return { left: l, top: tp, right: l + 54, bottom: tp + 70 };
-  });
+  // Quan hệ đè theo lưới logic (cùng x,y và lớp trên) — khớp với computeFree
   const blockers = list.map((t, i) => {
     const s = [];
     for (let j = 0; j < n; j++) {
-      if (i === j || list[j].z <= t.z) continue;
-      if (rectsOverlap(rects[i], rects[j], 0.001)) s.push(j);
+      if (i === j) continue;
+      const o = list[j];
+      if (o.z > t.z && o.x === t.x && o.y === t.y) s.push(j);
     }
     return s;
   });
