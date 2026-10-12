@@ -189,10 +189,10 @@ let curPack = 1, curMapIdx = 1, curMapNum = 1;
 let locked = false;
 
 /* ---------- DOM ---------- */
-const $ = s => document.querySelector(s);
-const boardEl = $("#mj-board"), boardFrame = $("#mj-boardFrame");
-const statTime = $("#mj-statTime"), statLeft = $("#mj-statLeft"), statDiff = $("#mj-statDiff");
-const shuffleBadge = $("#mj-shuffleBadge"), hintBadge = $("#mj-hintBadge");
+const mj$ = s => document.querySelector(s);
+const boardEl = mj$("#mj-board"), boardFrame = mj$("#mj-boardFrame");
+const statTime = mj$("#mj-statTime"), statLeft = mj$("#mj-statLeft"), statDiff = mj$("#mj-statDiff");
+const shuffleBadge = mj$("#mj-shuffleBadge"), hintBadge = mj$("#mj-hintBadge");
 
 /* ---------- Layout & Deal ---------- */
 function shuffleArr(a) {
@@ -505,22 +505,22 @@ function winGame() {
   stopTimer();
   if (curMapNum >= getProgress() && curMapNum < TOTAL_MAPS) setProgress(curMapNum + 1);
   renderPackMenu(); // cap nhat tien trinh menu
-  $("#mj-endEmoji").textContent = "🎉";
-  $("#mj-endTitle").textContent = "Thắng rồi!";
-  $("#mj-endSub").textContent = `Pack ${curPack} · Map ${curMapIdx} · ${fmtTime(seconds)}`;
-  $("#mj-endModal").style.display = "flex";
+  mj$("#mj-endEmoji").textContent = "🎉";
+  mj$("#mj-endTitle").textContent = "Thắng rồi!";
+  mj$("#mj-endSub").textContent = `Pack ${curPack} · Map ${curMapIdx} · ${fmtTime(seconds)}`;
+  mj$("#mj-endModal").style.display = "flex";
 }
 function loseGame(msg) {
   stopTimer();
-  $("#mj-endEmoji").textContent = "😞";
-  $("#mj-endTitle").textContent = "Thua rồi!";
-  $("#mj-endSub").textContent = msg || "";
-  $("#mj-endModal").style.display = "flex";
+  mj$("#mj-endEmoji").textContent = "😞";
+  mj$("#mj-endTitle").textContent = "Thua rồi!";
+  mj$("#mj-endSub").textContent = msg || "";
+  mj$("#mj-endModal").style.display = "flex";
 }
 
 /* ---------- Ván mới / Menu ---------- */
 function newGame() {
-  $("#mj-endModal").style.display = "none";
+  mj$("#mj-endModal").style.display = "none";
   selected = null; locked = false;
   const prm = packParams(curPack);
   shufflesLeft = prm.shuffles; hintsLeft = prm.hints;
@@ -531,8 +531,8 @@ function newGame() {
 function startMap(pack, idx) {
   curPack = pack; curMapIdx = idx;
   curMapNum = (pack - 1) * MAPS_PER_PACK + idx;
-  $("#mj-mainMenu").style.display = "none";
-  $("#mj-game").style.display = "flex";
+  mj$("#mj-mainMenu").style.display = "none";
+  mj$("#mj-game").style.display = "flex";
   newGame();
 }
 
@@ -565,8 +565,8 @@ function renderPackMenu() {
 }
 
 /* ---------- Wire UI ---------- */
-document.getElementById("mj-rulesBtn").addEventListener("click", () => $("#mj-rulesModal").style.display = "flex");
-document.getElementById("mj-rulesClose").addEventListener("click", () => $("#mj-rulesModal").style.display = "none");
+document.getElementById("mj-rulesBtn").addEventListener("click", () => mj$("#mj-rulesModal").style.display = "flex");
+document.getElementById("mj-rulesClose").addEventListener("click", () => mj$("#mj-rulesModal").style.display = "none");
 document.getElementById("mj-packPrev").addEventListener("click", () => {
   if (menuPack > 1) { menuPack--; renderPackMenu(); }
 });
@@ -592,19 +592,19 @@ document.getElementById("mj-btnClose").addEventListener("click", () => {
 });
 document.getElementById("mj-btnHome").addEventListener("click", () => {
   stopTimer();
-  $("#mj-endModal").style.display = "none";
-  $("#mj-game").style.display = "none";
-  $("#mj-mainMenu").style.display = "flex";
+  mj$("#mj-endModal").style.display = "none";
+  mj$("#mj-game").style.display = "none";
+  mj$("#mj-mainMenu").style.display = "flex";
 });
 document.getElementById("mj-btnShuffle").addEventListener("click", () => doShuffle(false));
 document.getElementById("mj-btnHint").addEventListener("click", useHint);
 document.getElementById("mj-btnNew").addEventListener("click", () => { if (!locked) newGame(); });
 document.getElementById("mj-againBtn").addEventListener("click", newGame);
 document.getElementById("mj-menuBtn").addEventListener("click", () => {
-  $("#mj-endModal").style.display = "none";
-  $("#mj-game").style.display = "none";
-  $("#mj-mainMenu").style.display = "flex";
+  mj$("#mj-endModal").style.display = "none";
+  mj$("#mj-game").style.display = "none";
+  mj$("#mj-mainMenu").style.display = "flex";
 });
 window.addEventListener("resize", () => {
-  if ($("#mj-game").style.display !== "none" && tiles.length) renderBoard();
+  if (mj$("#mj-game").style.display !== "none" && tiles.length) renderBoard();
 });
