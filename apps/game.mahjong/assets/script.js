@@ -156,8 +156,6 @@ function curShapeName() {
   const mapNum = (curPack - 1) * MAPS_PER_PACK + curMapIdx;
   return mapArchetype(mapNum).name;
 }
-// Tên shape của map hiện tại (hiển thị)
-function curShapeName() { return SHAPE_NAMES[packShape(curPack)] || ""; }
 
 // Thông số theo pack
 function packParams(pack) {
