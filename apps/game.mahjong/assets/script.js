@@ -47,6 +47,24 @@ function pyramidCells(set, pos, ox, oy, w, h, layers) {
 }
 
 const ARCHETYPES = [
+  { id: "flat", name: "Mặt phẳng",
+    desc: "Chỉ 1 lớp phẳng — làm quen cách ăn cặp",
+    gen(W, H, diff, rng, set, pos) {
+      // Map 1-2: hình chữ nhật phẳng, to dần
+      const w = 8 + Math.round(diff * 4), h = 5 + Math.round(diff * 2);
+      rectCells(set, pos, Math.floor((W - w) / 2), Math.floor((H - h) / 2), w, h, 0);
+    } },
+  { id: "flat-tower", name: "Tháp đơn",
+    desc: "Mặt phẳng + 1-2 tháp thấp — học cách gỡ lớp trên",
+    gen(W, H, diff, rng, set, pos) {
+      rectCells(set, pos, 0, 0, W, H, 0); // đáy phẳng
+      const n = 1 + (diff > 0.05 ? 1 : 0); // map 3: 1 tháp, map 4-5: 2 tháp
+      for (let i = 0; i < n; i++) {
+        const tw = 3, th = 3;
+        const ox = 2 + i * (W - 4 - tw), oy = Math.floor((H - th) / 2);
+        pyramidCells(set, pos, ox, oy, tw, th, 2); // chỉ 2 lớp
+      }
+    } },
   { id: "fortress", name: "Pháo đài",
     desc: "Tháp đa tầng ở giữa, 4 cánh hỗ trợ đánh vào",
     gen(W, H, diff, rng, set, pos) {
@@ -111,9 +129,13 @@ const ARCHETYPES = [
       pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2)); // tháp giữa
     } },
 ];
-// Mỗi map 1 kiểu: xoay vòng qua các archetype để map liên tiếp luôn khác nhau
+// 6 archetype chính (từ map 6 trở đi)
+const ARCHETYPES_MAIN = ARCHETYPES.filter(a => a.id !== "flat" && a.id !== "flat-tower");
+// Mỗi map 1 kiểu: 5 map đầu học thế cơ bản, từ map 6 xoay vòng 6 archetype chính
 function mapArchetype(mapNum) {
-  return ARCHETYPES[(mapNum - 1) % ARCHETYPES.length];
+  if (mapNum <= 2) return ARCHETYPES[0]; // flat
+  if (mapNum <= 5) return ARCHETYPES[1]; // flat-tower
+  return ARCHETYPES_MAIN[(mapNum - 6) % ARCHETYPES_MAIN.length];
 }
 
 // Sinh layout cho map: trả về mảng {x,y,z} — mỗi map 1 archetype (xoay vòng)
