@@ -208,13 +208,13 @@ function shuffleArr(a) {
 function isSolvableState(tileList) {
   const n = tileList.length;
   const removed = new Array(n).fill(false);
-  // Đè theo lưới logic (x,y,z) — khớp với computeFree
+  const rects = tileList.map(t => t._rect);
   const isCovered = (i) => {
-    const t = tileList[i];
+    if (!rects[i]) return false;
     for (let j = 0; j < n; j++) {
-      if (j === i || removed[j]) continue;
-      const o = tileList[j];
-      if (o.z > t.z && o.x === t.x && o.y === t.y) return true;
+      if (j === i || removed[j] || !rects[j]) continue;
+      if (tileList[j].z <= tileList[i].z) continue;
+      if (rectsOverlap(rects[i], rects[j])) return true;
     }
     return false;
   };
@@ -277,13 +277,21 @@ function dealTiles() {
 function assignFacesByConstruction(list) {
   const n = list.length;
   if (!n) return false;
-  // Quan hệ đè theo lưới logic (cùng x,y và lớp trên) — khớp với computeFree
+  // Quan hệ đè theo vùng hiển thị (DEPTH=8) — khớp với computeFree
+  let maxZ = 0;
+  for (const t of list) maxZ = Math.max(maxZ, t.z);
+  const rects = list.map(t => {
+    const l = t.x * 60 + t.z * 8, tp = t.y * 76 + (maxZ - t.z) * 8;
+    return { left: l, top: tp, right: l + 54, bottom: tp + 70 };
+  });
   const blockers = list.map((t, i) => {
     const s = [];
     for (let j = 0; j < n; j++) {
-      if (i === j) continue;
-      const o = list[j];
-      if (o.z > t.z && o.x === t.x && o.y === t.y) s.push(j);
+      if (i === j || list[j].z <= t.z) continue;
+      const a = rects[i], b = rects[j];
+      const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      if (ix > 0.5 && iy > 0.5) s.push(j);
     }
     return s;
   });
@@ -323,13 +331,27 @@ function assignFacesByConstruction(list) {
 }
 
 /* ---------- Luật tile tự do ---------- */
-// Đơn giản: tự do = không bị tile nào đè lên.
-// Tính theo LƯỚI LOGIC (x,y,z) — hiệu ứng 3D chỉ để nhìn, không ảnh hưởng luật.
+// Đơn giản: tự do = không bị tile nào đè lên (kể cả đè 1 phần).
+// Dùng vùng hiển thị thực tế; DEPTH nhỏ nên khớp với logic.
+function rectsOverlap(a, b) {
+  const ix = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+  const iy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  return ix > 0.5 && iy > 0.5; // đè lấn >0.5px thì tính
+}
 function computeFree(t, list) {
   if (t.removed) return false;
+  if (!t.el) {
+    for (const o of list) {
+      if (o.removed || o === t) continue;
+      if (o.z > t.z && o.x === t.x && o.y === t.y) return false;
+    }
+    return true;
+  }
+  const tr = t.el.getBoundingClientRect();
   for (const o of list) {
-    if (o.removed || o === t) continue;
-    if (o.z > t.z && o.x === t.x && o.y === t.y) return false; // bị đè (cùng ô lưới, lớp trên)
+    if (o.removed || o === t || !o.el) continue;
+    if (o.z <= t.z) continue;
+    if (rectsOverlap(tr, o.el.getBoundingClientRect())) return false;
   }
   return true;
 }
@@ -356,7 +378,7 @@ function findOneMove() {
 }
 
 /* ---------- Render ---------- */
-const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 16; // DEPTH: độ lệch mỗi lớp tạo chiều sâu (to để nhìn rõ)
+const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 8; // DEPTH: độ lệch mỗi lớp (vừa đủ nhìn 3D, không gây nhầm lẫn đè)
 // Sáng/tối: tile tự do luôn sáng; chỉ tile bị chặn (không chọn được) mới tối
 function setTileBrightness(t) {
   if (!t.el) return;
