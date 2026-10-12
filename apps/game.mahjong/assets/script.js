@@ -28,106 +28,111 @@ function mulberry32(seed) {
   };
 }
 
-/* ---------- Hình dạng map ---------- */
-// Mỗi shape là hàm (W,H) -> mảng {x,y} (lớp đáy). Không nhất thiết hình vuông.
-const SHAPES = {
-  rect(W, H) {
-    const c = [];
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) c.push({ x, y });
-    return c;
-  },
-  circle(W, H) { // hình tròn / ellipse
-    const c = [], cx = (W - 1) / 2, cy = (H - 1) / 2, rx = W / 2, ry = H / 2;
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const dx = (x - cx) / rx, dy = (y - cy) / ry;
-      if (dx * dx + dy * dy <= 1) c.push({ x, y });
-    }
-    return c;
-  },
-  diamond(W, H) { // hình thoi
-    const c = [], cx = (W - 1) / 2, cy = (H - 1) / 2, rx = W / 2, ry = H / 2;
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      if (Math.abs(x - cx) / rx + Math.abs(y - cy) / ry <= 1) c.push({ x, y });
-    }
-    return c;
-  },
-  cross(W, H) { // chữ thập
-    const c = [], cx = Math.floor(W / 2), cy = Math.floor(H / 2);
-    const aw = Math.max(1, Math.floor(W / 6)), ah = Math.max(1, Math.floor(H / 6));
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      if ((Math.abs(y - cy) <= ah) || (Math.abs(x - cx) <= aw)) c.push({ x, y });
-    }
-    return c;
-  },
-  donut(W, H) { // vành khuyên (chữ nhật có lỗ giữa)
-    const c = [];
-    const x1 = Math.floor(W / 4), x2 = W - 1 - x1, y1 = Math.floor(H / 4), y2 = H - 1 - y1;
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      if (x >= x1 && x <= x2 && y >= y1 && y <= y2) continue; // lỗ giữa
-      c.push({ x, y });
-    }
-    return c;
-  },
-};
-const SHAPE_NAMES = { rect: "Vuông", circle: "Tròn", diamond: "Thoi", cross: "Chữ thập", donut: "Vành" };
-// Shape theo pack: dễ -> hình đặc đơn giản, khó -> hình có lỗ / phức tạp
-function packShape(pack) {
-  if (pack <= 2) return "rect";
-  if (pack <= 4) return "circle";
-  if (pack <= 6) return "diamond";
-  if (pack <= 8) return "cross";
-  return "donut";
+/* ---------- Archetype map (mỗi map 1 chiến thuật) ---------- */
+// Mỗi archetype là 1 ý đồ thiết kế riêng, không random vô định.
+// Helper: thêm pos không trùng (cùng x,y,z)
+function addPos(set, pos, x, y, z) {
+  const k = x + "," + y + "," + z;
+  if (!set.has(k)) { set.add(k); pos.push({ x, y, z }); }
+}
+function rectCells(set, pos, ox, oy, w, h, z) {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) addPos(set, pos, ox + x, oy + y, z);
+}
+function pyramidCells(set, pos, ox, oy, w, h, layers) {
+  for (let z = 0; z < layers; z++) {
+    const sh = Math.floor(z / 2), ww = w - sh * 2, hh = h - sh * 2;
+    if (ww < 2 || hh < 2) break;
+    rectCells(set, pos, ox + sh, oy + sh, ww, hh, z);
+  }
 }
 
-// Sinh layout cho map: trả về mảng {x,y,z}
+const ARCHETYPES = [
+  { id: "fortress", name: "Pháo đài",
+    desc: "Tháp đa tầng ở giữa, 4 cánh hỗ trợ đánh vào",
+    gen(W, H, diff, rng, set, pos) {
+      const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
+      // 4 cánh hỗ trợ (1 lớp) — Bắc/Nam/Đông/Tây
+      rectCells(set, pos, cx - 2, 0, 4, 2, 0);       // Bắc
+      rectCells(set, pos, cx - 2, H - 2, 4, 2, 0);   // Nam
+      rectCells(set, pos, 0, cy - 2, 2, 4, 0);       // Tây
+      rectCells(set, pos, W - 2, cy - 2, 2, 4, 0);   // Đông
+      // Tháp trung tâm đa tầng
+      pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2));
+    } },
+  { id: "twin", name: "Song tháp",
+    desc: "2 tháp 2 bên, cầu nối ở giữa",
+    gen(W, H, diff, rng, set, pos) {
+      const cy = Math.floor(H / 2), layers = 3 + Math.round(diff * 2);
+      pyramidCells(set, pos, 1, cy - 2, 4, 4, layers);          // tháp trái
+      pyramidCells(set, pos, W - 5, cy - 2, 4, 4, layers);      // tháp phải
+      rectCells(set, pos, 5, cy - 1, W - 10, 2, 0);             // cầu nối
+    } },
+  { id: "pyramid", name: "Kim tự tháp",
+    desc: "1 kim tự tháp lớn ở giữa",
+    gen(W, H, diff, rng, set, pos) {
+      const w = 8, h = 6, layers = 4 + Math.round(diff * 2);
+      pyramidCells(set, pos, Math.floor((W - w) / 2), Math.floor((H - h) / 2), w, h, layers);
+    } },
+  { id: "scatter", name: "Rải rác",
+    desc: "Nhiều tháp nhỏ rải khắp board",
+    gen(W, H, diff, rng, set, pos) {
+      const n = 4 + Math.round(diff * 3); // 4-7 tháp
+      for (let i = 0; i < n; i++) {
+        const tw = 3 + Math.floor(rng() * 2), th = 3 + Math.floor(rng() * 2);
+        const ox = Math.floor(rng() * (W - tw + 1)), oy = Math.floor(rng() * (H - th + 1));
+        pyramidCells(set, pos, ox, oy, tw, th, 2 + Math.round(rng() * diff * 2));
+      }
+      // Lớp đáy mỏng hỗ trợ
+      for (let k = 0; k < 20; k++) {
+        const x = Math.floor(rng() * W), y = Math.floor(rng() * H);
+        addPos(set, pos, x, y, 0);
+      }
+    } },
+  { id: "ring", name: "Vòng vây",
+    desc: "Vành ngoài hỗ trợ, tháp trong bị vây",
+    gen(W, H, diff, rng, set, pos) {
+      // Vành ngoài (1 lớp, có lỗ giữa)
+      const x1 = 0, x2 = W - 1, y1 = 0, y2 = H - 1;
+      const hx1 = 3, hx2 = W - 4, hy1 = 2, hy2 = H - 3;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (x >= hx1 && x <= hx2 && y >= hy1 && y <= hy2) continue;
+        addPos(set, pos, x, y, 0);
+      }
+      // Tháp trong
+      const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
+      pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2));
+    } },
+  { id: "cross", name: "Chữ thập",
+    desc: "Chữ thập + tháp trung tâm",
+    gen(W, H, diff, rng, set, pos) {
+      const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
+      rectCells(set, pos, 0, cy - 1, W, 2, 0); // ngang
+      rectCells(set, pos, cx - 1, 0, 2, H, 0); // dọc
+      pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2)); // tháp giữa
+    } },
+];
+// Mỗi map 1 kiểu: xoay vòng qua các archetype để map liên tiếp luôn khác nhau
+function mapArchetype(mapNum) {
+  return ARCHETYPES[(mapNum - 1) % ARCHETYPES.length];
+}
+
+// Sinh layout cho map: trả về mảng {x,y,z} — mỗi map 1 archetype (xoay vòng)
 function generateMapLayout(pack, mapIdx) {
-  const t = (pack - 1) / (PACK_COUNT - 1); // 0 (dễ) -> 1 (khó)
-  const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1); // 0 -> 1 trong pack
-  const diff = Math.min(1, t * 0.85 + tm * 0.15); // độ khó tổng hợp
-  const rng = mulberry32(pack * 1000 + mapIdx * 37 + 11);
-  const shape = packShape(pack);
-
-  // Vùng HỖ TRỢ: lớp đáy theo hình dạng của pack (không nhất thiết vuông)
-  const baseCells = SHAPES[shape](BOARD_W, BOARD_H);
-  const baseSet = new Set(baseCells.map(c => c.x + "," + c.y));
-  const pos = baseCells.map(c => ({ x: c.x, y: c.y, z: 0 }));
-
-  // Vùng CAO TẦNG: các tháp nhiều lớp, chỉ đặt lên ô thuộc shape
-  const towerCount = 1 + Math.round(diff * 3);        // 1 -> 4 tháp
-  const towerLayers = 2 + Math.round(diff * 3);       // mỗi tháp 2 -> 5 lớp (kể cả đáy)
-  const baseTW = 5 + Math.round(diff * 2);            // rộng 5 -> 7
-  const baseTH = 4 + Math.round(diff * 2);            // cao 4 -> 6
-  for (let i = 0; i < towerCount; i++) {
-    // Thử 25 vị trí, chọn vị trí tháp nằm gọn trong shape nhất
-    let best = null, bestScore = -1;
-    for (let trial = 0; trial < 25; trial++) {
-      const tw = Math.max(3, baseTW - Math.floor(rng() * 2));
-      const th = Math.max(3, baseTH - Math.floor(rng() * 2));
-      const ox = Math.floor(rng() * (BOARD_W - tw + 1));
-      const oy = Math.floor(rng() * (BOARD_H - th + 1));
-      let score = 0;
-      for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
-        if (baseSet.has((ox + x) + "," + (oy + y))) score++;
-      }
-      if (score > bestScore) { bestScore = score; best = { tw, th, ox, oy }; }
-      if (score === tw * th) break; // vừa khít
-    }
-    if (!best || bestScore < 4) continue; // shape quá nhỏ, bỏ tháp này
-    const { tw, th, ox, oy } = best;
-    // Tháp dạng kim tự tháp: mỗi lớp trên thu nhỏ vào 1 ô mỗi bên (cách lớp)
-    for (let z = 1; z < towerLayers; z++) {
-      const shrink = Math.floor(z / 2);
-      const w = tw - shrink * 2, h = th - shrink * 2;
-      if (w < 2 || h < 2) break;
-      const cx = ox + shrink, cy = oy + shrink;
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        const gx = cx + x, gy = cy + y;
-        if (baseSet.has(gx + "," + gy)) pos.push({ x: gx, y: gy, z }); // chỉ đặt lên ô có trong shape
-      }
-    }
-  }
+  const mapNum = (pack - 1) * MAPS_PER_PACK + mapIdx;
+  const t = (pack - 1) / (PACK_COUNT - 1);
+  const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1);
+  const diff = Math.min(1, t * 0.85 + tm * 0.15);
+  const rng = mulberry32(mapNum * 7919 + 13);
+  const arch = mapArchetype(mapNum);
+  const set = new Set(), pos = [];
+  arch.gen(BOARD_W, BOARD_H, diff, rng, set, pos);
   if (pos.length % 2 !== 0) pos.pop();
   return pos;
+}
+// Tên kiểu map hiện tại (hiển thị)
+function curShapeName() {
+  const mapNum = (curPack - 1) * MAPS_PER_PACK + curMapIdx;
+  return mapArchetype(mapNum).name;
 }
 // Tên shape của map hiện tại (hiển thị)
 function curShapeName() { return SHAPE_NAMES[packShape(curPack)] || ""; }
