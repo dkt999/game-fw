@@ -281,7 +281,7 @@ function assignFacesByConstruction(list) {
   let maxZ = 0;
   for (const t of list) maxZ = Math.max(maxZ, t.z);
   const rects = list.map(t => {
-    const l = t.x * 60 + t.z * 8, tp = t.y * 76 + (maxZ - t.z) * 8;
+    const l = t.x * 60, tp = t.y * 76; // DEPTH=0: chồng thẳng
     return { left: l, top: tp, right: l + 54, bottom: tp + 70 };
   });
   const blockers = list.map((t, i) => {
@@ -378,7 +378,7 @@ function findOneMove() {
 }
 
 /* ---------- Render ---------- */
-const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 8; // DEPTH: độ lệch mỗi lớp (vừa đủ nhìn 3D, không gây nhầm lẫn đè)
+const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 0; // Chồng thẳng đứng 100% (không lệch) cho sạch đẹp
 // Sáng/tối: tile tự do luôn sáng; chỉ tile bị chặn (không chọn được) mới tối
 function setTileBrightness(t) {
   if (!t.el) return;
