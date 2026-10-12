@@ -330,10 +330,11 @@ function renderBoard() {
   const availW = Math.max(200, boardFrame.clientWidth - 24);
   const availH = Math.max(200, boardFrame.clientHeight - 24);
   const scale = Math.min(availW / needW, availH / needH, 1.15);
-  boardEl.style.width = needW + "px";
-  boardEl.style.height = needH + "px";
-  boardEl.style.transform = `scale(${scale})`;
-  boardEl.style.transformOrigin = "center center";
+  // Dùng kích thước đã scale trực tiếp (không dùng transform) để flex canh giữa chuẩn
+  const TW = BASE_TW * scale, TH = BASE_TH * scale, GP = GAP * scale, DP = DEPTH * scale;
+  boardEl.style.width = (needW * scale) + "px";
+  boardEl.style.height = (needH * scale) + "px";
+  boardEl.style.transform = "none";
 
   // Vẽ lớp dưới trước (z-index theo z)
   const sorted = [...tiles].sort((a, b) => (a.z - b.z) || (a.y - b.y) || (a.x - b.x));
@@ -341,10 +342,10 @@ function renderBoard() {
     if (t.removed) continue;
     const el = document.createElement("div");
     el.className = "mj-tile" + (t.free ? " free" : " blocked");
-    el.style.width = BASE_TW + "px";
-    el.style.height = BASE_TH + "px";
-    el.style.left = (t.x * (BASE_TW + GAP) + t.z * DEPTH) + "px";
-    el.style.top = (t.y * (BASE_TH + GAP) + (maxZ - t.z) * DEPTH) + "px";
+    el.style.width = TW + "px";
+    el.style.height = TH + "px";
+    el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
+    el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
     el.style.zIndex = t.z * 100 + t.y * 10 + t.x;
     // Lớp càng cao càng sáng viền + bóng đổ đậm để thấy rõ đang đè lên lớp dưới
     el.style.boxShadow = `${2 + t.z * 2}px ${3 + t.z * 3}px 0 rgba(0,0,0,${0.35 + t.z * 0.12})`;
