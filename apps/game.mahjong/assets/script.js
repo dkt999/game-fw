@@ -381,6 +381,14 @@ function findOneMove() {
 
 /* ---------- Render ---------- */
 const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 16; // DEPTH: độ lệch mỗi lớp tạo chiều sâu (to để nhìn rõ)
+let maxZGlobal = 0;
+// Chìm càng sâu (z thấp) màu càng tối; tile bị chặn tối thêm
+function setTileBrightness(t) {
+  if (!t.el) return;
+  const depthF = Math.max(0.45, 1 - (maxZGlobal - t.z) * 0.14);
+  const blockedF = t.free ? 1 : 0.55;
+  t.el.style.filter = `brightness(${(depthF * blockedF).toFixed(2)})`;
+}
 function renderBoard() {
   boardEl.innerHTML = "";
   // Kích thước thiết kế
@@ -400,6 +408,7 @@ function renderBoard() {
   boardEl.style.transform = "none";
 
   // Vẽ lớp dưới trước (z-index theo z)
+  maxZGlobal = maxZ;
   const sorted = [...tiles].sort((a, b) => (a.z - b.z) || (a.y - b.y) || (a.x - b.x));
   for (const t of sorted) {
     if (t.removed) continue;
@@ -410,9 +419,6 @@ function renderBoard() {
     el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
     el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
     el.style.zIndex = t.z * 100 + t.y * 10 + t.x;
-    // Lớp càng cao càng sáng viền + bóng đổ đậm để thấy rõ đang đè lên lớp dưới
-    el.style.boxShadow = `${2 + t.z * 2}px ${3 + t.z * 3}px 0 rgba(0,0,0,${0.35 + t.z * 0.12})`;
-    el.style.borderColor = ["#b9a86a", "#d4b84a", "#e8c832", "#ffe066"][Math.min(t.z, 3)];
     const img = document.createElement("img");
     img.src = tileSrc(t.face);
     img.alt = "";
@@ -421,6 +427,7 @@ function renderBoard() {
     boardEl.appendChild(el);
     t.el = el;
     t._rect = el.getBoundingClientRect();
+    setTileBrightness(t);
   }
   if (selected) {
     const s = tiles.find(t => t.id === selected.id && !t.removed);
@@ -436,6 +443,7 @@ function refreshTileClasses() {
     if (!t.el || t.removed) continue;
     t.el.classList.toggle("free", t.free);
     t.el.classList.toggle("blocked", !t.free);
+    setTileBrightness(t);
   }
 }
 function updateStats() {
