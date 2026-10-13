@@ -109,6 +109,41 @@ let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
+// Kiem tra thang trang (an ngay khi chia bai)
+function checkThangTrang(hand){
+  const ranks = hand.map(c => c.rank).sort((a,b) => a-b);
+  // Tu quy heo (4 con 2)
+  if (ranks.filter(r => r === 15).length === 4)
+    return "Tứ quý heo";
+  // Dem doi
+  const counts = {};
+  ranks.forEach(r => counts[r] = (counts[r]||0)+1);
+  const pairs = Object.keys(counts).filter(r => counts[r] === 2).map(Number).sort((a,b)=>a-b);
+  // 6 doi thong (6 doi lien tiep)
+  if (pairs.length >= 6){
+    for (let i = 0; i <= pairs.length - 6; i++){
+      let ok = true;
+      for (let j = 1; j < 6; j++) if (pairs[i+j] !== pairs[i]+j) ok = false;
+      if (ok) return "6 đôi thông";
+    }
+  }
+  // Sanh rong (3-A lien tiep, 12 la)
+  const uniq = [...new Set(ranks)].sort((a,b)=>a-b);
+  if (uniq.length >= 12){
+    for (let i = 0; i <= uniq.length - 12; i++){
+      if (uniq[i] === 3){
+        let ok = true;
+        for (let j = 1; j < 12; j++) if (uniq[i+j] !== 3+j) ok = false;
+        if (ok) return "Sảnh rồng";
+      }
+    }
+  }
+  // 4 sam co (4 bo 3 la giong nhau)
+  const triples = Object.keys(counts).filter(r => counts[r] === 3).length;
+  if (triples >= 4) return "4 sám cô";
+  return null;
+}
+
 function newGame(){
   const deck = shuffle(makeDeck());
   hands = [[], [], [], []];
@@ -134,8 +169,25 @@ function newGame(){
       if (hands[p].some(c => c.rank === 3 && c.suit === 0)) turn = p;
     }
   }
+  // Kiem tra thang trang truoc khi danh
+  for (let p = 0; p < 4; p++){
+    const tt = checkThangTrang(hands[p]);
+    if (tt){
+      gameOver = true;
+      finished = [p];
+      lastWinner = p;
+      render();
+      const medals = ["🥇"];
+      const resultEl = document.getElementById("tl-result");
+      if (resultEl) resultEl.innerHTML =
+        `<div class="tl-rank-row"><span>🥇 ${BOT_NAMES[p]}</span><span>Thắng trắng!</span></div>
+         <div class="tl-rank-row"><span>🎴 ${tt}</span><span></span></div>`;
+      const popup = document.getElementById("tl-popup");
+      if (popup) popup.style.display = "flex";
+      return;
+    }
+  }
   render();
-  setStatus(BOT_NAMES[turn] + (turn === 0 ? " (bạn)" : "") + " đi trước (có 3♠)");
   /* Cho chon do kho xong moi chay */
 }
 
