@@ -5,25 +5,21 @@ const SIZE = 4;
 const TARGET = 1024;
 const BEST_KEY = "game1024_best";
 
-let grid = [];
+let tiles = []; // [{id, r, c, value, merged}]
+let nextId = 1;
 let score = 0;
 let best = 0;
 let history = [];
 let won = false;
 let over = false;
 let keepGoing = false;
-let justMerged = []; // danh sach [r,c] vua gop de animation
-let lastMoveDir = -1; // huong di chuyen vua roi de animation truot
 
 const boardEl = () => document.getElementById("g1024-board");
+const tilesLayerEl = () => document.getElementById("g1024-tiles");
 const scoreEl = () => document.getElementById("g1024-score");
 const bestEl = () => document.getElementById("g1024-best");
 const overlayEl = () => document.getElementById("g1024-overlay");
 const overlayTextEl = () => document.getElementById("g1024-overlayText");
-
-function emptyGrid(){
-  return Array.from({length: SIZE}, () => Array(SIZE).fill(0));
-}
 
 function loadBest(){
   try { best = parseInt(localStorage.getItem(BEST_KEY) || "0", 10) || 0; }
@@ -33,8 +29,15 @@ function saveBest(){
   try { localStorage.setItem(BEST_KEY, String(best)); } catch(e){}
 }
 
+function gridFromTiles(){
+  const g = Array.from({length: SIZE}, () => Array(SIZE).fill(null));
+  for (const t of tiles) g[t.r][t.c] = t;
+  return g;
+}
+
 function newGame(){
-  grid = emptyGrid();
+  tiles = [];
+  nextId = 1;
   score = 0;
   history = [];
   won = false;
@@ -43,12 +46,16 @@ function newGame(){
   spawnTile();
   spawnTile();
   hideOverlay();
-  render();
+  render(true);
   updateScores();
 }
 
 function snapshot(){
-  return { grid: grid.map(r => r.slice()), score };
+  return {
+    tiles: tiles.map(t => ({...t})),
+    score, nextId,
+    won, over
+  };
 }
 function pushHistory(){
   history.push(snapshot());
@@ -57,118 +64,136 @@ function pushHistory(){
 function undo(){
   if (!history.length || over) return;
   const s = history.pop();
-  grid = s.grid;
+  tiles = s.tiles;
   score = s.score;
-  won = grid.some(r => r.some(v => v >= TARGET));
+  nextId = s.nextId;
+  won = s.won;
   hideOverlay();
-  render();
+  render(true);
   updateScores();
 }
 
 function emptyCells(){
+  const g = gridFromTiles();
   const cells = [];
   for (let r = 0; r < SIZE; r++)
     for (let c = 0; c < SIZE; c++)
-      if (grid[r][c] === 0) cells.push([r, c]);
+      if (!g[r][c]) cells.push([r, c]);
   return cells;
 }
 
 function spawnTile(){
   const cells = emptyCells();
-  if (!cells.length) return;
+  if (!cells.length) return null;
   const [r, c] = cells[Math.floor(Math.random() * cells.length)];
-  grid[r][c] = Math.random() < 0.9 ? 2 : 4;
-}
-
-function slideRow(row, rIdx, dir, gSize){
-  // Trượt sang trái, gộp các cặp giống nhau
-  // Tra ve vi tri cac tile vua gop (de animation)
-  const filtered = row.filter(v => v !== 0);
-  const merged = [];
-  const mergePos = []; // index trong merged[]
-  let gained = 0;
-  for (let i = 0; i < filtered.length; i++){
-    if (i + 1 < filtered.length && filtered[i] === filtered[i+1]){
-      const v = filtered[i] * 2;
-      mergePos.push(merged.length);
-      merged.push(v);
-      gained += v;
-      i++;
-      if (v >= TARGET && !won){ won = true; }
-    } else {
-      merged.push(filtered[i]);
-    }
-  }
-  while (merged.length < SIZE) merged.push(0);
-  return { row: merged, gained, mergePos, moved: merged.some((v,i) => v !== row[i]) };
-}
-
-// Chuyen vi tri merge (trong he xoay) ve toa do that
-function mergePosToReal(mergePos, rIdx, dir){
-  const out = [];
-  for (const cIdx of mergePos){
-    let r = rIdx, c = cIdx;
-    // Dao nguoc phep xoay: xoay phai dir lan
-    for (let i = 0; i < dir; i++){
-      const nr = c, nc = SIZE - 1 - r;
-      r = nr; c = nc;
-    }
-    out.push([r, c]);
-  }
-  return out;
-}
-
-function rotateLeft(g){
-  const n = g.length;
-  const out = emptyGrid();
-  for (let r = 0; r < n; r++)
-    for (let c = 0; c < n; c++)
-      out[n-1-c][r] = g[r][c];
-  return out;
+  const t = { id: nextId++, r, c, value: Math.random() < 0.9 ? 2 : 4, isNew: true };
+  tiles.push(t);
+  return t;
 }
 
 function move(dir){
   // dir: 0=trái, 1=lên, 2=phải, 3=xuống
   if (over) return;
-  lastMoveDir = dir;
   pushHistory();
-  let g = grid;
-  for (let i = 0; i < dir; i++) g = rotateLeft(g);
-  let moved = false, gained = 0;
-  const newG = [];
-  justMerged = [];
-  for (let r = 0; r < SIZE; r++){
-    const res = slideRow(g[r], r, dir, SIZE);
-    newG.push(res.row);
-    if (res.moved) moved = true;
-    gained += res.gained;
-    // Ghi nhan vi tri gop
-    for (const [rr, cc] of mergePosToReal(res.mergePos, r, dir)){
-      justMerged.push(rr + "," + cc);
+
+  // Xóa flag cũ
+  for (const t of tiles){ t.isNew = false; t.justMerged = false; }
+
+  // Nhóm tile theo hàng/cột theo hướng di chuyển
+  let moved = false;
+  let gained = 0;
+  const toRemove = new Set();
+
+  // Tạo lưới để xử lý
+  const getLines = () => {
+    const lines = [];
+    if (dir === 0 || dir === 2){
+      // Theo hàng ngang
+      for (let r = 0; r < SIZE; r++){
+        const line = [];
+        for (let c = 0; c < SIZE; c++){
+          const cc = (dir === 0) ? c : (SIZE - 1 - c);
+          line.push({r, c: cc});
+        }
+        lines.push(line);
+      }
+    } else {
+      // Theo cột dọc
+      for (let c = 0; c < SIZE; c++){
+        const line = [];
+        for (let r = 0; r < SIZE; r++){
+          const rr = (dir === 1) ? r : (SIZE - 1 - r);
+          line.push({r: rr, c});
+        }
+        lines.push(line);
+      }
+    }
+    return lines;
+  };
+
+  const g = gridFromTiles();
+  const lines = getLines();
+
+  for (const line of lines){
+    // Lấy tile theo thứ tự
+    const lineTiles = [];
+    for (const {r, c} of line){
+      if (g[r][c]) lineTiles.push(g[r][c]);
+    }
+    // Trượt và gộp
+    let targetIdx = 0;
+    for (let i = 0; i < lineTiles.length; i++){
+      const t = lineTiles[i];
+      const {r: tr, c: tc} = line[targetIdx];
+      if (i + 1 < lineTiles.length && lineTiles[i].value === lineTiles[i+1].value){
+        // Gộp 2 tile
+        const t2 = lineTiles[i+1];
+        t.r = tr; t.c = tc;
+        t.value *= 2;
+        t.justMerged = true;
+        gained += t.value;
+        if (t.value >= TARGET && !won) won = true;
+        toRemove.add(t2.id);
+        // Di chuyển t2 đến vị trí gộp để animation trượt
+        t2.r = tr; t2.c = tc;
+        t2.merging = true;
+        i++; // bỏ qua tile đã gộp
+        moved = true;
+      } else {
+        if (t.r !== tr || t.c !== tc) moved = true;
+        t.r = tr; t.c = tc;
+      }
+      targetIdx++;
     }
   }
-  // Xoay ngược lại: xoay trái (4-dir)%4 lần
-  let finalG = newG;
-  for (let i = 0; i < (4 - dir) % 4; i++) finalG = rotateLeft(finalG);
-  grid = finalG;
+
   if (!moved){
-    history.pop(); // không di chuyển thì bỏ snapshot
+    history.pop();
     return;
   }
+
   score += gained;
+  // Xóa tile đã gộp (sau khi animation)
+  tiles = tiles.filter(t => !toRemove.has(t.id));
   spawnTile();
-  render();
+  render(false);
   updateScores();
+  // Xóa flag merging sau animation
+  setTimeout(() => {
+    for (const t of tiles) delete t.merging;
+  }, 200);
   checkEnd();
 }
 
 function movesAvailable(){
   if (emptyCells().length) return true;
+  const g = gridFromTiles();
   for (let r = 0; r < SIZE; r++)
     for (let c = 0; c < SIZE; c++){
-      const v = grid[r][c];
-      if (c + 1 < SIZE && grid[r][c+1] === v) return true;
-      if (r + 1 < SIZE && grid[r+1][c] === v) return true;
+      const t = g[r][c];
+      if (!t) continue;
+      if (c + 1 < SIZE && g[r][c+1] && g[r][c+1].value === t.value) return true;
+      if (r + 1 < SIZE && g[r+1][c] && g[r+1][c].value === t.value) return true;
     }
   return false;
 }
@@ -195,13 +220,16 @@ function showOverlay(text, canContinue){
   overlayEl().classList.add("show");
 }
 function hideOverlay(){
-  overlayEl().classList.remove("show");
+  const o = overlayEl();
+  if (o) o.classList.remove("show");
 }
 
 function updateScores(){
-  scoreEl().textContent = score;
+  const sEl = scoreEl();
+  if (sEl) sEl.textContent = score;
   if (score > best){ best = score; saveBest(); }
-  bestEl().textContent = best;
+  const bEl = bestEl();
+  if (bEl) bEl.textContent = best;
 }
 
 const TILE_COLORS = {
@@ -218,41 +246,73 @@ const TILE_COLORS = {
   2048: ["#3c3a32", "#f9f6f2"]
 };
 
-function render(){
-  const board = boardEl();
-  board.innerHTML = "";
-  for (let r = 0; r < SIZE; r++){
-    for (let c = 0; c < SIZE; c++){
-      const cell = document.createElement("div");
-      cell.className = "g1024-cell";
-      const v = grid[r][c];
-      if (v){
-        const tile = document.createElement("div");
-        tile.className = "g1024-tile";
-        const [bg, fg] = TILE_COLORS[v] || TILE_COLORS[2048];
-        tile.style.background = bg;
-        tile.style.color = fg;
-        tile.textContent = v;
-        if (v >= 1024) tile.classList.add("super");
-        if (String(v).length >= 4) tile.classList.add("small");
-        // Chi animation tile vua duoc gop
-        if (justMerged.includes(r + "," + c)) tile.classList.add("merged");
-        cell.appendChild(tile);
-      }
-      board.appendChild(cell);
+// Map id -> element để giữ và animation
+const tileEls = new Map();
+
+function tilePos(r, c){
+  // Vị trí % trong board
+  return {
+    left: (c / SIZE * 100) + "%",
+    top: (r / SIZE * 100) + "%",
+    width: (100 / SIZE) + "%",
+    height: (100 / SIZE) + "%"
+  };
+}
+
+function render(instant){
+  const layer = tilesLayerEl();
+  if (!layer) return;
+  const seen = new Set();
+  for (const t of tiles){
+    seen.add(t.id);
+    let el = tileEls.get(t.id);
+    const pos = tilePos(t.r, t.c);
+    if (!el){
+      el = document.createElement("div");
+      el.className = "g1024-tile-abs";
+      tileEls.set(t.id, el);
+      layer.appendChild(el);
+      // Tile mới: đặt ngay vị trí, không transition
+      el.style.transition = "none";
+      el.style.left = pos.left;
+      el.style.top = pos.top;
+      el.style.width = pos.width;
+      el.style.height = pos.height;
+      void el.offsetWidth; // reflow
+      el.style.transition = "";
+      if (t.isNew) el.classList.add("appear");
+    } else {
+      // Cập nhật vị trí -> CSS transition sẽ trượt
+      el.style.left = pos.left;
+      el.style.top = pos.top;
+    }
+    // Cập nhật nội dung
+    const [bg, fg] = TILE_COLORS[t.value] || TILE_COLORS[2048];
+    el.style.background = bg;
+    el.style.color = fg;
+    el.textContent = t.value;
+    el.classList.toggle("super", t.value >= 1024);
+    el.classList.toggle("small", String(t.value).length >= 4);
+    el.classList.toggle("merged", !!t.justMerged);
+    // Xóa class appear sau animation
+    if (t.isNew){
+      setTimeout(() => el.classList.remove("appear"), 250);
+      t.isNew = false;
+    }
+    if (t.justMerged){
+      setTimeout(() => { el.classList.remove("merged"); t.justMerged = false; }, 320);
     }
   }
-  // Animation truot cho ca board theo huong di chuyen
-  if (lastMoveDir >= 0){
-    board.classList.remove("slide-l", "slide-r", "slide-u", "slide-d");
-    void board.offsetWidth; // force reflow de restart animation
-    const cls = ["slide-l", "slide-u", "slide-r", "slide-d"][lastMoveDir];
-    board.classList.add(cls);
-    lastMoveDir = -1;
+  // Xóa element của tile đã mất
+  for (const [id, el] of tileEls){
+    if (!seen.has(id)){
+      el.remove();
+      tileEls.delete(id);
+    }
   }
 }
 
-/* ---- Input: phím + vuốt ---- */
+/* ---- Input ---- */
 
 const KEYMAP = {
   ArrowLeft: 0, a: 0, A: 0,
@@ -266,9 +326,6 @@ document.addEventListener("keydown", (e) => {
   if (e.key in KEYMAP){
     e.preventDefault();
     move(KEYMAP[e.key]);
-  } else if ((e.key === "u" || e.key === "U") && (e.ctrlKey || e.metaKey)){
-    e.preventDefault();
-    undo();
   }
 });
 
@@ -284,24 +341,17 @@ document.addEventListener("pointerup", (e) => {
   const dy = e.clientY - touchStart.y;
   touchStart = null;
   const adx = Math.abs(dx), ady = Math.abs(dy);
-  if (Math.max(adx, ady) < 24) return; // vuốt quá ngắn
+  if (Math.max(adx, ady) < 24) return;
   let dir;
   if (adx > ady) dir = dx > 0 ? 2 : 0;
   else dir = dy > 0 ? 3 : 1;
   move(dir);
 });
 
-/* ---- Nút bấm ---- */
-
 document.addEventListener("click", (e) => {
   if (e.target.id === "g1024-new") newGame();
   else if (e.target.id === "g1024-undo") undo();
-  else if (e.target.id === "g1024-again"){
-    // xử lý trong showOverlay
-  }
 });
-
-/* ---- Khởi tạo ---- */
 
 loadBest();
 newGame();

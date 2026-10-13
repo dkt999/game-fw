@@ -42,7 +42,9 @@ function InitGame1024() {
             <button class="g1024-btn" id="g1024-undo">↩ Hoàn tác</button>
         </div>
         <div class="g1024-board-frame">
-            <div class="g1024-board" id="g1024-board"></div>
+            <div class="g1024-board" id="g1024-board">
+                <div class="g1024-tiles" id="g1024-tiles"></div>
+            </div>
             <div class="g1024-overlay" id="g1024-overlay">
                 <div class="g1024-overlay-text" id="g1024-overlayText"></div>
                 <button class="g1024-btn primary" id="g1024-again">Chơi lại</button>

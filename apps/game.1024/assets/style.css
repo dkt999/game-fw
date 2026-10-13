@@ -98,11 +98,46 @@
   grid-template-rows:repeat(4, 1fr);
   gap:10px;
   touch-action:none;
+  position:relative;
+}
+.g1024-tiles{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+}
+.g1024-tile-abs{
+  position:absolute;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:700;
+  transition:left 0.18s ease-in-out, top 0.18s ease-in-out;
+  padding:5px;
+  box-sizing:border-box;
+  background-clip:content-box;
+}
+.g1024-tile-abs .inner{
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:4px;
+}
+.g1024-tile-abs.appear{ animation:tileAppear 0.22s ease; }
+.g1024-tile-abs.merged{ animation:tileMerge 0.28s ease; }
+@keyframes tileAppear{
+  from{ transform:scale(0.5); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
+}
+@keyframes tileMerge{
+  0%{ transform:scale(0.8); }
+  50%{ transform:scale(1.15); }
+  100%{ transform:scale(1); }
 }
 .g1024-cell{
   background:var(--cell);
   border-radius:8px;
-  position:relative;
 }
 .g1024-tile{
   position:absolute;
