@@ -55,7 +55,6 @@
   justify-content:center;
   min-width:0;
   max-width:100%;
-  overflow:hidden;
 }
 .tl-seat-top .tl-hand-area,
 .tl-seat-bottom .tl-hand-area{ flex-direction:row; }
@@ -182,7 +181,7 @@
   margin:0 auto;
   max-width:100%;
 }
-.tl-hand-inner .tl-card{ margin-left:-24px; }
+.tl-hand-inner .tl-card{ margin-left:-28px; }
 .tl-hand-inner .tl-card:first-child{ margin-left:0; }
 
 /* Bài đã đánh: xếp chồng gọn */
@@ -294,6 +293,8 @@
   flex:0 0 auto;
   width:250px;
   max-width:45vw;
+  overflow:visible;
+  padding-top:16px; /* cho bai noi len */
 }
 
 /* Huong bai danh ve phia giua - dan ngang */
