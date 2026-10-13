@@ -12,6 +12,7 @@ let history = [];
 let won = false;
 let over = false;
 let keepGoing = false;
+let justMerged = []; // danh sach [r,c] vua gop de animation
 
 const boardEl = () => document.getElementById("g1024-board");
 const scoreEl = () => document.getElementById("g1024-score");
@@ -78,14 +79,17 @@ function spawnTile(){
   grid[r][c] = Math.random() < 0.9 ? 2 : 4;
 }
 
-function slideRow(row){
+function slideRow(row, rIdx, dir, gSize){
   // Trượt sang trái, gộp các cặp giống nhau
+  // Tra ve vi tri cac tile vua gop (de animation)
   const filtered = row.filter(v => v !== 0);
   const merged = [];
+  const mergePos = []; // index trong merged[]
   let gained = 0;
   for (let i = 0; i < filtered.length; i++){
     if (i + 1 < filtered.length && filtered[i] === filtered[i+1]){
       const v = filtered[i] * 2;
+      mergePos.push(merged.length);
       merged.push(v);
       gained += v;
       i++;
@@ -95,7 +99,22 @@ function slideRow(row){
     }
   }
   while (merged.length < SIZE) merged.push(0);
-  return { row: merged, gained, moved: merged.some((v,i) => v !== row[i]) };
+  return { row: merged, gained, mergePos, moved: merged.some((v,i) => v !== row[i]) };
+}
+
+// Chuyen vi tri merge (trong he xoay) ve toa do that
+function mergePosToReal(mergePos, rIdx, dir){
+  const out = [];
+  for (const cIdx of mergePos){
+    let r = rIdx, c = cIdx;
+    // Dao nguoc phep xoay: xoay phai dir lan
+    for (let i = 0; i < dir; i++){
+      const nr = c, nc = SIZE - 1 - r;
+      r = nr; c = nc;
+    }
+    out.push([r, c]);
+  }
+  return out;
 }
 
 function rotateLeft(g){
@@ -115,11 +134,16 @@ function move(dir){
   for (let i = 0; i < dir; i++) g = rotateLeft(g);
   let moved = false, gained = 0;
   const newG = [];
+  justMerged = [];
   for (let r = 0; r < SIZE; r++){
-    const res = slideRow(g[r]);
+    const res = slideRow(g[r], r, dir, SIZE);
     newG.push(res.row);
     if (res.moved) moved = true;
     gained += res.gained;
+    // Ghi nhan vi tri gop
+    for (const [rr, cc] of mergePosToReal(res.mergePos, r, dir)){
+      justMerged.push(rr + "," + cc);
+    }
   }
   // Xoay ngược lại: xoay trái (4-dir)%4 lần
   let finalG = newG;
@@ -209,6 +233,8 @@ function render(){
         tile.textContent = v;
         if (v >= 1024) tile.classList.add("super");
         if (String(v).length >= 4) tile.classList.add("small");
+        // Chi animation tile vua duoc gop
+        if (justMerged.includes(r + "," + c)) tile.classList.add("merged");
         cell.appendChild(tile);
       }
       board.appendChild(cell);
