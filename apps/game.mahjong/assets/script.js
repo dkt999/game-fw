@@ -179,7 +179,39 @@ function mapArchetype(mapNum) {
 }
 
 // Sinh layout cho map: trả về mảng {x,y,z} — mỗi map 1 archetype (xoay vòng)
+/* Test map: ?mahjong_test=p01 (3 ô chéo) hoặc ?mahjong_test=p02 (5 ô chữ thập)
+   Dựng đúng 2 thế cờ trong hình mẫu để kiểm tra render + logic, chưa chèn bẫy. */
+function getTestLayout() {
+  try {
+    const m = location.search.match(/[?&]mahjong_test=(p01|p02)/);
+    if (!m) return null;
+    const set = new Set(), pos = [];
+    if (m[1] === "p01") {
+      // P0-1: 3 ô xếp chéo cascade — mỗi ô trên che 25% ô dưới
+      // (0,0,z0) <- (0.5,0.5,z1) <- (1,1,z2), đặt giữa board
+      const cx = 5, cy = 3;
+      addPosF(set, pos, cx, cy, 0);
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1);
+      addPosF(set, pos, cx + 1, cy + 1, 2);
+      // Thêm 3 ô phẳng để đủ cặp (đặt xa ra)
+      addPos(set, pos, 1, 1, 0); addPos(set, pos, 10, 1, 0); addPos(set, pos, 1, 6, 0);
+      addPos(set, pos, 10, 6, 0);
+    } else {
+      // P0-2: 5 ô chữ thập — 4 ô z0 xếp 2x2, 1 ô z1 nằm giữa che 25% mỗi ô
+      const cx = 5, cy = 3;
+      addPos(set, pos, cx, cy, 0); addPos(set, pos, cx + 1, cy, 0);
+      addPos(set, pos, cx, cy + 1, 0); addPos(set, pos, cx + 1, cy + 1, 0);
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1);
+      // Thêm 1 ô phẳng để đủ cặp
+      addPos(set, pos, 1, 1, 0);
+    }
+    if (pos.length % 2 !== 0) pos.pop();
+    return pos;
+  } catch(e){ return null; }
+}
 function generateMapLayout(pack, mapIdx) {
+  const test = getTestLayout();
+  if (test) return test;
   const mapNum = (pack - 1) * MAPS_PER_PACK + mapIdx;
   const t = (pack - 1) / (PACK_COUNT - 1);
   const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1);
