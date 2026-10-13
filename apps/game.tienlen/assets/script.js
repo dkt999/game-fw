@@ -103,6 +103,7 @@ let gameOver = false;
 let firstTurn = true;
 let botLevel = "medium"; // mac dinh // easy | medium | hard
 let finished = []; // thu tu ve dich (1,2,3), nguoi con lai thua chot
+let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
@@ -118,6 +119,7 @@ function newGame(){
   passes = 0;
   roundPlays = {};
   finished = [];
+  passedRound = new Set();
   // Người có 3♠ đi trước
   turn = 0;
   for (let p = 0; p < 4; p++){
@@ -211,6 +213,9 @@ function botChoose(hand){
   return valid[0].cards;
 }
 
+function activePlayers(){
+  return [0,1,2,3].filter(p => hands[p].length > 0);
+}
 function botPlay(){
   if (gameOver || turn === 0) return;
   const hand = hands[turn];
@@ -245,6 +250,7 @@ function doPlay(player, cards){
   lastPlay = {player, combo, cards: [...cards]};
   roundPlays[player] = [...cards]; // giu bai da danh toi het vong
   passes = 0;
+  passedRound = new Set(); // vong moi (co nguoi ra bai) -> xoa danh sach bo qua
   firstTurn = false;
   if (player === 0) selected.clear();
 
@@ -423,32 +429,44 @@ document.addEventListener("click", (e) => {
   }
 });
 
-/* Sửa logic vòng: khi 3 người liên tiếp bỏ qua, người ra bài cuối được ra tiếp */
+/* Logic vòng: ai bỏ qua thì nghỉ hết vòng */
 (function patchPass(){
   const _doPass = doPass;
+  // Hàm tìm người tiếp theo chưa bỏ qua và còn bài
+  function nextActive(from){
+    let n = (from + 1) % 4, guard = 0;
+    while (guard++ < 8){
+      if (hands[n].length > 0 && !passedRound.has(n)) return n;
+      n = (n + 1) % 4;
+    }
+    return from;
+  }
   doPass = function(player){
     if (!lastPlay || lastPlay.player === player){
       if (player === 0) setStatus("Bạn đang dẫn, không được bỏ qua!");
       return false;
     }
     const winnerBefore = lastPlay.player;
+    passedRound.add(player);
     passes++;
-    setStatus(`${BOT_NAMES[player]} bỏ qua`);
-    if (passes >= 3){
+    setStatus(`${BOT_NAMES[player]} bỏ qua (nghỉ hết vòng)`);
+    // Đếm người còn có thể chơi (chưa bỏ qua, còn bài)
+    const remaining = activePlayers().filter(p => !passedRound.has(p) && p !== winnerBefore);
+    if (remaining.length === 0){
+      // Hết vòng: người ra cuối thắng, ra bài mới
       lastPlay = null;
       passes = 0;
-      roundPlays = {}; // xoa het bai tren ban khi het vong
+      roundPlays = {};
+      passedRound = new Set();
       turn = winnerBefore;
+      // Nếu người thắng vòng đã hết bài, tìm người tiếp theo
+      if (hands[turn].length === 0) turn = nextActive(turn);
       setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
       render();
-      if (turn === 0){
-        // người chơi đi
-      } else {
-        setTimeout(botPlay, 800);
-      }
+      if (turn !== 0) setTimeout(botPlay, 800);
       return true;
     }
-    turn = (player + 1) % 4;
+    turn = nextActive(player);
     render();
     if (turn === 0) setStatus("Tới lượt bạn!");
     else {
@@ -457,6 +475,8 @@ document.addEventListener("click", (e) => {
     }
     return true;
   };
+  // Ghi đè nextActive ra ngoài để doPlay dùng
+  window._tlNextActive = nextActive;
 })();
 
 newGame();
