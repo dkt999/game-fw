@@ -290,11 +290,11 @@ function isSolvableState(tileList) {
   const n = tileList.length;
   const removed = new Array(n).fill(false);
   const isCovered = (i) => {
-    const t = tileList[i], tzi = tileZIndex(t);
+    const t = tileList[i];
     for (let j = 0; j < n; j++) {
       if (j === i || removed[j]) continue;
       const o = tileList[j];
-      if (tileZIndex(o) <= tzi) continue;
+      if (o.z <= t.z) continue;
       if (gridOverlap(t, o)) return true;
     }
     return false;
@@ -366,9 +366,9 @@ function assignFacesByConstruction(list) {
   if (!n) return false;
   // Quan hệ đè theo tọa độ lưới (gridOverlap) — khớp với computeFree
   const blockers = list.map((t, i) => {
-    const s = [], tzi = tileZIndex(t);
+    const s = [];
     for (let j = 0; j < n; j++) {
-      if (i === j || tileZIndex(list[j]) <= tzi) continue;
+      if (i === j || list[j].z <= t.z) continue;
       if (gridOverlap(t, list[j])) s.push(j);
     }
     return s;
@@ -417,7 +417,6 @@ function assignFacesByConstruction(list) {
 // QUAN TRỌNG: dùng đúng thứ tự VẼ (zIndex = z*100 + y*10 + x) để biết tile nào
 // nằm TRÊN tile nào — z đơn thuần không quyết định, vì 2 tile cùng z vẫn có
 // thể vẽ chồng nhau (tile nào zIndex cao hơn thì che tile kia).
-function tileZIndex(t) { return t.z * 100 + t.y * 10 + t.x; }
 function gridOverlap(t, o) {
   const ix = Math.max(0, Math.min(t.x + 1, o.x + 1) - Math.max(t.x, o.x));
   const iy = Math.max(0, Math.min(t.y + 1, o.y + 1) - Math.max(t.y, o.y));
@@ -425,13 +424,11 @@ function gridOverlap(t, o) {
 }
 function computeFree(t, list) {
   if (t.removed) return false;
-  const tzi = tileZIndex(t);
   const dbg = window.MJ_SCANLOG;
-  if (dbg) console.log(`[SCAN] Tile (${t.x},${t.y},z${t.z}) zIndex=${tzi}:`);
+  if (dbg) console.log(`[SCAN] Tile (${t.x},${t.y},z${t.z}):`);
   for (const o of list) {
     if (o.removed || o === t) continue;
-    const ozi = tileZIndex(o);
-    if (ozi <= tzi) continue; // chỉ tile VẼ TRÊN mới đè được
+    if (o.z <= t.z) continue; // chỉ tầng TRÊN mới đè được (đơn giản)
     const ov = gridOverlap(t, o);
     if (dbg) {
       const ix = Math.max(0, Math.min(t.x+1,o.x+1)-Math.max(t.x,o.x));
