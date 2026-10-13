@@ -101,13 +101,13 @@
 }
 .g1024-cell{
   background:var(--cell);
-  border-radius:6px;
+  border-radius:50%;
   position:relative;
 }
 .g1024-tile{
   position:absolute;
   inset:0;
-  border-radius:6px;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
