@@ -210,9 +210,13 @@
 .tl-hand-area .tl-card-back{ margin-left:-32px; }
 .tl-hand-area .tl-card-back:first-child{ margin-left:0; }
 .tl-seat-left .tl-hand-area .tl-card-back,
-.tl-seat-right .tl-hand-area .tl-card-back{ margin-left:0; margin-top:-40px; }
+.tl-seat-right .tl-hand-area .tl-card-back{
+  margin-left:-28px;
+  margin-top:0;
+  transform:rotate(90deg);
+}
 .tl-seat-left .tl-hand-area .tl-card-back:first-child,
-.tl-seat-right .tl-hand-area .tl-card-back:first-child{ margin-top:0; }
+.tl-seat-right .tl-hand-area .tl-card-back:first-child{ margin-left:0; }
 
 /* Popup */
 .tl-popup{
@@ -297,9 +301,9 @@
 .tl-trick-center{
   background:rgba(255,255,255,0.92);
   border-radius:14px;
-  padding:14px 20px;
-  min-width:200px;
-  min-height:100px;
+  padding:20px 30px;
+  min-width:300px;
+  min-height:140px;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -350,4 +354,10 @@
 @keyframes tl-fly-dir{
   from{ opacity:0; transform:translate(var(--fly-x,0), var(--fly-y,0)) scale(0.6); }
   to{ opacity:1; transform:translate(0,0) scale(1); }
+}
+
+/* Vien sang chi luot danh */
+.tl-hand-area.active-turn{
+  outline:3px solid #ffd98a;
+  box-shadow:0 0 16px rgba(255,217,138,0.6);
 }

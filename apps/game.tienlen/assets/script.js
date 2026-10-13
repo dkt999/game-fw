@@ -313,7 +313,7 @@ function doPlay(player, cards){
     turn = _nx; }
   render();
   if (turn === 0){
-    setStatus("Tới lượt bạn!");
+    setStatus(BOT_NAMES[turn] + " đang đánh...");
   } else {
     setStatus(`${BOT_NAMES[turn]} đang nghĩ...`);
     setTimeout(botPlay, 700 + Math.random() * 600);
@@ -426,6 +426,11 @@ function render(){
   renderHand();
   renderBots();
   renderTrick();
+  // Vien sang cho nguoi dang co luot
+  document.querySelectorAll(".tl-hand-area").forEach(el => el.classList.remove("active-turn"));
+  const areaMap = {0: "tl-hand", 1: "tl-botCards1", 2: "tl-botCards2", 3: "tl-botCards0"};
+  const activeEl = document.getElementById(areaMap[turn]);
+  if (activeEl) activeEl.classList.add("active-turn");
   // Nút bỏ qua: chỉ hiện khi không phải người dẫn
   const passBtn = document.getElementById("tl-pass");
   if (passBtn){
@@ -513,7 +518,7 @@ document.addEventListener("click", (e) => {
     }
     turn = nextActive(player);
     render();
-    if (turn === 0) setStatus("Tới lượt bạn!");
+    if (turn === 0) setStatus(BOT_NAMES[turn] + " đang đánh...");
     else {
       setStatus(`${BOT_NAMES[turn]} đang nghĩ...`);
       setTimeout(botPlay, 700 + Math.random() * 600);
