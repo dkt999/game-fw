@@ -55,10 +55,9 @@ function pyramidCells(set, pos, ox, oy, w, h, layers) {
 }
 // Tháp bẫy: các lớp trên lệch 1/2 ô để lộ 1 phần tile dưới (nhìn trộm được).
 // Bẫy: phá pattern tầng — thay vì đều đặn, ngẫu nhiên chèn thêm tile bất ngờ.
+// Bắt đầu từ z=1 (trên lớp đáy), tránh chồng chéo cùng tầng với đáy.
 function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
-  // Đáy 2x2
-  rectCells(set, pos, ox, oy, 2, 2, 0);
-  for (let z = 1; z < layers; z++) {
+  for (let z = 1; z <= layers; z++) {
     // Lệch 1/2 ô so le: lớp lẻ lệch (+0.5,+0.5), lớp chẵn về vị trí gốc
     const off = (z % 2 === 1) ? 0.5 : 0;
     const bx = ox + off, by = oy + off;
@@ -161,12 +160,10 @@ const ARCHETYPES = [
   { id: "trap", name: "Bẫy chồng lệch",
     desc: "Tile chồng lệch 1/2 để lộ 1 phần — đoán tile dưới, coi chừng bẫy phá pattern",
     gen(W, H, diff, rng, set, pos) {
-      // 2 lớp đáy phẳng để tăng số tile (hướng tới 200 cặp = 400 tile)
+      // 1 lớp đáy phẳng (z=0); tháp bẫy xếp từ z=1 trở lên
       rectCells(set, pos, 0, 0, W, H, 0);
-      rectCells(set, pos, 0, 0, W, H, 1);
-      if (diff > 0.6) rectCells(set, pos, 1, 1, W - 2, H - 2, 1);
-      // Rải nhiều tháp bẫy khắp board
-      const n = 5 + Math.round(diff * 5); // 5-10 tháp bẫy
+      // Rải nhiều tháp bẫy khắp board (hướng tới 200 cặp = 400 tile)
+      const n = 8 + Math.round(diff * 6); // 8-14 tháp bẫy
       const layers = 4 + Math.round(diff * 4); // 4-8 tầng
       for (let i = 0; i < n; i++) {
         const ox = Math.floor(rng() * (W - 2)), oy = Math.floor(rng() * (H - 2));
