@@ -138,10 +138,7 @@ function newGame(){
   /* Cho chon do kho xong moi chay */
 }
 
-function setStatus(t){
-  const el = document.getElementById("tl-status");
-  if (el) el.textContent = t;
-}
+function setStatus(t){ /* da bo thanh trang thai */ }
 
 /* ============ Bot AI ============ */
 
