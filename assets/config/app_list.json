@@ -18,5 +18,9 @@
  {
   "id": "game.1024",
   "manifest": "apps/game.1024/manifest.js"
+ },
+ {
+  "id": "game.tienlen",
+  "manifest": "apps/game.tienlen/manifest.js"
  }
 ]
