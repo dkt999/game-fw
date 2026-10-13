@@ -414,3 +414,21 @@
   opacity:1;
   transform:translate(-50%,-50%) scale(1);
 }
+
+/* Tien */
+.tl-money{ color:#ffd98a; font-size:13px; margin-left:6px; }
+.tl-money-tag{
+  position:absolute;
+  background:rgba(0,0,0,0.6);
+  color:#ffd98a;
+  font-size:12px;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:12px;
+  z-index:10;
+}
+#tl-money0{ bottom:8px; left:50%; transform:translateX(-50%); }
+#tl-money1{ top:8px; left:50%; transform:translateX(-50%); }
+#tl-money2{ right:8px; top:50%; transform:translateY(-50%); }
+#tl-money3{ left:8px; top:50%; transform:translateY(-50%); }
+.tl-rank-row.penalty{ color:#ff9a9a; }

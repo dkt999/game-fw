@@ -105,9 +105,66 @@ let botLevel = "medium"; // mac dinh // easy | medium | hard
 let finished = []; // thu tu ve dich (1,2,3), nguoi con lai thua chot
 let lastWinner = -1; // nguoi thang van truoc (di truoc van sau)
 let trickId = 0; // tang moi trick de kich hoat hieu ung
+// Tien
+let money = [1000, 1000, 1000, 1000];
+const BASE = 10;
+let gameStopped = false; // het tien -> ngung
 let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
+
+// Tinh tien khi van ket thuc
+function settleMoney(){
+  if (finished.length < 3) return;
+  const loser = [0,1,2,3].find(p => !finished.includes(p));
+  const pay = [0,0,0,0];
+  // Hang 2 tra 1x, hang 3 tra 2x, bet tra 3x + 5/la con lai
+  pay[finished[1]] -= BASE;
+  pay[finished[2]] -= BASE*2;
+  pay[loser] -= BASE*3 + hands[loser].length*5;
+  // Heo con lai: moi con 2 = 10
+  for (let p = 0; p < 4; p++){
+    const twos = hands[p].filter(c => c.rank === 15).length;
+    if (twos) pay[p] -= twos*10;
+  }
+  // Tong tra -> nhat huong
+  const totalPay = -(pay[finished[1]] + pay[finished[2]] + pay[loser]);
+  pay[finished[0]] += totalPay;
+  // Cap nhat
+  for (let p = 0; p < 4; p++) money[p] += pay[p];
+  // Kiem tra het tien
+  for (let p = 0; p < 4; p++){
+    if (money[p] <= 0){
+      money[p] = 0;
+      gameStopped = true;
+    }
+  }
+  return pay;
+}
+
+// Phat khong chan: khi co nguoi thang, kiem tra nguoi tiep theo co bai chan duoc khong
+function checkNoBlockPenalty(winner, winCombo){
+  // Tim nguoi tiep theo con bai
+  let next = (winner + 1) % 4;
+  let guard = 0;
+  while (guard++ < 4){
+    if (hands[next].length > 0 && !finished.includes(next)) break;
+    next = (next + 1) % 4;
+  }
+  // Kiem tra nguoi nay co bo nao chan duoc khong
+  const combos = findAllCombos(hands[next]);
+  for (const c of combos){
+    const dc = detectCombo(c);
+    if (dc && canBeat(dc, winCombo)){
+      // Co ma khong chan -> phat 50
+      money[next] -= 50;
+      money[winner] += 50;
+      if (money[next] <= 0){ money[next] = 0; gameStopped = true; }
+      return next;
+    }
+  }
+  return -1;
+}
 
 // Kiem tra thang trang (an ngay khi chia bai)
 function checkThangTrang(hand){
@@ -144,7 +201,13 @@ function checkThangTrang(hand){
   return null;
 }
 
-function newGame(){
+function newGame(resetMoney){
+  if (resetMoney){
+    money = [1000, 1000, 1000, 1000];
+    gameStopped = false;
+    lastWinner = -1;
+  }
+  if (gameStopped) return;
   const deck = shuffle(makeDeck());
   hands = [[], [], [], []];
   for (let i = 0; i < 52; i++) hands[i % 4].push(deck[i]);
@@ -340,14 +403,27 @@ function doPlay(player, cards){
     } else {
       gameOver = true;
       const loser = [0,1,2,3].find(p => !finished.includes(p));
-      lastWinner = finished[0]; // nhat van nay di truoc van sau
+      lastWinner = finished[0];
+      // Phat khong chan (kiem tra truoc khi tinh tien)
+      const winCombo = lastPlay ? lastPlay.combo : null;
+      let penalized = -1;
+      if (winCombo) penalized = checkNoBlockPenalty(finished[0], winCombo);
+      const pay = settleMoney();
       const medals = ["🥇", "🥈", "🥉", "💀"];
+      const moneyStr = p => `<span class="tl-money">${money[p]} xu</span>`;
       const rows = finished.map((p, i) =>
-        `<div class="tl-rank-row"><span>${medals[i]} ${BOT_NAMES[p]}</span><span>Hạng ${i+1}</span></div>`
+        `<div class="tl-rank-row"><span>${medals[i]} ${BOT_NAMES[p]} ${moneyStr(p)}</span><span>${pay[p] >= 0 ? "+" : ""}${pay[p]}</span></div>`
       ).join("");
-      const loserRow = `<div class="tl-rank-row loser"><span>${medals[3]} ${BOT_NAMES[loser]}</span><span>Thua chót</span></div>`;
+      const loserRow = `<div class="tl-rank-row loser"><span>${medals[3]} ${BOT_NAMES[loser]} ${moneyStr(loser)}</span><span>${pay[loser]}</span></div>`;
+      const penaltyRow = penalized >= 0 ?
+        `<div class="tl-rank-row penalty"><span>⚠️ ${BOT_NAMES[penalized]} không chặn</span><span>-50</span></div>` : "";
       const resultEl = document.getElementById("tl-result");
-      if (resultEl) resultEl.innerHTML = rows + loserRow;
+      if (resultEl) resultEl.innerHTML = rows + loserRow + penaltyRow;
+      // Het tien -> ngung
+      if (gameStopped){
+        const stopRow = `<div class="tl-rank-row loser"><span>💸 Có người hết tiền!</span><span>Ngưng chơi</span></div>`;
+        if (resultEl) resultEl.innerHTML += stopRow;
+      }
       const popup = document.getElementById("tl-popup");
       if (popup) popup.style.display = "flex";
       setStatus(`🏁 Xong!`);
@@ -430,6 +506,26 @@ function renderHand(){
   // (Bai nguoi choi danh hien o giua)
 }
 
+function renderMoney(){
+  const map = {0: "tl-money0", 1: "tl-money1", 2: "tl-money2", 3: "tl-money3"};
+  for (let p = 0; p < 4; p++){
+    let el = document.getElementById(map[p]);
+    if (!el){
+      // Tao neu chua co
+      el = document.createElement("div");
+      el.id = map[p];
+      el.className = "tl-money-tag";
+      document.querySelector(".tl-arena").appendChild(el);
+    }
+    el.textContent = money[p] + " xu";
+    // Vi tri gan moi nguoi (don gian: hien o goc)
+    el.style.display = gameStopped ? "none" : "block";
+  }
+  // An nut Choi tiep neu het tien
+  const againBtn = document.getElementById("tl-again");
+  if (againBtn) againBtn.style.display = gameStopped ? "none" : "";
+}
+
 // Map hien thi bot -> hands index: top=1, right=2, left=3
 const BOT_MAP = {1: 1, 2: 2, 0: 3};
 // Luu bai da danh cua moi ben trong vong (de hien toi het vong)
@@ -487,6 +583,7 @@ function render(){
   renderHand();
   renderBots();
   renderTrick();
+  renderMoney();
   // Vien sang cho nguoi dang co luot
   document.querySelectorAll(".tl-hand-area").forEach(el => el.classList.remove("active-turn"));
   const areaMap = {0: "tl-hand", 1: "tl-botCards1", 2: "tl-botCards2", 3: "tl-botCards0"};
@@ -508,9 +605,9 @@ function render(){
 /* ============ Sự kiện ============ */
 
 document.addEventListener("click", (e) => {
-  if (e.target.id === "tl-new"){ lastWinner = -1; newGame(); return; }
+  if (e.target.id === "tl-new"){ newGame(true); return; }
   if (e.target.id === "tl-again"){
-    newGame();
+    newGame(false);
     // Choi tiep voi do kho da chon: khoi dong luot neu la bot
     if (turn !== 0) setTimeout(botPlay, 800);
     return;
