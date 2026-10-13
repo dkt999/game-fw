@@ -57,7 +57,8 @@ function pyramidCells(set, pos, ox, oy, w, h, layers) {
 // Bẫy phá pattern vẫn giữ.
 function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
   for (let z = 1; z <= layers; z++) {
-    const off = (z % 2 === 1) ? 0.5 : 0;
+    // z càng cao càng lệch lên-trái để nhìn rõ là "đang chồng lên trên"
+    const off = (z % 2 === 1) ? -0.5 : 0;
     const bx = ox + off, by = oy + off;
     for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
       addPosF(set, pos, bx + dx, by + dy, z);
@@ -191,10 +192,10 @@ function getTestLayout() {
       //   C(6,4,z2)=1 paired với D(1,1,z0)=1 (cả 2 free từ đầu)
       //   B(5.5,3.5,z1)=2 paired với E(10,1,z0)=2 (B free sau khi C gỡ)
       //   A(5,3,z0)=3 paired với F(1,6,z0)=3 (A free sau khi B gỡ)
-      const cx = 5, cy = 3;
-      addPosF(set, pos, cx, cy, 0);          // A
-      addPosF(set, pos, cx + 0.5, cy + 0.5, 1); // B (lệch 1/2)
-      addPosF(set, pos, cx + 1, cy + 1, 2);     // C (lệch 1/2)
+      const cx = 6, cy = 4;
+      addPosF(set, pos, cx, cy, 0);          // A (đáy, dưới-phải)
+      addPosF(set, pos, cx - 0.5, cy - 0.5, 1); // B (lệch lên-trái)
+      addPosF(set, pos, cx - 1, cy - 1, 2);     // C (lệch lên-trái, đỉnh)
       addPos(set, pos, 1, 1, 0);  // D
       addPos(set, pos, 10, 1, 0); // E
       addPos(set, pos, 1, 6, 0);  // F
