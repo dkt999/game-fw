@@ -259,6 +259,7 @@ function mapToPack(m) { return { pack: Math.ceil(m / MAPS_PER_PACK), idx: ((m - 
 
 /* ---------- State ---------- */
 window.MJ_DEBUG = (typeof location !== "undefined" && location.search.indexOf("mahjong_debug=1") >= 0);
+window.MJ_SCANLOG = (typeof location !== "undefined" && location.search.indexOf("mahjong_debug=2") >= 0);
 let tiles = [];        // {id,x,y,z,face,removed,free,el}
 let selected = null;
 let shufflesLeft = 0, hintsLeft = 0;
@@ -424,11 +425,24 @@ function gridOverlap(t, o) {
 function computeFree(t, list) {
   if (t.removed) return false;
   const tzi = tileZIndex(t);
+  const dbg = window.MJ_DEBUG && window.MJ_SCANLOG;
+  if (dbg) console.log(`[SCAN] Tile (${t.x},${t.y},z${t.z}) zIndex=${tzi}:`);
   for (const o of list) {
     if (o.removed || o === t) continue;
-    if (tileZIndex(o) <= tzi) continue; // chỉ tile VẼ TRÊN mới đè được
-    if (gridOverlap(t, o)) return false; // bị đè (kể cả 1 phần đáng kể)
+    const ozi = tileZIndex(o);
+    if (ozi <= tzi) continue; // chỉ tile VẼ TRÊN mới đè được
+    const ov = gridOverlap(t, o);
+    if (dbg) {
+      const ix = Math.max(0, Math.min(t.x+1,o.x+1)-Math.max(t.x,o.x));
+      const iy = Math.max(0, Math.min(t.y+1,o.y+1)-Math.max(t.y,o.y));
+      console.log(`  vs (${o.x},${o.y},z${o.z}) zIndex=${ozi} overlap=${ix.toFixed(2)}x${iy.toFixed(2)} -> ${ov?"ĐÈ":"không"}`);
+    }
+    if (ov) {
+      if (dbg) console.log(`  => BLOCKED`);
+      return false;
+    }
   }
+  if (dbg) console.log(`  => FREE`);
   return true;
 }
 function updateFreeStates() {
