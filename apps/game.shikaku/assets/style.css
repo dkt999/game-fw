@@ -274,12 +274,15 @@
   box-shadow: var(--shadow-strong);
   margin: 0 auto;
 }
-.shikaku-app .board-frame.zoomed{
+.shikaku-app .board-frame{
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.shikaku-app .board-frame.zoomed .board{
-  margin: 0 auto;
+.shikaku-app .board-frame .board{
+  flex-shrink: 0;
 }
 .shikaku-app .board-frame::before{
   content:"";

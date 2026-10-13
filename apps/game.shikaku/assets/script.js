@@ -121,11 +121,17 @@
     boardEl.style.setProperty("--w", state.W);
     boardEl.style.setProperty("--h", state.H);
     boardEl.style.setProperty("--cellpx", cell + "px");
-    // Khi zoom > 1, cho phep cuon board-frame
-    const zoomed = zoomLevel > 1.01;
-    boardFrame.classList.toggle("zoomed", zoomed);
-    boardFrame.style.maxWidth = zoomed ? Math.min(maxW + 32, window.innerWidth * 0.96) + "px" : "";
-    boardFrame.style.maxHeight = zoomed ? Math.min(maxH + 32, window.innerHeight * 0.8) + "px" : "";
+    // Board-frame la viewport RIENG: kich thuoc co dinh theo man hinh,
+    // board ben trong to bao nhieu cung chi cuon trong viewport, khong day layout
+    const viewportW = Math.min(maxW + 32, window.innerWidth * 0.96);
+    const viewportH = Math.min(maxH + 32, window.innerHeight * 0.72);
+    boardFrame.style.width = viewportW + "px";
+    boardFrame.style.maxWidth = viewportW + "px";
+    boardFrame.style.height = viewportH + "px";
+    boardFrame.style.maxHeight = viewportH + "px";
+    boardFrame.style.overflow = "auto";
+    // Can board giua viewport khi nho hon
+    boardEl.style.margin = "auto";
     updateZoomUI();
   }
 
