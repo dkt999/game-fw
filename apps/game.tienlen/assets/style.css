@@ -148,23 +148,44 @@
   color:#3a2a10;
   border-color:transparent;
 }
-/* Lá bài đơn giản: số + 1 ký hiệu chất */
+/* Lá bài: 2 góc (số+chất nhỏ) + chất to giữa */
 .tl-card{
-  width:52px;
-  height:72px;
+  width:56px;
+  height:78px;
   background:#fffdf7;
   border-radius:8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:20px;
-  font-weight:700;
+  position:relative;
   color:#222;
   box-shadow:0 2px 6px rgba(0,0,0,0.3);
   user-select:none;
   flex-shrink:0;
 }
 .tl-card.red{ color:#c0392b; }
+.tl-card .corner{
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  line-height:1.1;
+  font-size:13px;
+  font-weight:700;
+}
+.tl-card .corner.tl{ top:4px; left:5px; }
+.tl-card .corner.br{ bottom:4px; right:5px; transform:rotate(180deg); }
+.tl-card .pip{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+}
+/* Bai nguoi choi: gon */
+.tl-card.compact{
+  width:48px;
+  height:68px;
+}
+.tl-card.compact .corner{ font-size:12px; }
 .tl-card.selectable{ cursor:pointer; }
 .tl-card.selectable:hover{ transform:translateY(-4px); }
 .tl-card.selected{
@@ -192,14 +213,22 @@
   min-height:40px;
 }
 .tl-card-back{
-  width:32px;
-  height:46px;
+  width:30px;
+  height:44px;
   background:linear-gradient(135deg, #8b1a1a, #5c1010);
   border:2px solid #d4a24e;
   border-radius:6px;
   box-shadow:0 1px 4px rgba(0,0,0,0.4);
   flex-shrink:0;
 }
+/* Bot tren: xep ngang */
+.tl-bot-top .tl-bot-cards{ flex-direction:row; }
+.tl-bot-top .tl-card-back{ margin-left:-20px; }
+.tl-bot-top .tl-card-back:first-child{ margin-left:0; }
+/* Bot trai/phai: xep doc (vuong goc) */
+.tl-bot-left .tl-bot-cards, .tl-bot-right .tl-bot-cards{ flex-direction:column; }
+.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{ margin-top:-30px; }
+.tl-bot-left .tl-card-back:first-child, .tl-bot-right .tl-card-back:first-child{ margin-top:0; }
 .tl-count-label{
   margin-left:8px;
   font-size:13px;

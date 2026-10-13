@@ -102,6 +102,7 @@ let selected = new Set(); // index lá đã chọn
 let gameOver = false;
 let firstTurn = true;
 let botLevel = "medium"; // mac dinh // easy | medium | hard
+let finished = []; // thu tu ve dich (1,2,3), nguoi con lai thua chot
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
@@ -116,6 +117,7 @@ function newGame(){
   lastPlay = null;
   passes = 0;
   roundPlays = {};
+  finished = [];
   // Người có 3♠ đi trước
   turn = 0;
   for (let p = 0; p < 4; p++){
@@ -248,22 +250,26 @@ function doPlay(player, cards){
 
   render();
 
-  // Thắng?
-  if (hands[player].length === 0){
-    gameOver = true;
-    const order = [];
-    for (let i = 0; i < 4; i++){
-      const p = (player + i) % 4;
-      order.push({p, count: hands[p].length});
+  // Hết bài -> ghi nhận hạng, còn lại đánh tiếp
+  if (hands[player].length === 0 && !finished.includes(player)){
+    finished.push(player);
+    if (finished.length < 3){
+      const rankNames = ["🥇 Nhất", "🥈 Nhì", "🥉 Ba"];
+      setStatus(`🎉 ${BOT_NAMES[player]} về ${rankNames[finished.length-1]}! Còn lại đánh tiếp...`);
+    } else {
+      gameOver = true;
+      const loser = [0,1,2,3].find(p => !finished.includes(p));
+      const names = finished.map((p, i) => `${i+1}. ${BOT_NAMES[p]}`).join(" · ");
+      setStatus(`🏁 ${names} · 💀 ${BOT_NAMES[loser]} thua chót!`);
+      render();
+      return true;
     }
-    order.sort((a, b) => a.count - b.count);
-    const names = order.map((o, i) => `${i+1}. ${BOT_NAMES[o.p]} (${o.count} lá)`).join(" · ");
-    setStatus(`🏆 ${BOT_NAMES[player]} thắng! Xếp hạng: ${names}`);
-    return true;
   }
 
-  // Lượt tiếp
-  turn = (player + 1) % 4;
+  // Lượt tiếp: bỏ qua người đã hết bài
+  let _nx = (player + 1) % 4, _gd = 0;
+  while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4;
+  turn = _nx;
   render();
   if (turn === 0){
     setStatus("Tới lượt bạn!");
@@ -283,10 +289,20 @@ function doPass(player){
 
 /* ============ UI ============ */
 
-function cardEl(c, selectable, idx){
+function cardEl(c, selectable, idx, compact){
   const el = document.createElement("div");
   el.className = "tl-card" + (SUIT_RED[c.suit] ? " red" : "");
-  el.textContent = cardStr(c);
+  const rank = RANK_STR[c.rank], suit = SUITS[c.suit];
+  if (compact){
+    // Bai nguoi choi: gon, chi goc tren
+    el.classList.add("compact");
+    el.innerHTML = `<div class="corner tl"><span>${rank}</span><span>${suit}</span></div>`;
+  } else {
+    // Day du: 2 goc + chat to giua
+    el.innerHTML = `<div class="corner tl"><span>${rank}</span><span>${suit}</span></div>` +
+      `<div class="pip">${suit}</div>` +
+      `<div class="corner br"><span>${rank}</span><span>${suit}</span></div>`;
+  }
   if (selectable){
     el.classList.add("selectable");
     if (selected.has(idx)) el.classList.add("selected");
@@ -303,7 +319,7 @@ function renderHand(){
   const handEl = document.getElementById("tl-hand");
   if (!handEl) return;
   handEl.innerHTML = "";
-  hands[0].forEach((c, i) => handEl.appendChild(cardEl(c, turn === 0 && !gameOver, i)));
+  hands[0].forEach((c, i) => handEl.appendChild(cardEl(c, turn === 0 && !gameOver, i, true)));
 }
 
 // Map hien thi bot -> hands index: top=1, right=2, left=3
@@ -321,8 +337,6 @@ function renderBots(){
     for (let i = 0; i < show; i++){
       const back = document.createElement("div");
       back.className = "tl-card-back";
-      // Xep chong len nhau
-      back.style.marginLeft = i === 0 ? "0" : "-28px";
       el.appendChild(back);
     }
     const label = document.createElement("span");
