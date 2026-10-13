@@ -36,8 +36,8 @@
   padding:4px;
   min-width:0;
   min-height:0;
-  overflow:hidden;
 }
+.tl-seat-left, .tl-seat-right{ overflow:visible; }
 .tl-seat-top{ grid-area:top; flex-direction:column; }
 .tl-seat-bottom{ grid-area:bottom; flex-direction:column; }
 .tl-seat-left{ grid-area:left; flex-direction:row; }
@@ -223,12 +223,16 @@
 .tl-seat-right .tl-hand-area{
   flex-direction:column;
   padding:8px 6px;
+  max-height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 .tl-seat-left .tl-card-back,
 .tl-seat-right .tl-card-back{
-  width:52px; height:36px;
+  width:52px; height:32px;
   margin-left:0;
-  margin-top:-26px;
+  margin-top:-22px;
+  flex-shrink:0;
 }
 .tl-seat-left .tl-card-back:first-child,
 .tl-seat-right .tl-card-back:first-child{ margin-top:0; }
