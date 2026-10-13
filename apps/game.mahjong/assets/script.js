@@ -688,13 +688,25 @@ function renderBoard() {
    Chồng 5 tile → chỉ vẽ 3 lớp; khi gỡ dần thì mỏng đi 3 → 2 → 1 → phẳng. */
 const DEPTH_MAX_VISIBLE = 3;
 const DEPTH_COLORS = ["#d9cd9f", "#b5a673", "#8a7d52"]; // lớp gần → xa (đậm dần)
+// Sai số tọa độ (top-left) để coi 2 tile là "cùng vị trí". 0 = phải trùng khít x,y.
+// Map có tầng lẻ lệch -0.5 (stagger) sẽ không có hiệu ứng dày; muốn có thì đặt 0.5.
+const DEPTH_SAME_POS_TOL = 0;
+// Đếm số tile nằm ngay dưới t CÙNG vị trí, liên tục từ trên xuống.
+// Gặp 1 tầng có tile đè lên t mà lệch vị trí → dừng (chiều sâu thực tế bị ngắt).
+//   A(4,6) / B(4,6) / C(2,3) → A có 1 tile cùng chỗ bên dưới (tính cả A = chồng 2)
+//   A(4,6) / B(2,3) / C(4,6) → A không có gì cùng chỗ liên tục → 0 (chồng 1)
 function countUnder(t) {
-  const zs = new Set();                       // đếm số tầng khác nhau còn lại bên dưới
+  const levels = new Map(); // z -> có tile cùng vị trí ở tầng đó không
   for (const o of tiles) {
     if (o.removed || o.z >= t.z) continue;
-    if (gridOverlap(t, o)) zs.add(o.z);
+    if (!gridOverlap(t, o)) continue;
+    const same = Math.abs(o.x - t.x) <= DEPTH_SAME_POS_TOL && Math.abs(o.y - t.y) <= DEPTH_SAME_POS_TOL;
+    levels.set(o.z, (levels.get(o.z) || false) || same);
   }
-  return zs.size;
+  const zs = [...levels.keys()].sort((p, q) => q - p); // từ sát t xuống đáy
+  let n = 0;
+  for (const z of zs) { if (levels.get(z)) n++; else break; }
+  return n;
 }
 function setTileDepth(t) {
   if (!t.el) return;
