@@ -1,18 +1,22 @@
 [
-  {
-    "id": "game.shikaku",
-    "manifest": "apps/game.shikaku/manifest.js"
-  },
-  {
-    "id": "game.sudoku",
-    "manifest": "apps/game.sudoku/manifest.js"
-  },
-  {
-    "id": "game.pikachu",
-    "manifest": "apps/game.pikachu/manifest.js"
-  },
-  {
-    "id": "game.mahjong",
-    "manifest": "apps/game.mahjong/manifest.js"
-  }
+ {
+  "id": "game.shikaku",
+  "manifest": "apps/game.shikaku/manifest.js"
+ },
+ {
+  "id": "game.sudoku",
+  "manifest": "apps/game.sudoku/manifest.js"
+ },
+ {
+  "id": "game.pikachu",
+  "manifest": "apps/game.pikachu/manifest.js"
+ },
+ {
+  "id": "game.mahjong",
+  "manifest": "apps/game.mahjong/manifest.js"
+ },
+ {
+  "id": "game.1024",
+  "manifest": "apps/game.1024/manifest.js"
+ }
 ]
