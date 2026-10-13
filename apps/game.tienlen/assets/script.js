@@ -357,8 +357,9 @@ function cardEl(c, selectable, idx, compact){
 function renderHand(){
   const handEl = document.getElementById("tl-hand");
   if (!handEl) return;
-  handEl.innerHTML = "";
-  hands[0].forEach((c, i) => handEl.appendChild(cardEl(c, turn === 0 && !gameOver, i, true)));
+  handEl.innerHTML = '<div class="tl-hand-inner"></div>';
+  const inner = handEl.querySelector(".tl-hand-inner");
+  hands[0].forEach((c, i) => inner.appendChild(cardEl(c, turn === 0 && !gameOver, i, true)));
 }
 
 // Map hien thi bot -> hands index: top=1, right=2, left=3

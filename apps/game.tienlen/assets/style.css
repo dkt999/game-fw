@@ -120,24 +120,28 @@
 }
 .tl-hand{
   display:flex;
-  justify-content:center;
-  align-items:flex-end;
-  min-height:84px;
-  padding:10px 20px;
+  min-height:90px;
+  padding:18px 16px 10px; /* padding-top cho bai noi len khi chon */
   background:rgba(0,0,0,0.18);
   border-radius:12px;
   margin-bottom:10px;
   overflow-x:auto;
+  overflow-y:visible;
 }
-.tl-hand .tl-card{
+.tl-hand-inner{
+  display:flex;
+  align-items:flex-end;
+  margin:0 auto; /* can giua ma khong bi cat khi tran */
+}
+.tl-hand-inner .tl-card{
   margin-left:-22px;
   transition:transform 0.15s ease;
 }
-.tl-hand .tl-card:first-child{ margin-left:0; }
-.tl-hand .tl-card.selectable:hover{
+.tl-hand-inner .tl-card:first-child{ margin-left:0; }
+.tl-hand-inner .tl-card.selectable:hover{
   transform:translateY(-8px);
 }
-.tl-hand .tl-card.selected{
+.tl-hand-inner .tl-card.selected{
   transform:translateY(-16px);
 }
 .tl-actions{
