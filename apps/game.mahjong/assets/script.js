@@ -683,12 +683,38 @@ function renderBoard() {
     console.log(`[MJ_DEBUG] Sau quét: ${free} sáng, ${blocked} mờ`);
   }
 }
+/* ---------- Hiệu ứng "độ dày" của chồng tile ----------
+   Hiển thị các cạnh tile còn nằm bên dưới, tối đa DEPTH_MAX_VISIBLE lớp.
+   Chồng 5 tile → chỉ vẽ 3 lớp; khi gỡ dần thì mỏng đi 3 → 2 → 1 → phẳng. */
+const DEPTH_MAX_VISIBLE = 3;
+const DEPTH_COLORS = ["#d9cd9f", "#b5a673", "#8a7d52"]; // lớp gần → xa (đậm dần)
+function countUnder(t) {
+  const zs = new Set();                       // đếm số tầng khác nhau còn lại bên dưới
+  for (const o of tiles) {
+    if (o.removed || o.z >= t.z) continue;
+    if (gridOverlap(t, o)) zs.add(o.z);
+  }
+  return zs.size;
+}
+function setTileDepth(t) {
+  if (!t.el) return;
+  const n = Math.min(DEPTH_MAX_VISIBLE, countUnder(t));
+  t.el.style.transition = "filter .15s, transform .15s, box-shadow .3s";
+  if (!n) { t.el.style.boxShadow = "0 1px 2px rgba(0,0,0,.35)"; return; }
+  const scale = (parseFloat(t.el.style.width) || BASE_TW) / BASE_TW;
+  const step = Math.max(1.5, 3 * scale);
+  const layers = [];
+  for (let k = 1; k <= n; k++) layers.push(`${(k * step).toFixed(1)}px ${(k * step).toFixed(1)}px 0 0 ${DEPTH_COLORS[k - 1]}`);
+  layers.push(`${((n + 1) * step).toFixed(1)}px ${((n + 1) * step).toFixed(1)}px ${(5 * scale).toFixed(1)}px rgba(0,0,0,.4)`);
+  t.el.style.boxShadow = layers.join(", ");
+}
 function refreshTileClasses() {
   for (const t of tiles) {
     if (!t.el || t.removed) continue;
     t.el.classList.toggle("free", t.free);
     t.el.classList.toggle("blocked", !t.free);
     setTileBrightness(t);
+    setTileDepth(t);
   }
 }
 function updateStats() {
