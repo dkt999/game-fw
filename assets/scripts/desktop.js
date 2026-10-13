@@ -1,4 +1,5 @@
 window.appListData = [];
+window.APP_VERSION = "20261014x";
 function registerApp(appInfo) {
     window.appListData.push(appInfo);
 }
@@ -39,7 +40,7 @@ $(document).ready(function() {
     $.getJSON(appListUrl)
         .done(function(manifestList) {
             let scriptPromises = manifestList.map(function(item) {
-                return $.getScript(item.manifest);
+                return $.getScript(assetUrl(item.manifest));
             });
             $.when.apply($, scriptPromises).done(function() {
                 $.getJSON(desktopUrl)
