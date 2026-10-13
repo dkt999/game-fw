@@ -171,7 +171,7 @@
 }
 .tl-card.compact{ width:46px; height:64px; }
 .tl-card.selectable{ cursor:pointer; }
-.tl-card.selected{ transform:translateY(-12px); outline:3px solid var(--gold); }
+.tl-card.selected{ transform:translateY(-12px); }
 
 /* Bài trên tay người chơi: xếp chồng */
 .tl-hand-inner{
@@ -294,7 +294,7 @@
   width:250px;
   max-width:45vw;
   overflow:visible;
-  padding-top:16px; /* cho bai noi len */
+  padding-top:4px;
 }
 
 /* Huong bai danh ve phia giua - dan ngang */
