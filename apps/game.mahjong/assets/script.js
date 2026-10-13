@@ -186,20 +186,17 @@ function getTestLayout() {
     const set = new Set(), pos = [];
     let faces = null;
     if (m[1] === "p01") {
-      // P0-1: 3 ô xếp chéo cascade — mỗi ô trên che 25% ô dưới
-      // Thứ tự gỡ: (6,4,z2) -> (5.5,3.5,z1) -> (5,3,z0)
-      // Gán face tay để tránh blocking pair:
-      //   C(6,4,z2)=1 paired với D(1,1,z0)=1 (cả 2 free từ đầu)
-      //   B(5.5,3.5,z1)=2 paired với E(10,1,z0)=2 (B free sau khi C gỡ)
-      //   A(5,3,z0)=3 paired với F(1,6,z0)=3 (A free sau khi B gỡ)
-      const cx = 6, cy = 4;
-      addPosF(set, pos, cx, cy, 0);          // A (đáy, dưới-phải)
-      addPosF(set, pos, cx - 0.5, cy - 0.5, 1); // B (lệch lên-trái)
-      addPosF(set, pos, cx - 1, cy - 1, 2);     // C (lệch lên-trái, đỉnh)
+      // P0-1: 2 tile trên CÙNG tầng z1 đè 1 tile dưới z0 (ở giữa)
+      // (5,3,z1) + (6,4,z1) cùng sáng (không đè nhau)
+      // (5.5,3.5,z0) bị cả 2 đè -> mờ
+      // Gán face: A(5,3)=1 với D(1,1)=1; C(6,4)=2 với E(10,1)=2; B(5.5,3.5)=3 với F(1,6)=3
+      addPosF(set, pos, 5, 3, 1);          // A (trên-trái)
+      addPosF(set, pos, 5.5, 3.5, 0);      // B (dưới, giữa, bị đè)
+      addPosF(set, pos, 6, 4, 1);          // C (trên-phải, cùng tầng với A)
       addPos(set, pos, 1, 1, 0);  // D
       addPos(set, pos, 10, 1, 0); // E
       addPos(set, pos, 1, 6, 0);  // F
-      faces = [3, 2, 1, 1, 2, 3]; // A=3,B=2,C=1,D=1,E=2,F=3
+      faces = [1, 3, 2, 1, 2, 3]; // A=1,B=3,C=2,D=1,E=2,F=3
     } else {
       // P0-2: 5 ô chữ thập — 4 ô z0 xếp 2x2, 1 ô z1 nằm giữa che 25% mỗi ô
       // Thứ tự gỡ: ô giữa (z1) trước, rồi 4 ô dưới

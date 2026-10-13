@@ -30,7 +30,7 @@
     }
     /* Version asset de chong cache: moi lan push code moi thi tang version nay
        (va ?v= tren index.html) de dien thoai khong dung file CSS/JS cu. */
-    window.APP_VERSION = "20261014r";
+    window.APP_VERSION = "20261014s";
 
     /* Wake Lock: giữ màn hình không tự tắt khi chơi (app/PWA).
        Trình duyệt tự huỷ khi ẩn app -> xin lại khi hiện lên. */
