@@ -183,3 +183,44 @@
 }
 .is-mobile .tl-mid{ min-height:150px; }
 .is-mobile .tl-bot-left, .is-mobile .tl-bot-right{ width:84px; }
+
+/* Bai up cua bot */
+.tl-bot-cards{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+}
+.tl-card-back{
+  width:32px;
+  height:46px;
+  background:linear-gradient(135deg, #8b1a1a, #5c1010);
+  border:2px solid #d4a24e;
+  border-radius:6px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.4);
+  flex-shrink:0;
+}
+.tl-count-label{
+  margin-left:8px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--gold);
+}
+/* Chon do kho */
+.tl-level{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:8px;
+  font-size:13px;
+  color:#cfe0d4;
+}
+.tl-btn.sm{
+  padding:6px 14px;
+  font-size:12px;
+}
+.tl-btn.sm.active{
+  background:var(--gold);
+  color:#3a2a10;
+}

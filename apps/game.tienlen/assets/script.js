@@ -101,6 +101,7 @@ let passes = 0;
 let selected = new Set(); // index lá đã chọn
 let gameOver = false;
 let firstTurn = true;
+let botLevel = "medium"; // mac dinh // easy | medium | hard
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
@@ -114,6 +115,7 @@ function newGame(){
   firstTurn = true;
   lastPlay = null;
   passes = 0;
+  roundPlays = {};
   // Người có 3♠ đi trước
   turn = 0;
   for (let p = 0; p < 4; p++){
@@ -167,11 +169,37 @@ function botChoose(hand){
     if (canBeat(dc, lastPlay ? lastPlay.combo : null)) valid.push({cards: c, combo: dc});
   }
   if (!valid.length) return null;
-  // Chọn bộ nhỏ nhất
   valid.sort((a, b) => cardVal(a.combo.top) - cardVal(b.combo.top));
-  // Ưu tiên xả: nếu đang dẫn (không ai chặn), ra bộ dài nhất trong các bộ nhỏ
-  if (!lastPlay || lastPlay.player === turn){
-    // Dẫn: chọn sảnh dài hoặc bộ nhỏ nhất
+  const isLeading = !lastPlay || lastPlay.player === turn;
+
+  if (botLevel === "easy"){
+    // De: luon ra bo nho nhat
+    return valid[0].cards;
+  }
+  if (botLevel === "hard"){
+    // Kho: giu bai manh, chi chan khi can
+    if (!isLeading){
+      // Theo: neu bai doi thu sap het (<3 la), chan manh tay
+      const oppCounts = hands.map((h, i) => i === turn ? 99 : h.length);
+      const minOpp = Math.min(...oppCounts);
+      if (minOpp <= 2){
+        // Chon bo lon nhat de chan
+        return valid[valid.length - 1].cards;
+      }
+      // Binh thuong: 30% bo qua de giu bai (neu khong phai bo nho nhat)
+      if (valid.length > 1 && Math.random() < 0.3) return null;
+    } else {
+      // Dan: ra sanh dai hoac bo co rank trung binh (giu bai nho de xa sau)
+      const straights = valid.filter(v => v.combo.type === 5 || v.combo.type === 6);
+      if (straights.length){
+        straights.sort((a, b) => b.cards.length - a.cards.length);
+        return straights[0].cards;
+      }
+    }
+    return valid[0].cards;
+  }
+  // Medium (mac dinh)
+  if (isLeading){
     const straights = valid.filter(v => v.combo.type === 5 || v.combo.type === 6);
     if (straights.length && Math.random() < 0.6){
       straights.sort((a, b) => b.cards.length - a.cards.length || cardVal(a.combo.top) - cardVal(b.combo.top));
@@ -213,6 +241,7 @@ function doPlay(player, cards){
     if (idx >= 0) hand.splice(idx, 1);
   }
   lastPlay = {player, combo, cards: [...cards]};
+  roundPlays[player] = [...cards]; // giu bai da danh toi het vong
   passes = 0;
   firstTurn = false;
   if (player === 0) selected.clear();
@@ -277,32 +306,46 @@ function renderHand(){
   hands[0].forEach((c, i) => handEl.appendChild(cardEl(c, turn === 0 && !gameOver, i)));
 }
 
+// Map hien thi bot -> hands index: top=1, right=2, left=3
+const BOT_MAP = {1: 1, 2: 2, 0: 3};
+// Luu bai da danh cua moi ben trong vong (de hien toi het vong)
+let roundPlays = {}; // player -> cards
+
 function renderBots(){
-  for (let b = 1; b <= 3; b++){
-    const countEl = document.getElementById("tl-botCards" + b);
-    // Bot index trong hands: bot1=hands[1], bot2=hands[2], bot3=hands[3]
-    // Hiển thị: top=bot1, right=bot2, left=bot3 (hands[3])
-    const map = {1: 1, 2: 2, 0: 3};
-    const h = hands[map[b] !== undefined ? map[b] : b];
-    if (countEl) countEl.textContent = h.length + " lá";
-    const playEl = document.getElementById("tl-botPlay" + b);
-    if (playEl){
-      playEl.innerHTML = "";
-      if (lastPlay && lastPlay.player === (map[b] !== undefined ? map[b] : b)){
-        for (const c of lastPlay.cards) playEl.appendChild(cardEl(c, false));
-      }
+  // Ve bai up cho bot (thay vi hien so)
+  const drawBacks = (elId, count) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = "";
+    const show = Math.min(count, 13);
+    for (let i = 0; i < show; i++){
+      const back = document.createElement("div");
+      back.className = "tl-card-back";
+      // Xep chong len nhau
+      back.style.marginLeft = i === 0 ? "0" : "-28px";
+      el.appendChild(back);
     }
-  }
-  // Bot 0 (left) là hands[3]
-  const c0 = document.getElementById("tl-botCards0");
-  if (c0) c0.textContent = hands[3].length + " lá";
-  const p0 = document.getElementById("tl-botPlay0");
-  if (p0){
-    p0.innerHTML = "";
-    if (lastPlay && lastPlay.player === 3){
-      for (const c of lastPlay.cards) p0.appendChild(cardEl(c, false));
+    const label = document.createElement("span");
+    label.className = "tl-count-label";
+    label.textContent = count;
+    el.appendChild(label);
+  };
+  drawBacks("tl-botCards1", hands[1].length);
+  drawBacks("tl-botCards2", hands[2].length);
+  drawBacks("tl-botCards0", hands[3].length);
+  // Hien bai da danh cua moi bot (giu toi het vong)
+  const showPlay = (elId, player) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = "";
+    const cards = roundPlays[player];
+    if (cards){
+      for (const c of cards) el.appendChild(cardEl(c, false));
     }
-  }
+  };
+  showPlay("tl-botPlay1", 1);
+  showPlay("tl-botPlay2", 2);
+  showPlay("tl-botPlay0", 3);
 }
 
 function renderTrick(){
@@ -356,6 +399,14 @@ document.addEventListener("click", (e) => {
     doPass(0);
     return;
   }
+  const lvBtn = e.target.closest("[data-level]");
+  if (lvBtn){
+    botLevel = lvBtn.dataset.level;
+    document.querySelectorAll("[data-level]").forEach(b =>
+      b.classList.toggle("active", b.dataset.level === botLevel));
+    setStatus("Độ khó: " + lvBtn.textContent);
+    return;
+  }
 });
 
 /* Sửa logic vòng: khi 3 người liên tiếp bỏ qua, người ra bài cuối được ra tiếp */
@@ -372,6 +423,7 @@ document.addEventListener("click", (e) => {
     if (passes >= 3){
       lastPlay = null;
       passes = 0;
+      roundPlays = {}; // xoa het bai tren ban khi het vong
       turn = winnerBefore;
       setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
       render();

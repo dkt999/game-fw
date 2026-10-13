@@ -51,6 +51,12 @@ function InitTienLen() {
             </div>
             <div class="tl-player">
                 <div class="tl-hand" id="tl-hand"></div>
+                <div class="tl-level">
+                    <span>Độ khó:</span>
+                    <button class="tl-btn sm" data-level="easy">Dễ</button>
+                    <button class="tl-btn sm active" data-level="medium">Vừa</button>
+                    <button class="tl-btn sm" data-level="hard">Khó</button>
+                </div>
                 <div class="tl-actions">
                     <button class="tl-btn" id="tl-sort">Xếp bài</button>
                     <button class="tl-btn primary" id="tl-play">Đánh</button>
