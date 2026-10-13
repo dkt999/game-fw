@@ -292,3 +292,62 @@
   font-style:italic;
   font-weight:600;
 }
+
+/* Vung bai giua */
+.tl-trick-center{
+  background:rgba(255,255,255,0.92);
+  border-radius:14px;
+  padding:14px 20px;
+  min-width:200px;
+  min-height:100px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.tl-trick-label{
+  font-size:13px;
+  font-weight:700;
+  color:#8F600F;
+}
+.tl-trick-passed{
+  font-size:11px;
+  color:#888;
+  font-style:italic;
+}
+.tl-trick-cards{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.tl-trick-cards .tl-card{
+  width:48px; height:66px;
+  margin-left:-26px;
+  animation:tl-fly-in 0.4s ease-out;
+}
+.tl-trick-cards .tl-card:first-child{ margin-left:0; }
+.tl-trick-empty{
+  color:#999;
+  font-size:13px;
+  font-style:italic;
+}
+/* Hieu ung bay tu 4 huong */
+@keyframes tl-fly-in{
+  from{ opacity:0; transform:scale(0.5); }
+  to{ opacity:1; transform:scale(1); }
+}
+.tl-trick-cards.fly-from-bottom .tl-card{ --fly-y:80px; }
+.tl-trick-cards.fly-from-top .tl-card{ --fly-y:-80px; }
+.tl-trick-cards.fly-from-left .tl-card{ --fly-x:-80px; }
+.tl-trick-cards.fly-from-right .tl-card{ --fly-x:80px; }
+.tl-trick-cards.fly-from-bottom .tl-card,
+.tl-trick-cards.fly-from-top .tl-card,
+.tl-trick-cards.fly-from-left .tl-card,
+.tl-trick-cards.fly-from-right .tl-card{
+  animation:tl-fly-dir 0.45s ease-out;
+}
+@keyframes tl-fly-dir{
+  from{ opacity:0; transform:translate(var(--fly-x,0), var(--fly-y,0)) scale(0.6); }
+  to{ opacity:1; transform:translate(0,0) scale(1); }
+}

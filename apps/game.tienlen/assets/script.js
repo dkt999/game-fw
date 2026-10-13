@@ -104,6 +104,7 @@ let firstTurn = true;
 let botLevel = "medium"; // mac dinh // easy | medium | hard
 let finished = []; // thu tu ve dich (1,2,3), nguoi con lai thua chot
 let lastWinner = -1; // nguoi thang van truoc (di truoc van sau)
+let trickId = 0; // tang moi trick de kich hoat hieu ung
 let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
@@ -257,6 +258,7 @@ function doPlay(player, cards){
   lastPlay = {player, combo, cards: [...cards]};
   roundPlays[player] = [...cards]; // giu bai da danh toi het vong
   passes = 0;
+  trickId++; // trick moi -> hieu ung bay
   // KHONG reset passedRound o day: ai da bo qua phai nghi HET VONG,
   // chi xoa khi co nguoi thang vong va dan bai moi (trong doPass)
   firstTurn = false;
@@ -360,19 +362,7 @@ function renderHand(){
   handEl.innerHTML = '<div class="tl-hand-inner"></div>';
   const inner = handEl.querySelector(".tl-hand-inner");
   hands[0].forEach((c, i) => inner.appendChild(cardEl(c, turn === 0 && !gameOver, i, true)));
-  // Bai nguoi choi da danh (vung trang phia tren)
-  const pp = document.getElementById("tl-playerPlay");
-  if (pp){
-    pp.innerHTML = "";
-    pp.classList.remove("passed");
-    if (passedRound.has(0)){
-      pp.classList.add("passed");
-      pp.innerHTML = '<span class="tl-passed-text">Bỏ qua</span>';
-    } else {
-      const cards = roundPlays[0];
-      if (cards) for (const c of cards) pp.appendChild(cardEl(c, false, 0, true));
-    }
-  }
+  // (Bai nguoi choi danh hien o giua)
 }
 
 // Map hien thi bot -> hands index: top=1, right=2, left=3
@@ -400,38 +390,31 @@ function renderBots(){
   drawBacks("tl-botCards1", hands[1].length);
   drawBacks("tl-botCards2", hands[2].length);
   drawBacks("tl-botCards0", hands[3].length);
-  // Hien bai da danh cua moi bot (giu toi het vong)
-  const showPlay = (elId, player) => {
-    const el = document.getElementById(elId);
-    if (!el) return;
-    el.innerHTML = "";
-    el.classList.remove("passed");
-    if (passedRound.has(player)){
-      el.classList.add("passed");
-      el.innerHTML = '<span class="tl-passed-text">Bỏ qua</span>';
-      return;
-    }
-    const cards = roundPlays[player];
-    if (cards){
-      for (const c of cards) el.appendChild(cardEl(c, false, 0, true));
-    }
-  };
-  showPlay("tl-botPlay1", 1);
-  showPlay("tl-botPlay2", 2);
-  showPlay("tl-botPlay0", 3);
+  // (Bai danh hien o giua - xem renderTrick)
 }
 
 function renderTrick(){
   const el = document.getElementById("tl-trick");
   if (!el) return;
+  // Giu nguyen neu dang hien dung trick (tranh render lai mat hieu ung)
+  if (el.dataset.trickId === String(trickId)) return;
+  el.dataset.trickId = String(trickId);
   el.innerHTML = "";
   if (lastPlay){
     const label = document.createElement("div");
     label.className = "tl-trick-label";
-    label.textContent = BOT_NAMES[lastPlay.player] + " ra:";
+    label.textContent = BOT_NAMES[lastPlay.player];
+    // Hien "Bo qua" cho nhung nguoi da qua
+    const passed = [0,1,2,3].filter(p => passedRound.has(p) && p !== lastPlay.player);
+    if (passed.length){
+      const pl = document.createElement("div");
+      pl.className = "tl-trick-passed";
+      pl.textContent = passed.map(p => BOT_NAMES[p]).join(", ") + " bỏ qua";
+      el.appendChild(pl);
+    }
     el.appendChild(label);
     const row = document.createElement("div");
-    row.className = "tl-trick-cards";
+    row.className = "tl-trick-cards fly-from-" + ["bottom","top","right","left"][lastPlay.player];
     for (const c of lastPlay.cards) row.appendChild(cardEl(c, false, 0, true));
     el.appendChild(row);
   } else {
@@ -519,6 +502,7 @@ document.addEventListener("click", (e) => {
       passes = 0;
       roundPlays = {};
       passedRound = new Set();
+      trickId++; // xoa bai giua khi qua trick moi
       turn = winnerBefore;
       // Nếu người thắng vòng đã hết bài, tìm người tiếp theo
       if (hands[turn].length === 0) turn = nextActive(turn);

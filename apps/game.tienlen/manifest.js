@@ -49,6 +49,7 @@ function InitTienLen() {
         </div>
         <!-- Giữa: trạng thái -->
         <div class="tl-center-arena">
+            <div class="tl-trick-center" id="tl-trick"></div>
             <div class="tl-status" id="tl-status">Chia bài...</div>
 
         </div>
