@@ -207,16 +207,31 @@
   font-size:20px; font-weight:800;
   color:#ffd98a; text-shadow:0 1px 3px rgba(0,0,0,0.6);
 }
-.tl-hand-area .tl-card-back{ margin-left:-32px; }
-.tl-hand-area .tl-card-back:first-child{ margin-left:0; }
-.tl-seat-left .tl-hand-area .tl-card-back,
-.tl-seat-right .tl-hand-area .tl-card-back{
-  margin-left:-28px;
-  margin-top:0;
-  transform:rotate(90deg);
+/* === Bot tren/duoi: bai up nam ngang === */
+.tl-seat-top .tl-hand-area,
+.tl-seat-bottom .tl-hand-area{ flex-direction:row; }
+.tl-seat-top .tl-card-back,
+.tl-seat-bottom .tl-card-back{
+  width:36px; height:52px;
+  margin-left:-26px;
 }
-.tl-seat-left .tl-hand-area .tl-card-back:first-child,
-.tl-seat-right .tl-hand-area .tl-card-back:first-child{ margin-left:0; }
+.tl-seat-top .tl-card-back:first-child,
+.tl-seat-bottom .tl-card-back:first-child{ margin-left:0; }
+
+/* === Bot trai/phai: bai up xoay ngang, xep doc === */
+.tl-seat-left .tl-hand-area,
+.tl-seat-right .tl-hand-area{
+  flex-direction:column;
+  padding:8px 6px;
+}
+.tl-seat-left .tl-card-back,
+.tl-seat-right .tl-card-back{
+  width:52px; height:36px;
+  margin-left:0;
+  margin-top:-26px;
+}
+.tl-seat-left .tl-card-back:first-child,
+.tl-seat-right .tl-card-back:first-child{ margin-top:0; }
 
 /* Popup */
 .tl-popup{
