@@ -360,6 +360,13 @@ function renderHand(){
   handEl.innerHTML = '<div class="tl-hand-inner"></div>';
   const inner = handEl.querySelector(".tl-hand-inner");
   hands[0].forEach((c, i) => inner.appendChild(cardEl(c, turn === 0 && !gameOver, i, true)));
+  // Bai nguoi choi da danh (vung trang phia tren)
+  const pp = document.getElementById("tl-playerPlay");
+  if (pp){
+    pp.innerHTML = "";
+    const cards = roundPlays[0];
+    if (cards) for (const c of cards) pp.appendChild(cardEl(c, false, 0, true));
+  }
 }
 
 // Map hien thi bot -> hands index: top=1, right=2, left=3

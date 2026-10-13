@@ -1,149 +1,114 @@
+/* Tiến Lên - Layout 4 hướng fullscreen */
 .tienlen-app{
   --felt:#1a5c3a;
-  --felt-d:#134a2e;
+  --brown:#8F600F;
   --gold:#d4a24e;
   margin:0; padding:0;
   min-height:100%;
-  background: radial-gradient(ellipse at 50% 30%, #206844 0%, #134a2e 60%, #0d3520 100%);
+  background:#0d3a24;
   color:#f5f0e1;
   font-family:"Be Vietnam Pro", sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 .tienlen-app *{ box-sizing:border-box; }
-.tl-wrap{
-  max-width:900px;
-  margin:0 auto;
-  padding:16px 12px 32px;
-  min-height:100%;
-  display:flex;
-  flex-direction:column;
+
+/* Arena fullscreen: grid 3x3 */
+.tl-arena{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:180px 1fr 180px;
+  grid-template-rows:150px 1fr 210px;
+  grid-template-areas:
+    ". top ."
+    "left center right"
+    ". bottom .";
+  background: radial-gradient(ellipse at 50% 50%, #1e6b42 0%, #134a2e 55%, #0d3520 100%);
 }
-.tl-table{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  flex:1;
-}
-/* Bot trên */
-.tl-bot-top{
-  text-align:center;
-  padding:6px;
-}
-.tl-mid{
+
+/* Ghế ngồi */
+.tl-seat{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   gap:8px;
-  min-height:180px;
+  padding:8px;
 }
-.tl-bot-left, .tl-bot-right{
-  width:110px;
-  text-align:center;
-  flex-shrink:0;
-}
-.tl-center{
-  flex:1;
+.tl-seat-top{ grid-area:top; flex-direction:column; }
+.tl-seat-bottom{ grid-area:bottom; flex-direction:column; }
+.tl-seat-left{ grid-area:left; flex-direction:row; }
+.tl-seat-right{ grid-area:right; flex-direction:row; }
+
+/* Vùng bài trên tay (nâu #8F600F) */
+.tl-hand-area{
+  background:var(--brown);
+  border-radius:10px;
+  padding:8px;
   display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8px;
-  min-height:160px;
-  justify-content:center;
-}
-.tl-bot-name{
-  font-weight:700;
-  font-size:14px;
-  color:var(--gold);
-  margin-bottom:4px;
-}
-.tl-bot-cards{
-  font-size:12px;
-  color:#cfe0d4;
-  background:rgba(0,0,0,0.25);
-  border-radius:8px;
-  padding:4px 8px;
-  display:inline-block;
-  margin-bottom:6px;
-}
-.tl-bot-play{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:56px;
-}
-/* Giữa bàn */
-.tl-trick{
-  background:rgba(0,0,0,0.2);
-  border-radius:12px;
-  padding:12px 18px;
-  min-width:220px;
-  min-height:90px;
-  display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  min-width:120px;
+  min-height:80px;
 }
-.tl-trick-label{
-  font-size:12px;
-  color:var(--gold);
-  font-weight:600;
-}
-.tl-trick-cards{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.tl-trick-cards .tl-card{
-  width:44px;
-  height:62px;
-  margin-left:-24px;
-}
-.tl-trick-cards .tl-card:first-child{ margin-left:0; }
-.tl-trick-cards .tl-card .corner{ font-size:11px; }
-.tl-trick-cards .tl-card .pip{ font-size:26px; }
-.tl-trick-empty{
-  color:rgba(255,255,255,0.45);
-  font-size:13px;
-  font-style:italic;
-}
-.tl-status{
-  font-size:14px;
-  font-weight:600;
-  color:#ffe9b0;
-  text-align:center;
-  min-height:20px;
-}
-/* Tay người chơi */
-.tl-player{
-  margin-top:8px;
-}
-.tl-hand{
-  display:flex;
-  min-height:90px;
-  padding:18px 16px 10px; /* padding-top cho bai noi len khi chon */
-  background:rgba(0,0,0,0.18);
-  border-radius:12px;
-  margin-bottom:10px;
+.tl-seat-top .tl-hand-area,
+.tl-seat-bottom .tl-hand-area{ flex-direction:row; }
+.tl-seat-left .tl-hand-area,
+.tl-seat-right .tl-hand-area{ flex-direction:column; }
+.tl-hand-area.player{
+  max-width:100%;
   overflow-x:auto;
   overflow-y:visible;
 }
-.tl-hand-inner{
+
+/* Tên */
+.tl-name{
+  font-weight:700;
+  font-size:13px;
+  color:var(--gold);
+  white-space:nowrap;
+}
+
+/* Vùng bài đã đánh (trắng) */
+.tl-play-area{
+  background:rgba(255,255,255,0.92);
+  border-radius:10px;
+  padding:8px;
   display:flex;
-  align-items:flex-end;
-  margin:0 auto; /* can giua ma khong bi cat khi tran */
+  align-items:center;
+  justify-content:center;
+  min-width:110px;
+  min-height:74px;
 }
-.tl-hand-inner .tl-card{
-  margin-left:-22px;
-  transition:transform 0.15s ease;
+.tl-seat-top .tl-play-area,
+.tl-seat-bottom .tl-play-area{ flex-direction:row; }
+.tl-seat-left .tl-play-area,
+.tl-seat-right .tl-play-area{ flex-direction:column; }
+.tl-play-area:empty::after{
+  content:"";
 }
-.tl-hand-inner .tl-card:first-child{ margin-left:0; }
-.tl-hand-inner .tl-card.selectable:hover{
-  transform:translateY(-8px);
+
+/* Giữa */
+.tl-center-arena{
+  grid-area:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
 }
-.tl-hand-inner .tl-card.selected{
-  transform:translateY(-16px);
+.tl-status{
+  font-size:15px;
+  font-weight:600;
+  color:#ffe9b0;
+  text-align:center;
+  background:rgba(0,0,0,0.3);
+  padding:8px 18px;
+  border-radius:20px;
 }
+
+/* Nút */
 .tl-actions{
   display:flex;
   gap:8px;
@@ -151,12 +116,12 @@
   flex-wrap:wrap;
 }
 .tl-btn{
-  padding:10px 20px;
+  padding:9px 18px;
   border:none;
   border-radius:10px;
   background:rgba(255,255,255,0.14);
   color:#fff;
-  font-size:14px;
+  font-size:13px;
   font-weight:600;
   cursor:pointer;
   font-family:inherit;
@@ -164,15 +129,15 @@
 }
 .tl-btn:hover:not(:disabled){ background:rgba(255,255,255,0.22); }
 .tl-btn:disabled{ opacity:0.4; cursor:default; }
-.tl-btn.primary{
-  background:var(--gold);
-  color:#3a2a10;
-  border-color:transparent;
-}
-/* Lá bài: 2 góc (số+chất nhỏ) + chất to giữa */
+.tl-btn.primary{ background:var(--gold); color:#3a2a10; border-color:transparent; }
+.tl-level{ display:flex; gap:6px; align-items:center; }
+.tl-btn.sm{ padding:6px 14px; font-size:12px; }
+.tl-btn.sm.active{ background:var(--gold); color:#3a2a10; }
+
+/* Lá bài */
 .tl-card{
-  width:56px;
-  height:78px;
+  width:52px;
+  height:72px;
   background:#fffdf7;
   border-radius:8px;
   position:relative;
@@ -188,116 +153,71 @@
   flex-direction:column;
   align-items:center;
   line-height:1.1;
-  font-size:13px;
+  font-size:12px;
   font-weight:700;
 }
 .tl-card .corner.tl{ top:4px; left:5px; }
 .tl-card .corner.br{ bottom:4px; right:5px; transform:rotate(180deg); }
 .tl-card .pip{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:34px;
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:30px;
 }
-/* Bai nguoi choi: gon */
-.tl-card.compact{
-  width:48px;
-  height:68px;
-}
-.tl-card.compact .corner{ font-size:12px; }
+.tl-card.compact{ width:46px; height:64px; }
 .tl-card.selectable{ cursor:pointer; }
-.tl-card.selectable:hover{ transform:translateY(-4px); }
-.tl-card.selected{
-  transform:translateY(-10px);
-  outline:3px solid var(--gold);
-}
-.tl-bot-play .tl-card{
-  width:40px;
-  height:58px;
-  margin-left:-22px;
-}
-.tl-bot-play .tl-card:first-child{ margin-left:0; }
-.tl-bot-play .tl-card .corner{ font-size:10px; }
-.tl-bot-play .tl-card .pip{ font-size:22px; }
-.is-mobile .tl-card{
-  width:44px;
-  height:62px;
-  font-size:17px;
-}
-.is-mobile .tl-mid{ min-height:150px; }
-.is-mobile .tl-bot-left, .is-mobile .tl-bot-right{ width:84px; }
+.tl-card.selected{ transform:translateY(-12px); outline:3px solid var(--gold); }
 
-/* Bai up cua bot */
-.tl-bot-cards{
+/* Bài trên tay người chơi: xếp chồng */
+.tl-hand-inner{
   display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:40px;
+  align-items:flex-end;
+  margin:0 auto;
 }
+.tl-hand-inner .tl-card{ margin-left:-24px; }
+.tl-hand-inner .tl-card:first-child{ margin-left:0; }
+
+/* Bài đã đánh: xếp chồng gọn */
+.tl-play-area .tl-card{
+  width:42px; height:60px;
+  margin-left:-24px;
+}
+.tl-play-area .tl-card:first-child{ margin-left:0; }
+.tl-play-area .tl-card .corner{ font-size:10px; }
+.tl-play-area .tl-card .pip{ font-size:24px; }
+.tl-seat-left .tl-play-area .tl-card,
+.tl-seat-right .tl-play-area .tl-card{
+  margin-left:0; margin-top:-38px;
+}
+.tl-seat-left .tl-play-area .tl-card:first-child,
+.tl-seat-right .tl-play-area .tl-card:first-child{ margin-top:0; }
+
+/* Lưng bài bot */
 .tl-card-back{
-  width:44px;
-  height:62px;
+  width:42px; height:60px;
   background:linear-gradient(135deg, #8b1a1a, #5c1010);
   border:2px solid #d4a24e;
   border-radius:8px;
   box-shadow:0 1px 4px rgba(0,0,0,0.4);
   flex-shrink:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex; align-items:center; justify-content:center;
 }
 .tl-back-count{
-  font-size:22px;
-  font-weight:800;
-  color:#ffd98a;
-  text-shadow:0 1px 3px rgba(0,0,0,0.6);
+  font-size:20px; font-weight:800;
+  color:#ffd98a; text-shadow:0 1px 3px rgba(0,0,0,0.6);
 }
-.tl-count-label{ display:none; }
-/* Bot tren: xep ngang */
-.tl-bot-top .tl-bot-cards{ flex-direction:row; }
-.tl-bot-top .tl-card-back{ margin-left:-34px; }
-.tl-bot-top .tl-card-back:first-child{ margin-left:0; }
-/* Tat ca bot: xep ngang */
-.tl-bot-left .tl-bot-cards, .tl-bot-right .tl-bot-cards{ flex-direction:row; }
-.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{ margin-left:-34px; }
-.tl-bot-left .tl-card-back:first-child, .tl-bot-right .tl-card-back:first-child{ margin-left:0; }
-.tl-count-label{
-  margin-left:8px;
-  font-size:13px;
-  font-weight:700;
-  color:var(--gold);
-}
-/* Chon do kho */
-.tl-level{
-  display:flex;
-  gap:6px;
-  align-items:center;
-  justify-content:center;
-  margin-bottom:8px;
-  font-size:13px;
-  color:#cfe0d4;
-}
-.tl-btn.sm{
-  padding:6px 14px;
-  font-size:12px;
-}
-.tl-btn.sm.active{
-  background:var(--gold);
-  color:#3a2a10;
-}
+.tl-hand-area .tl-card-back{ margin-left:-32px; }
+.tl-hand-area .tl-card-back:first-child{ margin-left:0; }
+.tl-seat-left .tl-hand-area .tl-card-back,
+.tl-seat-right .tl-hand-area .tl-card-back{ margin-left:0; margin-top:-40px; }
+.tl-seat-left .tl-hand-area .tl-card-back:first-child,
+.tl-seat-right .tl-hand-area .tl-card-back:first-child{ margin-top:0; }
 
-/* Popup ket qua */
+/* Popup */
 .tl-popup{
-  position:absolute;
-  inset:0;
+  position:absolute; inset:0;
   background:rgba(0,0,0,0.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   z-index:50;
-  border-radius:12px;
 }
 .tl-popup-box{
   background:#1e3a2a;
@@ -310,12 +230,19 @@
 .tl-popup-box h2{ margin:0 0 16px; color:var(--gold); }
 .tl-result{ margin-bottom:18px; }
 .tl-rank-row{
-  display:flex;
-  justify-content:space-between;
-  gap:24px;
+  display:flex; justify-content:space-between; gap:24px;
   padding:8px 4px;
   border-bottom:1px solid rgba(255,255,255,0.1);
   font-size:15px;
 }
 .tl-rank-row.loser{ color:#ff9a9a; border-bottom:none; }
-.tl-wrap{ position:relative; }
+
+/* Mobile ngang */
+@media (max-width:900px){
+  .tl-arena{
+    grid-template-columns:120px 1fr 120px;
+    grid-template-rows:110px 1fr 170px;
+  }
+  .tl-card{ width:44px; height:62px; }
+  .tl-card.compact{ width:40px; height:56px; }
+}
