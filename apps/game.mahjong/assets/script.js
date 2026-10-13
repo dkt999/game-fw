@@ -222,6 +222,7 @@ function setProgress(n) {
 function mapToPack(m) { return { pack: Math.ceil(m / MAPS_PER_PACK), idx: ((m - 1) % MAPS_PER_PACK) + 1 }; }
 
 /* ---------- State ---------- */
+window.MJ_DEBUG = (typeof location !== "undefined" && location.search.indexOf("mahjong_debug=1") >= 0);
 let tiles = [];        // {id,x,y,z,face,removed,free,el}
 let selected = null;
 let shufflesLeft = 0, hintsLeft = 0;
@@ -444,6 +445,12 @@ function renderBoard() {
     img.src = tileSrc(t.face);
     img.alt = "";
     el.appendChild(img);
+    if (window.MJ_DEBUG) {
+      const dbg = document.createElement("div");
+      dbg.textContent = t.x + "," + t.y + ",z" + t.z;
+      dbg.style.cssText = "position:absolute;top:0;left:0;font-size:8px;color:red;background:rgba(255,255,255,0.7);pointer-events:none;z-index:9999;";
+      el.appendChild(dbg);
+    }
     el.addEventListener("click", () => onTileClick(t));
     boardEl.appendChild(el);
     t.el = el;
