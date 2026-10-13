@@ -186,32 +186,40 @@ function getTestLayout() {
     const m = location.search.match(/[?&]mahjong_test=(p01|p02)/);
     if (!m) return null;
     const set = new Set(), pos = [];
+    let faces = null;
     if (m[1] === "p01") {
       // P0-1: 3 ô xếp chéo cascade — mỗi ô trên che 25% ô dưới
-      // (0,0,z0) <- (0.5,0.5,z1) <- (1,1,z2), đặt giữa board
+      // Thứ tự gỡ: (6,4,z2) -> (5.5,3.5,z1) -> (5,3,z0)
+      // Gán face tay để tránh blocking pair:
+      //   C(6,4,z2)=1 paired với D(1,1,z0)=1 (cả 2 free từ đầu)
+      //   B(5.5,3.5,z1)=2 paired với E(10,1,z0)=2 (B free sau khi C gỡ)
+      //   A(5,3,z0)=3 paired với F(1,6,z0)=3 (A free sau khi B gỡ)
       const cx = 5, cy = 3;
-      addPosF(set, pos, cx, cy, 0);
-      addPosF(set, pos, cx + 0.5, cy + 0.5, 1);
-      addPosF(set, pos, cx + 1, cy + 1, 2);
-      // Thêm 3 ô phẳng để đủ cặp (đặt xa ra)
-      addPos(set, pos, 1, 1, 0); addPos(set, pos, 10, 1, 0); addPos(set, pos, 1, 6, 0);
-      addPos(set, pos, 10, 6, 0);
+      addPosF(set, pos, cx, cy, 0);          // A
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1); // B
+      addPosF(set, pos, cx + 1, cy + 1, 2);     // C
+      addPos(set, pos, 1, 1, 0);  // D
+      addPos(set, pos, 10, 1, 0); // E
+      addPos(set, pos, 1, 6, 0);  // F
+      faces = [3, 2, 1, 1, 2, 3]; // A=3,B=2,C=1,D=1,E=2,F=3
     } else {
       // P0-2: 5 ô chữ thập — 4 ô z0 xếp 2x2, 1 ô z1 nằm giữa che 25% mỗi ô
+      // Thứ tự gỡ: ô giữa (z1) trước, rồi 4 ô dưới
+      // Gán: giữa=1 paired với (1,1)=1; 4 ô dưới thành 2 cặp
       const cx = 5, cy = 3;
-      addPos(set, pos, cx, cy, 0); addPos(set, pos, cx + 1, cy, 0);
-      addPos(set, pos, cx, cy + 1, 0); addPos(set, pos, cx + 1, cy + 1, 0);
-      addPosF(set, pos, cx + 0.5, cy + 0.5, 1);
-      // Thêm 1 ô phẳng để đủ cặp
-      addPos(set, pos, 1, 1, 0);
+      addPos(set, pos, cx, cy, 0);       // A
+      addPos(set, pos, cx + 1, cy, 0);   // B
+      addPos(set, pos, cx, cy + 1, 0);   // C
+      addPos(set, pos, cx + 1, cy + 1, 0); // D
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1); // E (giữa)
+      addPos(set, pos, 1, 1, 0); // F
+      faces = [2, 2, 3, 3, 1, 1]; // A=2,B=2,C=3,D=3,E=1,F=1
     }
-    if (pos.length % 2 !== 0) pos.pop();
-    return pos;
+    if (pos.length % 2 !== 0) { pos.pop(); faces.pop(); }
+    return { pos, faces };
   } catch(e){ return null; }
 }
 function generateMapLayout(pack, mapIdx) {
-  const test = getTestLayout();
-  if (test) return test;
   const mapNum = (pack - 1) * MAPS_PER_PACK + mapIdx;
   const t = (pack - 1) / (PACK_COUNT - 1);
   const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1);
@@ -319,10 +327,16 @@ function isSolvableState(tileList) {
   return removed.every(Boolean);
 }
 function dealTiles() {
-  const pos = generateMapLayout(curPack, curMapIdx);
+  const testLayout = getTestLayout();
+  const pos = testLayout ? testLayout.pos : generateMapLayout(curPack, curMapIdx);
   const pairCount = pos.length / 2;
   tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: 0, removed: false, free: false, el: null, _rect: null }));
   pairsLeft = pairCount;
+  if (testLayout && testLayout.faces) {
+    // Map test: dùng faces gán tay (đã đảm bảo không blocking pair)
+    tiles.forEach((t, i) => { t.face = testLayout.faces[i] || 1; });
+    return;
+  }
   // Chia hình đảm bảo giải được (by construction). Rớt về chia random nếu lỗi lạ.
   if (!assignFacesByConstruction(tiles)) {
     const params = packParams(curPack);
