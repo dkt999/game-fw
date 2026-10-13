@@ -42,6 +42,8 @@
   let timerId = null;
   let currentDiff = "medium";
   let lastCustomDims = { W: 8, H: 8 };
+  let zoomLevel = 1; // 1 = vua man hinh, >1 phong to
+  const ZOOM_MIN = 1, ZOOM_MAX = 3, ZOOM_STEP = 0.25;
 
   function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -110,12 +112,35 @@
     const maxH = Math.min(window.innerHeight * 0.72, 900);
     let cell = Math.floor(Math.min(maxW / state.W, maxH / state.H));
     cell = Math.max(22, Math.min(120, cell));
+    // Ap dung zoom
+    cell = Math.round(cell * zoomLevel);
     const w = cell * state.W, h = cell * state.H;
     boardEl.style.width = w + "px";
     boardEl.style.height = h + "px";
     boardEl.style.setProperty("--w", state.W);
     boardEl.style.setProperty("--h", state.H);
     boardEl.style.setProperty("--cellpx", cell + "px");
+    // Khi zoom > 1, cho phep cuon board-frame
+    const zoomed = zoomLevel > 1.01;
+    boardFrame.classList.toggle("zoomed", zoomed);
+    boardFrame.style.maxWidth = zoomed ? Math.min(maxW + 32, window.innerWidth * 0.96) + "px" : "";
+    boardFrame.style.maxHeight = zoomed ? Math.min(maxH + 32, window.innerHeight * 0.8) + "px" : "";
+    updateZoomUI();
+  }
+
+  function setZoom(z){
+    zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(z / ZOOM_STEP) * ZOOM_STEP));
+    sizeBoard();
+  }
+  function updateZoomUI(){
+    const zOut = document.getElementById("shk-zoomOut");
+    const zIn = document.getElementById("shk-zoomIn");
+    const zReset = document.getElementById("shk-zoomReset");
+    const zLabel = document.getElementById("shk-zoomLabel");
+    if (zLabel) zLabel.textContent = Math.round(zoomLevel * 100) + "%";
+    if (zOut) zOut.disabled = zoomLevel <= ZOOM_MIN + 0.01;
+    if (zIn) zIn.disabled = zoomLevel >= ZOOM_MAX - 0.01;
+    if (zReset) zReset.style.display = zoomLevel > 1.01 ? "" : "none";
   }
 
   window.addEventListener("resize", debounce(sizeBoard, 120));
@@ -180,6 +205,7 @@
       numbersLayerMap.set(key, span);
     }
 
+    zoomLevel = 1; // reset zoom moi van
     sizeBoard();
     resetTimer();
     startTimer();
@@ -430,6 +456,12 @@
   });
 
   document.getElementById("shk-btnNew").addEventListener("click", () => startNewGame(currentDiff));
+  const zOutBtn = document.getElementById("shk-zoomOut");
+  const zInBtn = document.getElementById("shk-zoomIn");
+  const zResetBtn = document.getElementById("shk-zoomReset");
+  if (zOutBtn) zOutBtn.addEventListener("click", () => setZoom(zoomLevel - ZOOM_STEP));
+  if (zInBtn) zInBtn.addEventListener("click", () => setZoom(zoomLevel + ZOOM_STEP));
+  if (zResetBtn) zResetBtn.addEventListener("click", () => setZoom(1));
   document.getElementById("shk-btnMenu").addEventListener("click", () => gotoMainMenu());
   document.getElementById("shk-btnNewGame").addEventListener("click", () => startNewGame(currentDiff));
   document.getElementById("shk-btnClear").addEventListener("click", () => {

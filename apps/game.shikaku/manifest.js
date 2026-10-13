@@ -89,6 +89,12 @@ function InitShikakuGame() {
                     <div class="stat"><span class="val" id="shk-statRegions">0</span><span class="lbl">Vùng đã đặt</span></div>
                 </div>
             </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="shk-zoomOut" title="Thu nhỏ">−</button>
+                <span class="zoom-label" id="shk-zoomLabel">100%</span>
+                <button class="zoom-btn" id="shk-zoomIn" title="Phóng to">+</button>
+                <button class="zoom-reset" id="shk-zoomReset" style="display:none">Vừa màn hình</button>
+            </div>
             <div class="board-frame" id="shk-boardFrame">
                 <div class="board" id="shk-board">
                 <div class="numbers-layer" id="shk-numbersLayer"></div>
