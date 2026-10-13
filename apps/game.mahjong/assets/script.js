@@ -41,11 +41,38 @@ function addPos(set, pos, x, y, z) {
 function rectCells(set, pos, ox, oy, w, h, z) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) addPos(set, pos, ox + x, oy + y, z);
 }
+// key ho tro so thap phan (0.5) cho chong lech 1/2
+function addPosF(set, pos, x, y, z) {
+  const k = x + "," + y + "," + z;
+  if (!set.has(k)) { set.add(k); pos.push({ x, y, z }); }
+}
 function pyramidCells(set, pos, ox, oy, w, h, layers) {
   for (let z = 0; z < layers; z++) {
     const sh = Math.floor(z / 2), ww = w - sh * 2, hh = h - sh * 2;
     if (ww < 2 || hh < 2) break;
     rectCells(set, pos, ox + sh, oy + sh, ww, hh, z);
+  }
+}
+// Tháp bẫy: các lớp trên lệch 1/2 ô để lộ 1 phần tile dưới (nhìn trộm được).
+// Bẫy: phá pattern tầng — thay vì đều đặn, ngẫu nhiên chèn thêm tile bất ngờ.
+function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
+  // Đáy 2x2
+  rectCells(set, pos, ox, oy, 2, 2, 0);
+  for (let z = 1; z < layers; z++) {
+    // Lệch 1/2 ô so le: lớp lẻ lệch (+0.5,+0.5), lớp chẵn về vị trí gốc
+    const off = (z % 2 === 1) ? 0.5 : 0;
+    const bx = ox + off, by = oy + off;
+    // Pattern cơ bản 2x2 lệch
+    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      addPosF(set, pos, bx + dx, by + dy, z);
+    }
+    // BẪY: với xác suất theo diff, chèn thêm 1 tile "trùng" phá pattern
+    // (người chơi đoán 2-1-2-1 thì bất ngờ thành 2-1-3-1)
+    if (rng() < diff * 0.5) {
+      const tx = bx + Math.floor(rng() * 2), ty = by + Math.floor(rng() * 2);
+      // Đặt lệch thêm 0.5 nữa để tạo thế chồng chéo khó đoán
+      addPosF(set, pos, tx + 0.5, ty, z);
+    }
   }
 }
 
@@ -131,6 +158,21 @@ const ARCHETYPES = [
       rectCells(set, pos, cx - 1, 0, 2, H, 0); // dọc
       pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2)); // tháp giữa
     } },
+  { id: "trap", name: "Bẫy chồng lệch",
+    desc: "Tile chồng lệch 1/2 để lộ 1 phần — đoán tile dưới, coi chừng bẫy phá pattern",
+    gen(W, H, diff, rng, set, pos) {
+      // 2 lớp đáy phẳng để tăng số tile (hướng tới 200 cặp = 400 tile)
+      rectCells(set, pos, 0, 0, W, H, 0);
+      rectCells(set, pos, 0, 0, W, H, 1);
+      if (diff > 0.6) rectCells(set, pos, 1, 1, W - 2, H - 2, 1);
+      // Rải nhiều tháp bẫy khắp board
+      const n = 5 + Math.round(diff * 5); // 5-10 tháp bẫy
+      const layers = 4 + Math.round(diff * 4); // 4-8 tầng
+      for (let i = 0; i < n; i++) {
+        const ox = Math.floor(rng() * (W - 2)), oy = Math.floor(rng() * (H - 2));
+        trapStackCells(set, pos, ox, oy, layers, rng, diff);
+      }
+    } },
 ];
 // 6 archetype chính (từ map 6 trở đi)
 const ARCHETYPES_MAIN = ARCHETYPES.filter(a => a.id !== "flat" && a.id !== "flat-tower");
@@ -165,7 +207,7 @@ function packParams(pack) {
   const t = (pack - 1) / (PACK_COUNT - 1);
   return {
     name: "Pack " + pack,
-    tilePool: Math.round(40 + t * 110),              // 40 -> 150 loại hình
+    tilePool: Math.round(40 + t * 160),              // 40 -> 200 loại hình
     shuffles: Math.max(2, Math.round(4 - t * 2)),    // 4 -> 2
     hints: Math.max(2, Math.round(4 - t * 2)),       // 4 -> 2
   };
