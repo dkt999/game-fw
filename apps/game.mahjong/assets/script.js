@@ -290,11 +290,11 @@ function isSolvableState(tileList) {
   const n = tileList.length;
   const removed = new Array(n).fill(false);
   const isCovered = (i) => {
-    const t = tileList[i];
+    const t = tileList[i], tzi = tileZIndex(t);
     for (let j = 0; j < n; j++) {
       if (j === i || removed[j]) continue;
       const o = tileList[j];
-      if (o.z <= t.z) continue;
+      if (tileZIndex(o) <= tzi) continue;
       if (gridOverlap(t, o)) return true;
     }
     return false;
@@ -366,9 +366,9 @@ function assignFacesByConstruction(list) {
   if (!n) return false;
   // Quan hệ đè theo tọa độ lưới (gridOverlap) — khớp với computeFree
   const blockers = list.map((t, i) => {
-    const s = [];
+    const s = [], tzi = tileZIndex(t);
     for (let j = 0; j < n; j++) {
-      if (i === j || list[j].z <= t.z) continue;
+      if (i === j || tileZIndex(list[j]) <= tzi) continue;
       if (gridOverlap(t, list[j])) s.push(j);
     }
     return s;
@@ -414,6 +414,10 @@ function assignFacesByConstruction(list) {
 // Đè theo tọa độ lưới (không phụ thuộc DEPTH visual).
 // Mỗi tile chiếm [x,x+1]x[y,y+1]; đè lấn >=20% diện tích thì tính.
 // Offset 0.5 cho overlap 25% -> tính; chạm góc nhẹ <20% -> không tính.
+// QUAN TRỌNG: dùng đúng thứ tự VẼ (zIndex = z*100 + y*10 + x) để biết tile nào
+// nằm TRÊN tile nào — z đơn thuần không quyết định, vì 2 tile cùng z vẫn có
+// thể vẽ chồng nhau (tile nào zIndex cao hơn thì che tile kia).
+function tileZIndex(t) { return t.z * 100 + t.y * 10 + t.x; }
 function gridOverlap(t, o) {
   const ix = Math.max(0, Math.min(t.x + 1, o.x + 1) - Math.max(t.x, o.x));
   const iy = Math.max(0, Math.min(t.y + 1, o.y + 1) - Math.max(t.y, o.y));
@@ -421,9 +425,10 @@ function gridOverlap(t, o) {
 }
 function computeFree(t, list) {
   if (t.removed) return false;
+  const tzi = tileZIndex(t);
   for (const o of list) {
     if (o.removed || o === t) continue;
-    if (o.z <= t.z) continue; // chỉ lớp trên mới đè được
+    if (tileZIndex(o) <= tzi) continue; // chỉ tile VẼ TRÊN mới đè được
     if (gridOverlap(t, o)) return false; // bị đè (kể cả 1 phần đáng kể)
   }
   return true;
