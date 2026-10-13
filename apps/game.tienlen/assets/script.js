@@ -250,7 +250,8 @@ function doPlay(player, cards){
   lastPlay = {player, combo, cards: [...cards]};
   roundPlays[player] = [...cards]; // giu bai da danh toi het vong
   passes = 0;
-  passedRound = new Set(); // vong moi (co nguoi ra bai) -> xoa danh sach bo qua
+  // KHONG reset passedRound o day: ai da bo qua phai nghi HET VONG,
+  // chi xoa khi co nguoi thang vong va dan bai moi (trong doPass)
   firstTurn = false;
   if (player === 0) selected.clear();
 
@@ -272,10 +273,26 @@ function doPlay(player, cards){
     }
   }
 
-  // Lượt tiếp: bỏ qua người đã hết bài
-  let _nx = (player + 1) % 4, _gd = 0;
-  while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4;
-  turn = _nx;
+  // Thắng vòng ngay: mọi đối thủ còn bài đều đã bỏ qua vòng này -> không ai chặn được
+  const _rivals = activePlayers().filter(p => p !== player);
+  if (_rivals.length > 0 && _rivals.every(p => passedRound.has(p))){
+    lastPlay = null;
+    passes = 0;
+    roundPlays = {};
+    passedRound = new Set();
+    turn = player;
+    if (hands[turn].length === 0 && typeof window._tlNextActive === "function")
+      turn = window._tlNextActive(turn); // người thắng đã hết bài -> người kế tiếp còn bài dẫn
+    render();
+    setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
+    if (turn !== 0) setTimeout(botPlay, 800);
+    return true;
+  }
+  // Lượt tiếp: bỏ qua người đã hết bài HOẶC đã bỏ qua trong vòng này (tự động qua lượt)
+  if (typeof window._tlNextActive === "function") turn = window._tlNextActive(player);
+  else { let _nx = (player + 1) % 4, _gd = 0;
+    while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4;
+    turn = _nx; }
   render();
   if (turn === 0){
     setStatus("Tới lượt bạn!");

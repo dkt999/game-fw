@@ -245,13 +245,10 @@
 .tl-bot-top .tl-bot-cards{ flex-direction:row; }
 .tl-bot-top .tl-card-back{ margin-left:-20px; }
 .tl-bot-top .tl-card-back:first-child{ margin-left:0; }
-/* Bot trai/phai: xep doc + xoay ngang la bai */
-.tl-bot-left .tl-bot-cards, .tl-bot-right .tl-bot-cards{ flex-direction:column; }
-.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{
-  margin-top:-26px;
-  transform:rotate(90deg);
-}
-.tl-bot-left .tl-card-back:first-child, .tl-bot-right .tl-card-back:first-child{ margin-top:0; }
+/* Tat ca bot: xep ngang */
+.tl-bot-left .tl-bot-cards, .tl-bot-right .tl-bot-cards{ flex-direction:row; }
+.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{ margin-left:-20px; }
+.tl-bot-left .tl-card-back:first-child, .tl-bot-right .tl-card-back:first-child{ margin-left:0; }
 .tl-count-label{
   margin-left:8px;
   font-size:13px;
