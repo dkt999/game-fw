@@ -114,14 +114,25 @@
 }
 .tl-hand{
   display:flex;
-  gap:6px;
   justify-content:center;
-  flex-wrap:wrap;
-  min-height:76px;
-  padding:10px;
+  align-items:flex-end;
+  min-height:84px;
+  padding:10px 20px;
   background:rgba(0,0,0,0.18);
   border-radius:12px;
   margin-bottom:10px;
+  overflow-x:auto;
+}
+.tl-hand .tl-card{
+  margin-left:-22px;
+  transition:transform 0.15s ease;
+}
+.tl-hand .tl-card:first-child{ margin-left:0; }
+.tl-hand .tl-card.selectable:hover{
+  transform:translateY(-8px);
+}
+.tl-hand .tl-card.selected{
+  transform:translateY(-16px);
 }
 .tl-actions{
   display:flex;
