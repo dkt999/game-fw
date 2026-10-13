@@ -18,7 +18,7 @@ function tileSrc(n) {
 // Ý tưởng của fen: board có 2 vùng — vùng CAO TẦNG (nhiều lớp, khó) và vùng HỖ TRỢ (1 lớp, dễ).
 // Càng lên pack cao: càng nhiều tháp cao tầng, vùng hỗ trợ càng mỏng, tile càng nhiều loại.
 const PACK_COUNT = 10, MAPS_PER_PACK = 10, TOTAL_MAPS = 100;
-const BOARD_W = 12, BOARD_H = 8; // lưới cơ sở
+const BOARD_W = 14, BOARD_H = 9; // lưới tối đa (archetype "fixed" vẫn dùng 12x8)
 
 // Seeded RNG để mỗi map luôn sinh cùng 1 layout
 function mulberry32(seed) {
@@ -71,109 +71,232 @@ function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
   }
 }
 
+/* ===================== MAP ENGINE v2 =====================
+   Mỗi map = (hình dạng mask) + (luật xếp tầng) + (tham số theo độ khó).
+   - mask:  ô nào có tile (trái tim, kim cương, xoắn ốc, hoa...)
+   - luật:  chiều cao mỗi ô (kim tự tháp, bậc thang, bát, cột, sóng, đồi...)
+   - stagger: tầng lẻ lệch -0.5 ô (kiểu mahjong cổ điển, đè lên 4 tile bên dưới)
+   Độ giải được luôn được đảm bảo ở assignFacesByConstruction. */
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function maskGrid(W, H, fn) {
+  const m = [];
+  for (let y = 0; y < H; y++) {
+    const row = [];
+    for (let x = 0; x < W; x++) {
+      const nx = (x + 0.5 - W / 2) / (W / 2), ny = (y + 0.5 - H / 2) / (H / 2);
+      row.push(fn(nx, ny, x, y) ? 1 : 0);
+    }
+    m.push(row);
+  }
+  return m;
+}
+// Khoảng cách Manhattan từ ô trong mask tới mép gần nhất (ô sát mép = 1)
+function distField(m) {
+  const H = m.length, W = m[0].length;
+  const d = m.map(r => r.map(() => 0));
+  const q = [];
+  const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!m[y][x]) continue;
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || !m[ny][nx]) { d[y][x] = 1; q.push([x, y]); break; }
+    }
+  }
+  for (let qi = 0; qi < q.length; qi++) {
+    const [x, y] = q[qi];
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      if (m[ny][nx] && d[ny][nx] === 0) { d[ny][nx] = d[y][x] + 1; q.push([nx, ny]); }
+    }
+  }
+  return d;
+}
+// Luật chiều cao: (d = khoảng cách tới mép, x, y, W, H, L = số tầng tối đa, env)
+const HEIGHT_RULES = {
+  flat:    () => 1,
+  pyramid: (d, x, y, W, H, L) => Math.min(L, d),
+  terrace: (d, x, y, W, H, L) => Math.min(L, Math.ceil(d / 2)),
+  bowl:    (d, x, y, W, H, L) => Math.max(1, L - d + 1),
+  rim:     (d, x, y, W, H, L) => (d === 1 ? L : 1),
+  columns: (d, x, y, W, H, L) => (x % 2 === 0 ? Math.min(L, d) : 1),
+  checker: (d, x, y, W, H, L) => 1 + (((x + y) & 1) ? 0 : Math.min(L - 1, d - 1)),
+  waves:   (d, x, y, W, H, L) => 1 + Math.round(((Math.sin(x * 0.85 + y * 0.55) + 1) / 2) * (L - 1)),
+  ramp:    (d, x, y, W, H, L, env) => 1 + Math.min(L - 1, Math.floor((env.flip ? W - 1 - x : x) * L / W)),
+  rampY:   (d, x, y, W, H, L, env) => 1 + Math.min(L - 1, Math.floor((env.flip ? H - 1 - y : y) * L / H)),
+  rampD:   (d, x, y, W, H, L, env) => 1 + Math.min(L - 1, Math.floor(((env.flip ? W - 1 - x : x) + y) * L / (W + H - 1))),
+  hills:   (d, x, y, W, H, L, env) => {
+    let best = 1;
+    for (const p of env.peaks) {
+      const dist = Math.hypot(x - p.x, (y - p.y) * 1.2);
+      best = Math.max(best, 1 + Math.round((1 - dist / p.r) * (L - 1)));
+    }
+    return Math.min(L, best);
+  },
+};
+function emitHeights(set, pos, hts, stagger) {
+  for (let y = 0; y < hts.length; y++) for (let x = 0; x < hts[y].length; x++) {
+    for (let z = 0; z < hts[y][x]; z++) {
+      const sh = (stagger && z % 2 === 1) ? -0.5 : 0;
+      addPosF(set, pos, x + sh, y + sh, z);
+    }
+  }
+}
+// Tạo archetype từ mask + danh sách luật (luật chọn theo variant để map lặp lại vẫn khác nhau)
+function maskArch(id, name, desc, maskFn, rules) {
+  return {
+    id, name, desc,
+    gen(W, H, diff, rng, set, pos, P) {
+      const m = maskGrid(W, H, maskFn);
+      const d = distField(m);
+      // Độ khó cao thì bỏ luật "flat" (nếu còn luật khác) để map không bị phẳng lì
+      const usable = diff > 0.35 ? rules.filter(r => r !== "flat") : rules;
+      const rule = HEIGHT_RULES[usable[P.variant % usable.length]];
+      const env = { flip: (P.variant & 1) === 1, peaks: [] };
+      const np = 2 + (P.variant % 2);
+      for (let i = 0; i < np; i++) env.peaks.push({ x: W * (0.2 + 0.6 * rng()), y: H * (0.25 + 0.5 * rng()), r: Math.max(W, H) * (0.45 + 0.25 * rng()) });
+      const build = (rf) => m.map((row, y) => row.map((v, x) => v ? clamp(Math.round(rf(d[y][x], x, y, W, H, P.L, env)), 1, P.L) : 0));
+      let hts = build(rule);
+      // Hình mảnh (xoắn ốc, vành, khung...) làm luật theo khoảng cách ra phẳng lì → thử luật không phụ thuộc d
+      if (diff > 0.2 && P.L > 1 && Math.max(...hts.map(r => Math.max(...r))) < 2) hts = build(HEIGHT_RULES.waves);
+      // Đục vài lỗ nhỏ ở bên trong cho đỡ đơn điệu khi độ khó cao
+      const holes = Math.round(diff * 3);
+      for (let k = 0; k < holes; k++) {
+        const x = Math.floor(rng() * W), y = Math.floor(rng() * H);
+        if (m[y][x] && d[y][x] >= 2) hts[y][x] = 0;
+      }
+      emitHeights(set, pos, hts, P.stagger);
+    },
+  };
+}
+const MASKS = {
+  heart:     (nx, ny) => { const x = nx * 1.18, y = -ny * 1.15 + 0.12; const a = x * x + y * y - 1; return a * a * a - x * x * y * y * y <= 0; },
+  diamond:   (nx, ny) => Math.abs(nx) + Math.abs(ny) <= 1.02,
+  ellipse:   (nx, ny) => nx * nx + ny * ny <= 1.02,
+  ring:      (nx, ny) => { const r = Math.hypot(nx, ny); return (r <= 1.02 && r >= 0.58) || r <= 0.3; },
+  plus:      (nx, ny) => Math.abs(nx) <= 0.3 || Math.abs(ny) <= 0.4,
+  xshape:    (nx, ny) => Math.abs(Math.abs(nx) - Math.abs(ny)) <= 0.3,
+  butterfly: (nx, ny) => Math.abs(ny) <= 0.2 + 0.85 * Math.abs(nx),
+  hourglass: (nx, ny) => Math.abs(nx) <= 0.2 + 0.85 * Math.abs(ny),
+  triangle:  (nx, ny) => Math.abs(nx) <= (ny + 1) / 2 + 0.05,
+  octagon:   (nx, ny) => Math.abs(nx) + Math.abs(ny) <= 1.5,
+  crescent:  (nx, ny) => Math.hypot(nx, ny) <= 1.02 && Math.hypot(nx + 0.45, ny) > 0.78,
+  spiral:    (nx, ny) => { const r = Math.hypot(nx, ny); if (r > 1.02) return false; if (r < 0.15) return true;
+                           const t = r * 2.6 - Math.atan2(ny, nx) / (2 * Math.PI); return (((t % 1) + 1) % 1) < 0.58; },
+  frame:     (nx, ny) => !(Math.abs(nx) < 0.55 && Math.abs(ny) < 0.5) || (Math.abs(nx) < 0.18 && Math.abs(ny) < 0.2),
+  flower:    (nx, ny) => Math.hypot(nx, ny) <= 0.5 + 0.5 * (0.5 + 0.5 * Math.cos(5 * Math.atan2(ny, nx))) + 0.02,
+  islands:   (nx, ny) => Math.hypot(nx - 0.52, ny) <= 0.5 || Math.hypot(nx + 0.52, ny) <= 0.5,
+  squircle:  (nx, ny) => Math.pow(Math.abs(nx), 4) + Math.pow(Math.abs(ny), 4) <= 1.02,
+  rect:      () => true,
+};
+
 const ARCHETYPES = [
-  { id: "flat", name: "Mặt phẳng",
+  // ---- 2 kiểu nhập môn (map 1-5) ----
+  { id: "flat", name: "Mặt phẳng", fixed: true,
     desc: "Chỉ 1 lớp phẳng — làm quen cách ăn cặp",
     gen(W, H, diff, rng, set, pos) {
-      // Map 1-2: hình chữ nhật phẳng, to dần
       const w = 8 + Math.round(diff * 4), h = 5 + Math.round(diff * 2);
       rectCells(set, pos, Math.floor((W - w) / 2), Math.floor((H - h) / 2), w, h, 0);
     } },
-  { id: "flat-tower", name: "Tháp đơn",
+  { id: "flat-tower", name: "Tháp đơn", fixed: true,
     desc: "Mặt phẳng + 1-2 tháp thấp — học cách gỡ lớp trên",
     gen(W, H, diff, rng, set, pos) {
-      rectCells(set, pos, 0, 0, W, H, 0); // đáy phẳng
-      const n = 1 + (diff > 0.05 ? 1 : 0); // map 3: 1 tháp, map 4-5: 2 tháp
+      rectCells(set, pos, 0, 0, W, H, 0);
+      const n = 1 + (diff > 0.05 ? 1 : 0);
       for (let i = 0; i < n; i++) {
         const tw = 3, th = 3;
         const ox = 2 + i * (W - 4 - tw), oy = Math.floor((H - th) / 2);
-        pyramidCells(set, pos, ox, oy, tw, th, 2); // chỉ 2 lớp
+        pyramidCells(set, pos, ox, oy, tw, th, 2);
       }
     } },
-  { id: "fortress", name: "Pháo đài",
-    desc: "Tháp đa tầng ở giữa, 4 cánh hỗ trợ đánh vào",
+  // ---- Hình thù (mask + luật tầng) ----
+  maskArch("heart", "Trái tim", "Trái tim nhiều tầng", MASKS.heart, ["pyramid", "terrace", "bowl", "checker"]),
+  maskArch("diamond", "Kim cương", "Hình thoi, bậc thang vào tâm", MASKS.diamond, ["pyramid", "rim", "terrace", "checker"]),
+  maskArch("lake", "Hồ tròn", "Bầu dục, tầng cao dồn ở mép hoặc ở tâm", MASKS.ellipse, ["bowl", "pyramid", "rim", "terrace"]),
+  maskArch("ring", "Vòng vây", "Vành ngoài + đảo nhỏ ở giữa", MASKS.ring, ["pyramid", "rim", "terrace", "flat"]),
+  maskArch("plus", "Chữ thập", "Hai cánh giao nhau", MASKS.plus, ["pyramid", "columns", "terrace", "checker"]),
+  maskArch("xshape", "Chữ X", "Hai đường chéo giao nhau", MASKS.xshape, ["pyramid", "flat", "checker", "columns"]),
+  maskArch("butterfly", "Con bướm", "Hai cánh tam giác", MASKS.butterfly, ["pyramid", "columns", "terrace", "waves"]),
+  maskArch("hourglass", "Đồng hồ cát", "Hai tam giác úp vào nhau", MASKS.hourglass, ["pyramid", "terrace", "checker"]),
+  maskArch("triangle", "Tam giác", "Đỉnh nhọn hướng lên", MASKS.triangle, ["pyramid", "terrace", "rampD", "waves"]),
+  maskArch("octagon", "Bát giác", "Hình tám cạnh", MASKS.octagon, ["pyramid", "bowl", "checker", "terrace"]),
+  maskArch("crescent", "Trăng khuyết", "Lưỡi liềm cong", MASKS.crescent, ["pyramid", "flat", "waves", "terrace"]),
+  maskArch("spiral", "Xoắn ốc", "Rãnh xoắn từ ngoài vào tâm", MASKS.spiral, ["flat", "columns", "waves", "checker"]),
+  maskArch("frame", "Khung cửa", "Khung viền, ô cửa trống ở giữa", MASKS.frame, ["pyramid", "rim", "terrace", "checker"]),
+  maskArch("flower", "Bông hoa", "5 cánh hoa quanh nhụy", MASKS.flower, ["pyramid", "terrace", "bowl", "flat"]),
+  maskArch("islands", "Hai đảo", "Hai hòn đảo tách rời", MASKS.islands, ["pyramid", "bowl", "terrace", "rim"]),
+  maskArch("mountains", "Núi non", "Vài đỉnh núi nhô lên từ nền", MASKS.squircle, ["hills", "waves", "hills", "pyramid"]),
+  maskArch("stairs", "Cầu thang", "Bậc thang dốc dần", MASKS.rect, ["ramp", "rampY", "rampD", "ramp"]),
+  maskArch("checkerboard", "Bàn cờ", "Ô cao ô thấp xen kẽ", MASKS.rect, ["checker", "waves", "checker", "columns"]),
+  maskArch("big-pyramid", "Kim tự tháp", "Kim tự tháp lớn", MASKS.rect, ["pyramid", "terrace", "bowl", "rim"]),
+  { id: "bricks", name: "Tường gạch",
+    desc: "Gạch xếp so le từng hàng, tầng trên đè lên mạch nối",
+    gen(W, H, diff, rng, set, pos, P) {
+      const layers = Math.min(P.L, 4);
+      for (let z = 0; z < layers; z++) {
+        for (let y = z; y < H - z; y++) {
+          const shift = ((y + z) % 2) * 0.5;
+          for (let x = z; x < W - z - (shift ? 1 : 0); x++) addPosF(set, pos, x + shift, y, z);
+        }
+      }
+    } },
+  // ---- Kiểu cổ điển giữ lại (lưới cố định 12x8) ----
+  { id: "fortress", name: "Pháo đài", fixed: true,
+    desc: "Tháp đa tầng ở giữa, 4 cánh hỗ trợ",
     gen(W, H, diff, rng, set, pos) {
       const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
-      // 4 cánh hỗ trợ (1 lớp) — Bắc/Nam/Đông/Tây
-      rectCells(set, pos, cx - 2, 0, 4, 2, 0);       // Bắc
-      rectCells(set, pos, cx - 2, H - 2, 4, 2, 0);   // Nam
-      rectCells(set, pos, 0, cy - 2, 2, 4, 0);       // Tây
-      rectCells(set, pos, W - 2, cy - 2, 2, 4, 0);   // Đông
-      // Tháp trung tâm đa tầng
+      rectCells(set, pos, cx - 2, 0, 4, 2, 0);
+      rectCells(set, pos, cx - 2, H - 2, 4, 2, 0);
+      rectCells(set, pos, 0, cy - 2, 2, 4, 0);
+      rectCells(set, pos, W - 2, cy - 2, 2, 4, 0);
       pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2));
     } },
-  { id: "twin", name: "Song tháp",
+  { id: "twin", name: "Song tháp", fixed: true,
     desc: "2 tháp 2 bên, cầu nối ở giữa",
     gen(W, H, diff, rng, set, pos) {
       const cy = Math.floor(H / 2), layers = 3 + Math.round(diff * 2);
-      pyramidCells(set, pos, 1, cy - 2, 4, 4, layers);          // tháp trái
-      pyramidCells(set, pos, W - 5, cy - 2, 4, 4, layers);      // tháp phải
-      rectCells(set, pos, 5, cy - 1, W - 10, 2, 0);             // cầu nối
+      pyramidCells(set, pos, 1, cy - 2, 4, 4, layers);
+      pyramidCells(set, pos, W - 5, cy - 2, 4, 4, layers);
+      rectCells(set, pos, 5, cy - 1, W - 10, 2, 0);
     } },
-  { id: "pyramid", name: "Kim tự tháp",
-    desc: "1 kim tự tháp lớn ở giữa",
-    gen(W, H, diff, rng, set, pos) {
-      const w = 8, h = 6, layers = 4 + Math.round(diff * 2);
-      pyramidCells(set, pos, Math.floor((W - w) / 2), Math.floor((H - h) / 2), w, h, layers);
-    } },
-  { id: "scatter", name: "Rải rác",
+  { id: "scatter", name: "Rải rác", fixed: true,
     desc: "Nhiều tháp nhỏ rải khắp board",
     gen(W, H, diff, rng, set, pos) {
-      const n = 4 + Math.round(diff * 3); // 4-7 tháp
+      const n = 4 + Math.round(diff * 3);
       for (let i = 0; i < n; i++) {
         const tw = 3 + Math.floor(rng() * 2), th = 3 + Math.floor(rng() * 2);
         const ox = Math.floor(rng() * (W - tw + 1)), oy = Math.floor(rng() * (H - th + 1));
         pyramidCells(set, pos, ox, oy, tw, th, 2 + Math.round(rng() * diff * 2));
       }
-      // Lớp đáy mỏng hỗ trợ
-      for (let k = 0; k < 20; k++) {
-        const x = Math.floor(rng() * W), y = Math.floor(rng() * H);
-        addPos(set, pos, x, y, 0);
-      }
+      for (let k = 0; k < 20; k++) addPos(set, pos, Math.floor(rng() * W), Math.floor(rng() * H), 0);
     } },
-  { id: "ring", name: "Vòng vây",
-    desc: "Vành ngoài hỗ trợ, tháp trong bị vây",
+  { id: "trap", name: "Bẫy chồng lệch", fixed: true,
+    desc: "Tile chồng lệch 1/2 là thế cờ thật — coi chừng bẫy phá pattern",
     gen(W, H, diff, rng, set, pos) {
-      // Vành ngoài (1 lớp, có lỗ giữa)
-      const x1 = 0, x2 = W - 1, y1 = 0, y2 = H - 1;
-      const hx1 = 3, hx2 = W - 4, hy1 = 2, hy2 = H - 3;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        if (x >= hx1 && x <= hx2 && y >= hy1 && y <= hy2) continue;
-        addPos(set, pos, x, y, 0);
-      }
-      // Tháp trong
-      const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
-      pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2));
-    } },
-  { id: "cross", name: "Chữ thập",
-    desc: "Chữ thập + tháp trung tâm",
-    gen(W, H, diff, rng, set, pos) {
-      const cx = Math.floor(W / 2), cy = Math.floor(H / 2);
-      rectCells(set, pos, 0, cy - 1, W, 2, 0); // ngang
-      rectCells(set, pos, cx - 1, 0, 2, H, 0); // dọc
-      pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2)); // tháp giữa
-    } },
-  { id: "trap", name: "Bẫy chồng lệch",
-    desc: "Tile chồng lệch 1/2 là thế cờ thật — nhìn phần lộ để đoán, coi chừng bẫy phá pattern",
-    gen(W, H, diff, rng, set, pos) {
-      // 1 lớp đáy phẳng (z=0); tháp bẫy xếp từ z=1 trở lên
       rectCells(set, pos, 0, 0, W, H, 0);
-      // Rải nhiều tháp bẫy khắp board (hướng tới 200 cặp = 400 tile)
-      const n = 8 + Math.round(diff * 6); // 8-14 tháp bẫy
-      const layers = 4 + Math.round(diff * 4); // 4-8 tầng
+      const n = 7 + Math.round(diff * 4);
+      const layers = 3 + Math.round(diff * 3);
       for (let i = 0; i < n; i++) {
         const ox = Math.floor(rng() * (W - 2)), oy = Math.floor(rng() * (H - 2));
         trapStackCells(set, pos, ox, oy, layers, rng, diff);
       }
     } },
 ];
-// 6 archetype chính (từ map 6 trở đi)
 const ARCHETYPES_MAIN = ARCHETYPES.filter(a => a.id !== "flat" && a.id !== "flat-tower");
-// Mỗi map 1 kiểu: 5 map đầu học thế cơ bản, từ map 6 xoay vòng 6 archetype chính
+// Map 1-2: phẳng, 3-5: tháp đơn. Từ map 6: đi vòng qua toàn bộ archetype với bước nhảy
+// nguyên tố cùng nhau với N → mỗi N map không trùng kiểu, 2 map liền kề luôn khác hình.
+function mapStride(N) {
+  for (const s of [7, 5, 11, 3, 13, 2]) { let a = s, b = N; while (b) { [a, b] = [b, a % b]; } if (a === 1) return s; }
+  return 1;
+}
 function mapArchetype(mapNum) {
-  if (mapNum <= 2) return ARCHETYPES[0]; // flat
-  if (mapNum <= 5) return ARCHETYPES[1]; // flat-tower
-  return ARCHETYPES_MAIN[(mapNum - 6) % ARCHETYPES_MAIN.length];
+  if (mapNum <= 2) return ARCHETYPES[0];
+  if (mapNum <= 5) return ARCHETYPES[1];
+  const k = mapNum - 6, N = ARCHETYPES_MAIN.length;
+  return ARCHETYPES_MAIN[(k * mapStride(N) + Math.floor(k / N)) % N];
 }
 
 // Sinh layout cho map: trả về mảng {x,y,z} — mỗi map 1 archetype (xoay vòng)
@@ -226,8 +349,28 @@ function generateMapLayout(pack, mapIdx) {
   const diff = Math.min(1, t * 0.85 + tm * 0.15);
   const rng = mulberry32(mapNum * 7919 + 13);
   const arch = mapArchetype(mapNum);
-  const set = new Set(), pos = [];
-  arch.gen(BOARD_W, BOARD_H, diff, rng, set, pos);
+  const variant = mapNum <= 5 ? 0 : Math.floor((mapNum - 6) / ARCHETYPES_MAIN.length);
+
+  // Archetype "fixed" dùng lưới 12x8 như cũ; archetype hình thù tự co giãn theo độ khó.
+  let W = arch.fixed ? 12 : clamp(Math.round(lerp(8, 14, diff)), 8, BOARD_W);
+  let H = arch.fixed ? 8 : clamp(Math.round(lerp(6, 9, diff)), 6, BOARD_H);
+  let L = 2 + Math.round(diff * 3);
+  const minT = Math.round(lerp(36, 130, diff)), maxT = Math.round(lerp(90, 320, diff));
+  const stagger = mapNum > 8 && diff > 0.2 && rng() < 0.45;
+
+  let best = null, bestScore = Infinity;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const set = new Set(), pos = [];
+    arch.gen(W, H, diff, mulberry32(mapNum * 131 + 7), set, pos, { L, variant, stagger });
+    const n = pos.length;
+    const score = n < minT ? minT - n : n > maxT ? n - maxT : 0;
+    if (score < bestScore) { best = pos; bestScore = score; }
+    if (arch.fixed || score === 0) break;
+    if (n < minT) { if (W < BOARD_W || H < BOARD_H) { W = Math.min(BOARD_W, W + 1); H = Math.min(BOARD_H, H + (attempt % 2)); } else L++; }
+    else if (L > 1) L--;
+    else { W = Math.max(6, W - 1); H = Math.max(5, H - 1); }
+  }
+  const pos = best;
   if (pos.length % 2 !== 0) pos.pop();
   return pos;
 }
