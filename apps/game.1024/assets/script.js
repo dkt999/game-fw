@@ -36,6 +36,7 @@ function gridFromTiles(){
 }
 
 function newGame(){
+  buildGrid();
   tiles = [];
   nextId = 1;
   score = 0;
@@ -248,6 +249,23 @@ const TILE_COLORS = {
 
 // Map id -> element để giữ và animation
 const tileEls = new Map();
+
+function buildGrid(){
+  const board = boardEl();
+  // Xoa luoi cu neu co (giu lai tiles layer)
+  const oldCells = board.querySelectorAll(".g1024-cell");
+  oldCells.forEach(el => el.remove());
+  for (let r = 0; r < SIZE; r++){
+    for (let c = 0; c < SIZE; c++){
+      const cell = document.createElement("div");
+      cell.className = "g1024-cell";
+      board.appendChild(cell);
+    }
+  }
+  // Dua tiles layer len tren
+  const layer = tilesLayerEl();
+  if (layer) board.appendChild(layer);
+}
 
 function tilePos(r, c){
   // Vị trí % trong board
