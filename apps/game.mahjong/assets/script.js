@@ -260,6 +260,7 @@ function mapToPack(m) { return { pack: Math.ceil(m / MAPS_PER_PACK), idx: ((m - 
 /* ---------- State ---------- */
 window.MJ_DEBUG = (typeof location !== "undefined" && location.search.indexOf("mahjong_debug=1") >= 0);
 window.MJ_SCANLOG = (typeof location !== "undefined" && location.search.indexOf("mahjong_debug=2") >= 0);
+if (window.MJ_SCANLOG) window.MJ_DEBUG = true;
 let tiles = [];        // {id,x,y,z,face,removed,free,el}
 let selected = null;
 let shufflesLeft = 0, hintsLeft = 0;
@@ -425,7 +426,7 @@ function gridOverlap(t, o) {
 function computeFree(t, list) {
   if (t.removed) return false;
   const tzi = tileZIndex(t);
-  const dbg = window.MJ_DEBUG && window.MJ_SCANLOG;
+  const dbg = window.MJ_SCANLOG;
   if (dbg) console.log(`[SCAN] Tile (${t.x},${t.y},z${t.z}) zIndex=${tzi}:`);
   for (const o of list) {
     if (o.removed || o === t) continue;
