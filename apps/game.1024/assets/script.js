@@ -13,6 +13,7 @@ let won = false;
 let over = false;
 let keepGoing = false;
 let justMerged = []; // danh sach [r,c] vua gop de animation
+let lastMoveDir = -1; // huong di chuyen vua roi de animation truot
 
 const boardEl = () => document.getElementById("g1024-board");
 const scoreEl = () => document.getElementById("g1024-score");
@@ -129,6 +130,7 @@ function rotateLeft(g){
 function move(dir){
   // dir: 0=trái, 1=lên, 2=phải, 3=xuống
   if (over) return;
+  lastMoveDir = dir;
   pushHistory();
   let g = grid;
   for (let i = 0; i < dir; i++) g = rotateLeft(g);
@@ -239,6 +241,14 @@ function render(){
       }
       board.appendChild(cell);
     }
+  }
+  // Animation truot cho ca board theo huong di chuyen
+  if (lastMoveDir >= 0){
+    board.classList.remove("slide-l", "slide-r", "slide-u", "slide-d");
+    void board.offsetWidth; // force reflow de restart animation
+    const cls = ["slide-l", "slide-u", "slide-r", "slide-d"][lastMoveDir];
+    board.classList.add(cls);
+    lastMoveDir = -1;
   }
 }
 

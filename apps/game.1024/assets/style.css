@@ -117,6 +117,15 @@
 .g1024-tile.merged{
   animation:tileMerge 0.3s ease;
 }
+/* Hieu ung truot: board nhe nhang dich theo huong di chuyen */
+.g1024-board.slide-l{ animation:slideL 0.18s ease; }
+.g1024-board.slide-r{ animation:slideR 0.18s ease; }
+.g1024-board.slide-u{ animation:slideU 0.18s ease; }
+.g1024-board.slide-d{ animation:slideD 0.18s ease; }
+@keyframes slideL{ 0%{transform:translateX(14px);} 100%{transform:translateX(0);} }
+@keyframes slideR{ 0%{transform:translateX(-14px);} 100%{transform:translateX(0);} }
+@keyframes slideU{ 0%{transform:translateY(14px);} 100%{transform:translateY(0);} }
+@keyframes slideD{ 0%{transform:translateY(-14px);} 100%{transform:translateY(0);} }
 @keyframes tileMerge{
   0%{ transform:scale(0.7); }
   50%{ transform:scale(1.12); }
