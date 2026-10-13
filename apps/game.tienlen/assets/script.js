@@ -441,7 +441,12 @@ function render(){
 
 document.addEventListener("click", (e) => {
   if (e.target.id === "tl-new"){ lastWinner = -1; newGame(); return; }
-  if (e.target.id === "tl-again"){ newGame(); return; }
+  if (e.target.id === "tl-again"){
+    newGame();
+    // Choi tiep voi do kho da chon: khoi dong luot neu la bot
+    if (turn !== 0) setTimeout(botPlay, 800);
+    return;
+  }
   if (e.target.id === "tl-sort"){
     hands[0].sort(cmpCard);
     selected.clear();
