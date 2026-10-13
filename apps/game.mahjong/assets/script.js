@@ -186,17 +186,22 @@ function getTestLayout() {
     const set = new Set(), pos = [];
     let faces = null;
     if (m[1] === "p01") {
-      // P0-1: 2 tile trên CÙNG tầng z1 đè 1 tile dưới z0 (ở giữa)
-      // (5,3,z1) + (6,4,z1) cùng sáng (không đè nhau)
-      // (5.5,3.5,z0) bị cả 2 đè -> mờ
-      // Gán face: A(5,3)=1 với D(1,1)=1; C(6,4)=2 với E(10,1)=2; B(5.5,3.5)=3 với F(1,6)=3
-      addPosF(set, pos, 5, 3, 1);          // A (trên-trái)
-      addPosF(set, pos, 5.5, 3.5, 0);      // B (dưới, giữa, bị đè)
-      addPosF(set, pos, 6, 4, 1);          // C (trên-phải, cùng tầng với A)
-      addPos(set, pos, 1, 1, 0);  // D
+      // P0-1: Tháp 4 tầng (z0-z3) để test logic tầng
+      // z3 (đỉnh): A3(5,3), C3(6,4) — cùng sáng
+      // z2: B2(5.5,3.5) — mờ (bị z3 đè)
+      // z1: A1(5,3), C1(6,4) — mờ (bị z2 đè)
+      // z0 (đáy): B0(5.5,3.5) — mờ (bị z1 đè)
+      // Gán face: A3=C3=1; B2=D=2; A1=C1=3; B0=E=4
+      addPosF(set, pos, 5.5, 3.5, 0); // B0 (đáy)
+      addPosF(set, pos, 5, 3, 1);     // A1
+      addPosF(set, pos, 6, 4, 1);     // C1
+      addPosF(set, pos, 5.5, 3.5, 2); // B2
+      addPosF(set, pos, 5, 3, 3);     // A3 (đỉnh)
+      addPosF(set, pos, 6, 4, 3);     // C3 (đỉnh)
+      // 2 ô phẳng để đủ cặp
+      addPos(set, pos, 1, 1, 0); // D
       addPos(set, pos, 10, 1, 0); // E
-      addPos(set, pos, 1, 6, 0);  // F
-      faces = [1, 3, 2, 1, 2, 3]; // A=1,B=3,C=2,D=1,E=2,F=3
+      faces = [4, 3, 3, 2, 1, 1, 2, 4]; // B0=4,A1=3,C1=3,B2=2,A3=1,C3=1,D=2,E=4
     } else {
       // P0-2: 5 ô chữ thập — 4 ô z0 xếp 2x2, 1 ô z1 nằm giữa che 25% mỗi ô
       // Thứ tự gỡ: ô giữa (z1) trước, rồi 4 ô dưới
