@@ -416,6 +416,9 @@ function computeFree(t, list) {
 }
 function updateFreeStates() {
   for (const t of tiles) t.free = computeFree(t, tiles);
+  if (window.MJ_DEBUG) {
+    console.log("[MJ_DEBUG] Tiles:", tiles.map(t => `(${t.x},${t.y},z${t.z}) free=${t.free} face=${t.face}`).join(" | "));
+  }
 }
 function hasAnyMove() {
   const seen = {};
