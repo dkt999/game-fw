@@ -493,12 +493,15 @@ function renderBoard() {
   boardEl.style.height = (needH * scale) + "px";
   boardEl.style.transform = "none";
 
+  // PHASE 1: Render TẤT CẢ ở trạng thái mờ (blocked) trước
+  // (loại trừ nguyên nhân từ thứ tự render/timing)
+  for (const t of tiles) t.free = false;
   // Vẽ lớp dưới trước (z-index theo z)
   const sorted = [...tiles].sort((a, b) => (a.z - b.z) || (a.y - b.y) || (a.x - b.x));
   for (const t of sorted) {
     if (t.removed) continue;
     const el = document.createElement("div");
-    el.className = "mj-tile" + (t.free ? " free" : " blocked");
+    el.className = "mj-tile blocked";
     el.style.width = TW + "px";
     el.style.height = TH + "px";
     el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
@@ -524,10 +527,15 @@ function renderBoard() {
     const s = tiles.find(t => t.id === selected.id && !t.removed);
     if (s && s.el) s.el.classList.add("selected");
   }
-  // Kiểm tra lại bằng vùng hiển thị thực tế (t.el đã có)
+  // PHASE 2: Quét 1 lượt — tile nào không bị đè thì chuyển sang sáng (free)
   updateFreeStates();
   refreshTileClasses();
   updateStats();
+  if (window.MJ_DEBUG) {
+    const free = tiles.filter(t => !t.removed && t.free).length;
+    const blocked = tiles.filter(t => !t.removed && !t.free).length;
+    console.log(`[MJ_DEBUG] Sau quét: ${free} sáng, ${blocked} mờ`);
+  }
 }
 function refreshTileClasses() {
   for (const t of tiles) {
