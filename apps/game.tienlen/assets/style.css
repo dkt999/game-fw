@@ -176,7 +176,9 @@
 .tl-hand-inner{
   display:flex;
   align-items:flex-end;
+  justify-content:center;
   margin:0 auto;
+  max-width:100%;
 }
 .tl-hand-inner .tl-card{ margin-left:-24px; }
 .tl-hand-inner .tl-card:first-child{ margin-left:0; }
@@ -268,4 +270,8 @@
   gap:8px;
   flex-shrink:0;
 }
-.tl-bottom-row .tl-hand-area{ flex:1; }
+.tl-bottom-row .tl-hand-area{
+  flex:0 0 auto;
+  width:330px;
+  max-width:45vw;
+}
