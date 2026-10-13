@@ -9,7 +9,10 @@
 /* ---------- Config ---------- */
 const TILE_BASE = "./apps/game.pikachu/assets/titles/";
 const TILE_COUNT = 200;
-function tileSrc(n) { return TILE_BASE + "tile" + String(n).padStart(3, "0") + ".svg"; }
+function tileSrc(n) {
+  const v = (typeof window !== "undefined" && window.APP_VERSION) ? window.APP_VERSION : "1";
+  return TILE_BASE + "tile" + String(n).padStart(3, "0") + ".svg?v=" + v;
+}
 
 /* ---------- Hệ thống Pack/Map (10 pack x 10 map) ---------- */
 // Ý tưởng của fen: board có 2 vùng — vùng CAO TẦNG (nhiều lớp, khó) và vùng HỖ TRỢ (1 lớp, dễ).
