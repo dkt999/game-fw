@@ -122,10 +122,17 @@ function settleMoney(){
   pay[finished[1]] -= BASE;
   pay[finished[2]] -= BASE*2;
   pay[loser] -= BASE*3 + hands[loser].length*5;
-  // Heo con lai: moi con 2 = 10
+  // Thui heo: heo den (♠♣) = 10, heo do (♦♥) = 20, chia deu cho 3 nguoi kia
   for (let p = 0; p < 4; p++){
-    const twos = hands[p].filter(c => c.rank === 15).length;
-    if (twos) pay[p] -= twos*10;
+    const twos = hands[p].filter(c => c.rank === 15);
+    if (!twos.length) continue;
+    let fine = 0;
+    for (const t of twos){
+      fine += (t.suit <= 1) ? 10 : 20; // den:♠♣, do:♦♥
+    }
+    pay[p] -= fine;
+    const share = Math.floor(fine / 3);
+    for (let q = 0; q < 4; q++) if (q !== p) pay[q] += share;
   }
   // Tong tra -> nhat huong
   const totalPay = -(pay[finished[1]] + pay[finished[2]] + pay[loser]);
