@@ -275,3 +275,9 @@
   width:330px;
   max-width:45vw;
 }
+
+/* Huong bai danh ve phia giua */
+.tl-seat-top .tl-play-area .tl-card{ transform:rotate(180deg); }
+.tl-seat-left .tl-play-area{ transform:rotate(90deg); }
+.tl-seat-right .tl-play-area{ transform:rotate(-90deg); }
+/* Bottom giu nguyen */
