@@ -210,7 +210,11 @@
 }
 /* === Bot tren/duoi: bai up nam ngang === */
 .tl-seat-top .tl-hand-area,
-.tl-seat-bottom .tl-hand-area{ flex-direction:row; }
+.tl-seat-bottom .tl-hand-area{
+  flex-direction:row;
+  width:250px;
+  height:66px;
+}
 .tl-seat-top .tl-card-back,
 .tl-seat-bottom .tl-card-back{
   width:36px; height:52px;
