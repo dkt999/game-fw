@@ -502,31 +502,28 @@ function renderBoard() {
   const sorted = [...tiles].sort((a, b) => (a.z - b.z) || (a.y - b.y) || (a.x - b.x));
   sorted.forEach((t, idx) => {
     if (t.removed) return;
-    for (const t of sorted) {
-      if (t.removed) continue;
-      const el = document.createElement("div");
-      el.className = "mj-tile blocked";
-      el.style.width = TW + "px";
-      el.style.height = TH + "px";
-      el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
-      el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
-      el.style.zIndex = String(idx + 1);
-      const img = document.createElement("img");
-      img.src = tileSrc(t.face);
-      img.alt = "";
-      el.appendChild(img);
-      if (window.MJ_DEBUG) {
-        const dbg = document.createElement("div");
-        dbg.textContent = t.x + "," + t.y + ",z" + t.z;
-        dbg.style.cssText = "position:absolute;top:0;left:0;font-size:8px;color:red;background:rgba(255,255,255,0.7);pointer-events:none;z-index:9999;";
-        el.appendChild(dbg);
-      }
-      el.addEventListener("click", () => onTileClick(t));
-      boardEl.appendChild(el);
-      t.el = el;
-      t._rect = el.getBoundingClientRect();
-      setTileBrightness(t);
+    const el = document.createElement("div");
+    el.className = "mj-tile blocked";
+    el.style.width = TW + "px";
+    el.style.height = TH + "px";
+    el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
+    el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
+    el.style.zIndex = String(idx + 1);
+    const img = document.createElement("img");
+    img.src = tileSrc(t.face);
+    img.alt = "";
+    el.appendChild(img);
+    if (window.MJ_DEBUG) {
+      const dbg = document.createElement("div");
+      dbg.textContent = t.x + "," + t.y + ",z" + t.z;
+      dbg.style.cssText = "position:absolute;top:0;left:0;font-size:8px;color:red;background:rgba(255,255,255,0.7);pointer-events:none;z-index:9999;";
+      el.appendChild(dbg);
     }
+    el.addEventListener("click", () => onTileClick(t));
+    boardEl.appendChild(el);
+    t.el = el;
+    t._rect = el.getBoundingClientRect();
+    setTileBrightness(t);
   });
   if (selected) {
     const s = tiles.find(t => t.id === selected.id && !t.removed);
