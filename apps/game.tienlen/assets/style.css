@@ -191,12 +191,7 @@
 .tl-play-area .tl-card:first-child{ margin-left:0; }
 .tl-play-area .tl-card .corner{ font-size:10px; }
 .tl-play-area .tl-card .pip{ font-size:24px; }
-.tl-seat-left .tl-play-area .tl-card,
-.tl-seat-right .tl-play-area .tl-card{
-  margin-left:0; margin-top:-38px;
-}
-.tl-seat-left .tl-play-area .tl-card:first-child,
-.tl-seat-right .tl-play-area .tl-card:first-child{ margin-top:0; }
+
 
 /* Lưng bài bot */
 .tl-card-back{
@@ -276,10 +271,15 @@
   max-width:45vw;
 }
 
-/* Huong bai danh ve phia giua */
+/* Huong bai danh ve phia giua - dan ngang */
 .tl-seat-top .tl-play-area .tl-card{ transform:rotate(180deg); }
-.tl-seat-left .tl-play-area{ transform:rotate(90deg); }
-.tl-seat-right .tl-play-area{ transform:rotate(-90deg); }
+.tl-seat-left .tl-play-area .tl-card,
+.tl-seat-right .tl-play-area .tl-card{
+  margin-left:-20px;
+  margin-top:0;
+}
+.tl-seat-left .tl-play-area .tl-card{ transform:rotate(90deg); }
+.tl-seat-right .tl-play-area .tl-card{ transform:rotate(-90deg); }
 /* Bottom giu nguyen */
 
 /* Vung bai cua nguoi da bo qua */
