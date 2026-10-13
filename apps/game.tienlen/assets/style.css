@@ -227,6 +227,7 @@
   max-height:100%;
   overflow-y:auto;
   overflow-x:hidden;
+  min-height:170px;
 }
 .tl-seat-left .tl-card-back,
 .tl-seat-right .tl-card-back{
@@ -291,10 +292,11 @@
 }
 .tl-bottom-row .tl-hand-area{
   flex:0 0 auto;
-  width:283px;
+  width:266px;
   max-width:45vw;
   overflow:visible;
   padding-top:4px;
+  height:66px;
 }
 
 /* Huong bai danh ve phia giua - dan ngang */
