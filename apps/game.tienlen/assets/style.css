@@ -39,7 +39,7 @@
   min-width:0;
   min-height:0;
 }
-.tl-seat-left, .tl-seat-right{ overflow:visible; }
+.tl-seat-left, .tl-seat-right{ overflow:visible; min-height:161px; }
 .tl-seat-top{ grid-area:top; flex-direction:column; }
 .tl-seat-bottom{ grid-area:bottom; flex-direction:column; }
 .tl-seat-left{ grid-area:left; flex-direction:row; }
@@ -382,3 +382,6 @@
   outline:3px solid #ffd98a;
   box-shadow:0 0 16px rgba(255,217,138,0.6);
 }
+
+/* An ten bot va ban */
+.tl-name{ display:none; }

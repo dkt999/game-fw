@@ -38,12 +38,10 @@ function InitTienLen() {
         <!-- Bot 1 (trên) -->
         <div class="tl-seat tl-seat-top">
             <div class="tl-hand-area" id="tl-botCards1"></div>
-            <div class="tl-name">Bot 1</div>
         </div>
         <!-- Bot 3 (trái) -->
         <div class="tl-seat tl-seat-left">
             <div class="tl-hand-area" id="tl-botCards0"></div>
-            <div class="tl-name">Bot 3</div>
         </div>
         <!-- Giữa: trạng thái -->
         <div class="tl-center-arena">
@@ -52,12 +50,10 @@ function InitTienLen() {
         </div>
         <!-- Bot 2 (phải) -->
         <div class="tl-seat tl-seat-right">
-            <div class="tl-name">Bot 2</div>
             <div class="tl-hand-area" id="tl-botCards2"></div>
         </div>
         <!-- Người chơi (dưới) -->
         <div class="tl-seat tl-seat-bottom">
-            <div class="tl-name">Bạn</div>
             <div class="tl-bottom-row">
                 <div class="tl-side-btns">
                     <button class="tl-btn" id="tl-sort">Xếp bài</button>
