@@ -82,19 +82,17 @@ function InitShikakuGame() {
                     <div class="btn-square home" id="shk-btnMenu"></div>
                     <div class="btn-square clear" id="shk-btnClear"></div>
                     <div class="btn-square new" id="shk-btnNewGame"></div>
+                    <span class="toolbar-sep"></span>
+                    <button class="zoom-btn sm" id="shk-zoomOut" title="Thu nhỏ">−</button>
+                    <span class="zoom-label sm" id="shk-zoomLabel">100%</span>
+                    <button class="zoom-btn sm" id="shk-zoomIn" title="Phóng to">+</button>
+                    <button class="zoom-btn sm" id="shk-panMode" title="Chế độ kéo board">🖐️</button>
                 </div>
                 <div class="stats-container">
                     <div class="stat"><span class="val" id="shk-statTime">00:00</span><span class="lbl">Thời gian</span></div>
                     <div class="stat"><span class="val" id="shk-statFilled">0/0</span><span class="lbl">Đã lấp đầy</span></div>
                     <div class="stat"><span class="val" id="shk-statRegions">0</span><span class="lbl">Vùng đã đặt</span></div>
                 </div>
-            </div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" id="shk-zoomOut" title="Thu nhỏ">−</button>
-                <span class="zoom-label" id="shk-zoomLabel">100%</span>
-                <button class="zoom-btn" id="shk-zoomIn" title="Phóng to">+</button>
-                <button class="zoom-btn" id="shk-panMode" title="Chế độ kéo board">🖐️</button>
-                <button class="zoom-reset" id="shk-zoomReset" style="display:none">Vừa màn hình</button>
             </div>
             <div class="board-frame" id="shk-boardFrame">
                 <div class="board" id="shk-board">
