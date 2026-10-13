@@ -286,6 +286,15 @@ function shuffleArr(a) {
   return a;
 }
 
+/* o có đè lên t không? Khác tầng: z cao hơn đè. CÙNG tầng (tile bẫy lệch 0.5):
+   tile nào được VẼ SAU (sort theo z, y, x trong renderBoard) thì nằm trên và đè tile kia. */
+function covers(o, t) {
+  if (o === t || o.removed) return false;
+  if (!gridOverlap(t, o)) return false;
+  if (o.z !== t.z) return o.z > t.z;
+  return ((o.y - t.y) || (o.x - t.x)) > 0;
+}
+
 /* Solver kiểm tra tính khả thi: thử gỡ tham lam với thứ tự ngẫu nhiên.
    Trả về true nếu gỡ hết được (có ít nhất 1 cách giải). */
 function isSolvableState(tileList) {
@@ -295,9 +304,7 @@ function isSolvableState(tileList) {
     const t = tileList[i];
     for (let j = 0; j < n; j++) {
       if (j === i || removed[j]) continue;
-      const o = tileList[j];
-      if (o.z <= t.z) continue;
-      if (gridOverlap(t, o)) return true;
+      if (covers(tileList[j], t)) return true;
     }
     return false;
   };
@@ -370,8 +377,7 @@ function assignFacesByConstruction(list) {
   const blockers = list.map((t, i) => {
     const s = [];
     for (let j = 0; j < n; j++) {
-      if (i === j || list[j].z <= t.z) continue;
-      if (gridOverlap(t, list[j])) s.push(j);
+      if (i !== j && covers(list[j], t)) s.push(j);
     }
     return s;
   });
@@ -429,20 +435,11 @@ function computeFree(t, list) {
   const dbg = window.MJ_SCANLOG;
   if (dbg) console.log(`[SCAN] Tile (${t.x},${t.y},z${t.z}):`);
   for (const o of list) {
-    if (o.removed || o === t) continue;
-    if (o.z <= t.z) continue; // chỉ tầng TRÊN mới đè được (đơn giản)
-    const ov = gridOverlap(t, o);
-    if (dbg) {
-      const ix = Math.max(0, Math.min(t.x+1,o.x+1)-Math.max(t.x,o.x));
-      const iy = Math.max(0, Math.min(t.y+1,o.y+1)-Math.max(t.y,o.y));
-      console.log(`  vs (${o.x},${o.y},z${o.z}) overlap=${ix.toFixed(2)}x${iy.toFixed(2)} -> ${ov?"ĐÈ":"không"}`);
-    }
-    if (ov) {
-      if (dbg) console.log(`  => BLOCKED`);
-      return false;
-    }
+    if (o === t) continue;
+    const ov = covers(o, t);
+    if (dbg) console.log(`  vs (${o.x},${o.y},z${o.z}) -> ${ov ? "ĐÈ" : "không"}`);
+    if (ov) return false;
   }
-  if (dbg) console.log(`  => FREE`);
   return true;
 }
 function updateFreeStates() {
@@ -508,7 +505,7 @@ function renderBoard() {
     el.style.height = TH + "px";
     el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
     el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
-    el.style.zIndex = String(idx + 1);
+    el.style.zIndex = String(idx + 1); // số nguyên, tăng theo thứ tự vẽ
     const img = document.createElement("img");
     img.src = tileSrc(t.face);
     img.alt = "";
