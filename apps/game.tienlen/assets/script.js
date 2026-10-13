@@ -187,9 +187,8 @@ function botChoose(hand){
   for (const c of combos){
     const dc = detectCombo(c);
     if (!dc) continue;
-    // Ván đầu phải có 3♠
-    if (firstTurn && turn !== 0){
-      // Bot đi đầu ván: phải ra 3♠
+    // Van dau tien moi bat buoc 3♠
+    if (firstTurn && turn !== 0 && lastWinner < 0){
       if (!c.some(x => x.rank === 3 && x.suit === 0)) continue;
     }
     if (canBeat(dc, lastPlay ? lastPlay.combo : null)) valid.push({cards: c, combo: dc});
@@ -252,8 +251,8 @@ function botPlay(){
 function doPlay(player, cards){
   const combo = detectCombo(cards);
   if (!combo) return false;
-  // Ván đầu: người chơi phải ra 3♠
-  if (firstTurn && player === 0){
+  // Van dau tien (chua co winner): bat buoc ra 3♠. Van sau winner tu do.
+  if (firstTurn && player === 0 && lastWinner < 0){
     if (!cards.some(c => c.rank === 3 && c.suit === 0)){
       setStatus("Ván đầu phải ra 3♠!");
       return false;
