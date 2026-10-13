@@ -419,7 +419,7 @@ function tileZIndex(t) { return t.z * 100 + t.y * 10 + t.x; }
 function gridOverlap(t, o) {
   const ix = Math.max(0, Math.min(t.x + 1, o.x + 1) - Math.max(t.x, o.x));
   const iy = Math.max(0, Math.min(t.y + 1, o.y + 1) - Math.max(t.y, o.y));
-  return ix * iy >= 0.2;
+  return ix > 0 && iy > 0; // chồng lấn dù 1 chút cũng tính là đè
 }
 function computeFree(t, list) {
   if (t.removed) return false;
