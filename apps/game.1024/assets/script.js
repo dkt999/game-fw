@@ -268,12 +268,14 @@ function buildGrid(){
 }
 
 function tilePos(r, c){
-  // Vị trí % trong board
+  // Tinh vi tri bang calc() de tru gap 10px (3 khe)
+  // cell = (100% - 30px)/4 ; left = c * (cell + 10px)
+  const cellW = "(100% - 30px) / 4";
   return {
-    left: (c / SIZE * 100) + "%",
-    top: (r / SIZE * 100) + "%",
-    width: (100 / SIZE) + "%",
-    height: (100 / SIZE) + "%"
+    left: `calc(${c} * ((${cellW}) + 10px))`,
+    top: `calc(${r} * ((${cellW}) + 10px))`,
+    width: `calc(${cellW})`,
+    height: `calc(${cellW})`
   };
 }
 
