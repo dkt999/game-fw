@@ -122,6 +122,7 @@ function newGame(){
   roundPlays = {};
   finished = [];
   passedRound = new Set();
+  trickId++; // xoa bai giua van cu
   // Van dau: nguoi co 3♠ di truoc. Van sau: nguoi thang van truoc di truoc
   const popup = document.getElementById("tl-popup");
   if (popup) popup.style.display = "none";
@@ -138,7 +139,23 @@ function newGame(){
   /* Cho chon do kho xong moi chay */
 }
 
-function setStatus(t){ /* da bo thanh trang thai */ }
+function setStatus(t){
+  if (!t) return;
+  // Chi hien loi (toast), khong hien trang thai luot
+  if (t.includes("phải ra") || t.includes("không hợp lệ") || t.includes("Chọn bài")){
+    let toast = document.getElementById("tl-toast");
+    if (!toast){
+      toast = document.createElement("div");
+      toast.id = "tl-toast";
+      toast.className = "tl-toast";
+      document.querySelector(".tl-arena").appendChild(toast);
+    }
+    toast.textContent = t;
+    toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove("show"), 2000);
+  }
+}
 
 /* ============ Bot AI ============ */
 
