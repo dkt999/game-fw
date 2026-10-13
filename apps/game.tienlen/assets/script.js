@@ -134,7 +134,7 @@ function newGame(){
   }
   render();
   setStatus(BOT_NAMES[turn] + (turn === 0 ? " (bạn)" : "") + " đi trước (có 3♠)");
-  if (turn !== 0) setTimeout(botPlay, 800);
+  /* Cho chon do kho xong moi chay */
 }
 
 function setStatus(t){
@@ -467,12 +467,13 @@ document.addEventListener("click", (e) => {
     doPass(0);
     return;
   }
-  const lvBtn = e.target.closest("[data-level]");
-  if (lvBtn){
-    botLevel = lvBtn.dataset.level;
-    document.querySelectorAll("[data-level]").forEach(b =>
-      b.classList.toggle("active", b.dataset.level === botLevel));
-    setStatus("Độ khó: " + lvBtn.textContent);
+  const startBtn = e.target.closest("[data-start-level]");
+  if (startBtn){
+    botLevel = startBtn.dataset.startLevel;
+    const sp = document.getElementById("tl-startPopup");
+    if (sp) sp.style.display = "none";
+    setStatus("Độ khó: " + startBtn.textContent + " — " + BOT_NAMES[turn] + " đi trước");
+    if (turn !== 0) setTimeout(botPlay, 800);
     return;
   }
 });

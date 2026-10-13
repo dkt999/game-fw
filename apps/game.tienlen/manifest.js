@@ -50,11 +50,7 @@ function InitTienLen() {
         <!-- Giữa: trạng thái -->
         <div class="tl-center-arena">
             <div class="tl-status" id="tl-status">Chia bài...</div>
-            <div class="tl-level">
-                <button class="tl-btn sm" data-level="easy">Dễ</button>
-                <button class="tl-btn sm active" data-level="medium">Vừa</button>
-                <button class="tl-btn sm" data-level="hard">Khó</button>
-            </div>
+
         </div>
         <!-- Bot 2 (phải) -->
         <div class="tl-seat tl-seat-right">
@@ -66,12 +62,27 @@ function InitTienLen() {
         <div class="tl-seat tl-seat-bottom">
             <div class="tl-play-area" id="tl-playerPlay"></div>
             <div class="tl-name">Bạn</div>
-            <div class="tl-hand-area player" id="tl-hand"></div>
-            <div class="tl-actions">
-                <button class="tl-btn" id="tl-sort">Xếp bài</button>
-                <button class="tl-btn primary" id="tl-play">Đánh</button>
-                <button class="tl-btn" id="tl-pass">Bỏ qua</button>
-                <button class="tl-btn" id="tl-new">Ván mới</button>
+            <div class="tl-bottom-row">
+                <div class="tl-side-btns">
+                    <button class="tl-btn" id="tl-sort">Xếp bài</button>
+                    <button class="tl-btn primary" id="tl-play">Đánh</button>
+                </div>
+                <div class="tl-hand-area player" id="tl-hand"></div>
+                <div class="tl-side-btns">
+                    <button class="tl-btn" id="tl-pass">Bỏ qua</button>
+                    <button class="tl-btn" id="tl-new">Ván mới</button>
+                </div>
+            </div>
+        </div>
+        <div class="tl-popup" id="tl-startPopup" style="display:flex">
+            <div class="tl-popup-box">
+                <h2>🃏 Tiến Lên</h2>
+                <p style="color:#cfe0d4;margin-bottom:16px">Chọn độ khó</p>
+                <div class="tl-start-levels">
+                    <button class="tl-btn big" data-start-level="easy">Dễ</button>
+                    <button class="tl-btn big primary" data-start-level="medium">Vừa</button>
+                    <button class="tl-btn big" data-start-level="hard">Khó</button>
+                </div>
             </div>
         </div>
         <div class="tl-popup" id="tl-popup" style="display:none">

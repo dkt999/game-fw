@@ -251,3 +251,21 @@
   .tl-card{ width:44px; height:62px; }
   .tl-card.compact{ width:40px; height:56px; }
 }
+
+/* Popup chon do kho */
+.tl-start-levels{ display:flex; gap:10px; justify-content:center; }
+.tl-btn.big{ padding:14px 28px; font-size:16px; }
+/* Nut 2 ben */
+.tl-bottom-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+}
+.tl-side-btns{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex-shrink:0;
+}
+.tl-bottom-row .tl-hand-area{ flex:1; }
