@@ -313,9 +313,9 @@ function doPlay(player, cards){
     turn = _nx; }
   render();
   if (turn === 0){
-    setStatus(BOT_NAMES[turn] + " đang đánh...");
+    /* vien sang da chi luot */
   } else {
-    setStatus(`${BOT_NAMES[turn]} đang nghĩ...`);
+    /* vien sang da chi luot */
     setTimeout(botPlay, 700 + Math.random() * 600);
   }
   return true;
@@ -518,9 +518,7 @@ document.addEventListener("click", (e) => {
     }
     turn = nextActive(player);
     render();
-    if (turn === 0) setStatus(BOT_NAMES[turn] + " đang đánh...");
-    else {
-      setStatus(`${BOT_NAMES[turn]} đang nghĩ...`);
+    if (turn !== 0){
       setTimeout(botPlay, 700 + Math.random() * 600);
     }
     return true;
