@@ -43,18 +43,9 @@
     line-height: 1.25;
 }
 
-/* ---------- Taskbar: cao hơn cho ngón tay + tránh tai thỏ ---------- */
+/* ---------- Taskbar: ẩn hẳn trên mobile cho rộng màn hình ---------- */
 .is-mobile #taskbar {
-    height: 58px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    align-items: center;
-    overflow-x: auto;
-}
-.is-mobile .taskbar-icon {
-    width: 60px;
-    height: 52px;
-    flex: 0 0 auto;
-    background-size: 34px 34px;
+    display: none !important;
 }
 .is-mobile #desktop {
     height: calc(100% - 58px);
