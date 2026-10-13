@@ -364,8 +364,14 @@ function renderHand(){
   const pp = document.getElementById("tl-playerPlay");
   if (pp){
     pp.innerHTML = "";
-    const cards = roundPlays[0];
-    if (cards) for (const c of cards) pp.appendChild(cardEl(c, false, 0, true));
+    pp.classList.remove("passed");
+    if (passedRound.has(0)){
+      pp.classList.add("passed");
+      pp.innerHTML = '<span class="tl-passed-text">Bỏ cuộc</span>';
+    } else {
+      const cards = roundPlays[0];
+      if (cards) for (const c of cards) pp.appendChild(cardEl(c, false, 0, true));
+    }
   }
 }
 
@@ -399,6 +405,12 @@ function renderBots(){
     const el = document.getElementById(elId);
     if (!el) return;
     el.innerHTML = "";
+    el.classList.remove("passed");
+    if (passedRound.has(player)){
+      el.classList.add("passed");
+      el.innerHTML = '<span class="tl-passed-text">Bỏ cuộc</span>';
+      return;
+    }
     const cards = roundPlays[player];
     if (cards){
       for (const c of cards) el.appendChild(cardEl(c, false, 0, true));

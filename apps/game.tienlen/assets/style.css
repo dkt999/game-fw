@@ -281,3 +281,14 @@
 .tl-seat-left .tl-play-area{ transform:rotate(90deg); }
 .tl-seat-right .tl-play-area{ transform:rotate(-90deg); }
 /* Bottom giu nguyen */
+
+/* Vung bai cua nguoi da bo qua */
+.tl-play-area.passed{
+  background:rgba(120,120,120,0.5);
+}
+.tl-passed-text{
+  color:#ddd;
+  font-size:13px;
+  font-style:italic;
+  font-weight:600;
+}
