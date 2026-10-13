@@ -293,9 +293,6 @@ function dealTiles() {
   const pairCount = pos.length / 2;
   tiles = pos.map((p, i) => ({ id: i, x: p.x, y: p.y, z: p.z, face: 0, removed: false, free: false, el: null, _rect: null }));
   pairsLeft = pairCount;
-  // Set V_* cho visualOverlap dùng trong assignFacesByConstruction (dùng BASE chưa scale — tỉ lệ overlap như nhau)
-  V_TW = BASE_TW; V_TH = BASE_TH; V_GP = GAP; V_DP = DEPTH;
-  V_MAXZ = 0; for (const t of tiles) V_MAXZ = Math.max(V_MAXZ, t.z);
   // Chia hình đảm bảo giải được (by construction). Rớt về chia random nếu lỗi lạ.
   if (!assignFacesByConstruction(tiles)) {
     const params = packParams(curPack);
@@ -370,29 +367,20 @@ function assignFacesByConstruction(list) {
 /* ---------- Luật tile tự do ---------- */
 // Đơn giản: tự do = không bị tile nào đè lên (kể cả đè 1 phần).
 // Dùng vùng hiển thị thực tế; DEPTH nhỏ nên khớp với logic.
-// Đè theo vùng hiển thị thực tế (tính toán, không qua DOM).
-// Dùng đúng công thức render: left = x*(TW+GP) + z*DP, top = y*(TH+GP) + (maxZ-z)*DP.
-// "Thấy sao tính vậy": tile nào che mắt thì tính là đè.
-let V_TW = 54, V_TH = 70, V_GP = 6, V_DP = 6, V_MAXZ = 0;
-function visualRect(t) {
-  const l = t.x * (V_TW + V_GP) + t.z * V_DP;
-  const tp = t.y * (V_TH + V_GP) + (V_MAXZ - t.z) * V_DP;
-  return { l, t: tp, r: l + V_TW, b: tp + V_TH };
+// Đè theo tọa độ lưới (không phụ thuộc DEPTH visual).
+// Mỗi tile chiếm [x,x+1]x[y,y+1]; đè lấn >=20% diện tích thì tính.
+// Offset 0.5 cho overlap 25% -> tính; chạm góc nhẹ <20% -> không tính.
+function gridOverlap(t, o) {
+  const ix = Math.max(0, Math.min(t.x + 1, o.x + 1) - Math.max(t.x, o.x));
+  const iy = Math.max(0, Math.min(t.y + 1, o.y + 1) - Math.max(t.y, o.y));
+  return ix * iy >= 0.2;
 }
-function visualOverlap(t, o) {
-  const a = visualRect(t), b = visualRect(o);
-  const ix = Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l));
-  const iy = Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
-  // Đè lấn >2% diện tích tile thì tính (tránh sai số làm tròn)
-  return ix * iy > V_TW * V_TH * 0.02;
-}
-const gridOverlap = visualOverlap; // giữ tên cũ cho các chỗ dùng
 function computeFree(t, list) {
   if (t.removed) return false;
   for (const o of list) {
     if (o.removed || o === t) continue;
     if (o.z <= t.z) continue; // chỉ lớp trên mới đè được
-    if (visualOverlap(t, o)) return false; // bị đè (kể cả 1 phần)
+    if (gridOverlap(t, o)) return false; // bị đè (kể cả 1 phần đáng kể)
   }
   return true;
 }
@@ -439,8 +427,6 @@ function renderBoard() {
   const scale = Math.min(availW / needW, availH / needH, 1.15);
   // Dùng kích thước đã scale trực tiếp (không dùng transform) để flex canh giữa chuẩn
   const TW = BASE_TW * scale, TH = BASE_TH * scale, GP = GAP * scale, DP = DEPTH * scale;
-  // Đồng bộ thông số cho visualOverlap ("thấy sao tính vậy")
-  V_TW = TW; V_TH = TH; V_GP = GP; V_DP = DP; V_MAXZ = maxZ;
   boardEl.style.width = (needW * scale) + "px";
   boardEl.style.height = (needH * scale) + "px";
   boardEl.style.transform = "none";
