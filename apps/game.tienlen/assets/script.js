@@ -392,7 +392,13 @@ function render(){
   renderTrick();
   // Nút bỏ qua: chỉ hiện khi không phải người dẫn
   const passBtn = document.getElementById("tl-pass");
-  if (passBtn) passBtn.disabled = !lastPlay || lastPlay.player === 0 || turn !== 0;
+  if (passBtn){
+    const canPass = lastPlay && lastPlay.player !== 0 && turn === 0 && !gameOver;
+    passBtn.disabled = !canPass;
+    passBtn.title = !lastPlay ? "Vòng mới: bạn phải ra bài" :
+      lastPlay.player === 0 ? "Bạn đang dẫn, phải ra bài" :
+      turn !== 0 ? "Chưa tới lượt bạn" : "Bỏ qua vòng này";
+  }
   const playBtn = document.getElementById("tl-play");
   if (playBtn) playBtn.disabled = turn !== 0 || gameOver;
 }
