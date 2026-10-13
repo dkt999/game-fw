@@ -406,7 +406,7 @@ function findOneMove() {
 }
 
 /* ---------- Render ---------- */
-const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 0; // DEPTH=0: visual khớp 100% với logic lưới (thấy sao tính vậy)
+const BASE_TW = 54, BASE_TH = 70, GAP = 6, DEPTH = 3; // DEPTH=3: lộ viền 3px để thấy lớp chồng (logic đè tính theo lưới, không ảnh hưởng)
 // Sáng/tối: tile tự do luôn sáng; chỉ tile bị chặn (không chọn được) mới tối
 function setTileBrightness(t) {
   if (!t.el) return;
