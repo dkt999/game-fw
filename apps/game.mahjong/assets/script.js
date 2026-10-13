@@ -53,24 +53,23 @@ function pyramidCells(set, pos, ox, oy, w, h, layers) {
     rectCells(set, pos, ox + sh, oy + sh, ww, hh, z);
   }
 }
-// Tháp bẫy: các lớp trên lệch 1/2 ô để lộ 1 phần tile dưới (nhìn trộm được).
-// Bẫy: phá pattern tầng — thay vì đều đặn, ngẫu nhiên chèn thêm tile bất ngờ.
-// Bắt đầu từ z=1 (trên lớp đáy), tránh chồng chéo cùng tầng với đáy.
+// Tháp bẫy: dùng lưới NGUYÊN để logic đè chính xác tuyệt đối.
+// Bẫy: phá pattern tầng — thay vì đều đặn 2-1-2-1, ngẫu nhiên chèn thêm tile
+// bất ngờ (thành 2-1-3-1). Hiệu ứng 3D (DEPTH) vẫn cho thấy lớp trên/dưới.
+// Bắt đầu từ z=1 (trên lớp đáy).
 function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
   for (let z = 1; z <= layers; z++) {
-    // Lệch 1/2 ô so le: lớp lẻ lệch (+0.5,+0.5), lớp chẵn về vị trí gốc
-    const off = (z % 2 === 1) ? 0.5 : 0;
-    const bx = ox + off, by = oy + off;
-    // Pattern cơ bản 2x2 lệch
-    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
-      addPosF(set, pos, bx + dx, by + dy, z);
+    // Thu nhỏ dần như kim tự tháp (lớp trên nhỏ hơn để lộ viền lớp dưới)
+    const sh = Math.floor(z / 2);
+    const bx = ox + sh, by = oy + sh;
+    const w = Math.max(1, 2 - sh), h = Math.max(1, 2 - sh);
+    for (let dy = 0; dy < h + 1; dy++) for (let dx = 0; dx < w + 1; dx++) {
+      addPos(set, pos, bx + dx, by + dy, z);
     }
-    // BẪY: với xác suất theo diff, chèn thêm 1 tile "trùng" phá pattern
-    // (người chơi đoán 2-1-2-1 thì bất ngờ thành 2-1-3-1)
+    // BẪY: với xác suất theo diff, chèn thêm 1 tile phá pattern
     if (rng() < diff * 0.5) {
-      const tx = bx + Math.floor(rng() * 2), ty = by + Math.floor(rng() * 2);
-      // Đặt lệch thêm 0.5 nữa để tạo thế chồng chéo khó đoán
-      addPosF(set, pos, tx + 0.5, ty, z);
+      const tx = bx + Math.floor(rng() * (w + 1)), ty = by + Math.floor(rng() * (h + 1));
+      addPos(set, pos, tx + 1, ty, z); // đặt thò ra ngoài 1 ô gây bất ngờ
     }
   }
 }
@@ -157,8 +156,8 @@ const ARCHETYPES = [
       rectCells(set, pos, cx - 1, 0, 2, H, 0); // dọc
       pyramidCells(set, pos, cx - 2, cy - 2, 4, 4, 3 + Math.round(diff * 2)); // tháp giữa
     } },
-  { id: "trap", name: "Bẫy chồng lệch",
-    desc: "Tile chồng lệch 1/2 để lộ 1 phần — đoán tile dưới, coi chừng bẫy phá pattern",
+  { id: "trap", name: "Bẫy phá tầng",
+    desc: "Tháp nhiều tầng với bẫy phá pattern — đoán tầng trên, coi chừng tile bất ngờ",
     gen(W, H, diff, rng, set, pos) {
       // 1 lớp đáy phẳng (z=0); tháp bẫy xếp từ z=1 trở lên
       rectCells(set, pos, 0, 0, W, H, 0);
