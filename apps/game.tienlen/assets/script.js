@@ -360,7 +360,7 @@ function renderBots(){
     el.innerHTML = "";
     const cards = roundPlays[player];
     if (cards){
-      for (const c of cards) el.appendChild(cardEl(c, false));
+      for (const c of cards) el.appendChild(cardEl(c, false, 0, true));
     }
   };
   showPlay("tl-botPlay1", 1);
@@ -379,7 +379,7 @@ function renderTrick(){
     el.appendChild(label);
     const row = document.createElement("div");
     row.className = "tl-trick-cards";
-    for (const c of lastPlay.cards) row.appendChild(cardEl(c, false));
+    for (const c of lastPlay.cards) row.appendChild(cardEl(c, false, 0, true));
     el.appendChild(row);
   } else {
     el.innerHTML = '<div class="tl-trick-empty">Vòng mới — ra bài tự do</div>';
