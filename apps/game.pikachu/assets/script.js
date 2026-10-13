@@ -824,7 +824,7 @@ function resolveMatch(a, b, path) {
       }
     }
   }
-  const clearEls = [elA, elB].concat(bonus && bonus.els ? bonus.els : []);
+  const clearEls = [elA, elB];
   setTimeout(() => afterMatch(clearEls), 140);
 }
 /* Sau khi ăn cặp (và bom nổ xong nếu có): thắng / rơi board / kiểm tra bí */
