@@ -228,6 +228,7 @@
   overflow-y:auto;
   overflow-x:hidden;
   min-height:170px;
+  min-width:66px;
 }
 .tl-seat-left .tl-card-back,
 .tl-seat-right .tl-card-back{
