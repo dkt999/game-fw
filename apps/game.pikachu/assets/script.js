@@ -1152,7 +1152,11 @@ function autoRescueShuffle() {
 function useHint() {
   if (locked || hintsLeft <= 0) return;
   const move = findOneMove();
-  if (!move) return;
+  if (!move) {
+    // Bí mà auto-xáo không kịp chạy: bấm Gợi ý thì xáo cứu luôn (không trừ lượt hint)
+    autoRescueShuffle();
+    return;
+  }
   hintsLeft--;
   hintBadge.textContent = hintsLeft;
   [move.a, move.b].forEach(p => {
