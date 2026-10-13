@@ -261,14 +261,14 @@
 .tl-bottom-row{
   display:flex;
   align-items:center;
-  gap:10px;
   width:100%;
 }
 .tl-side-btns{
+  flex:1;
   display:flex;
   flex-direction:column;
   gap:8px;
-  flex-shrink:0;
+  align-items:center;
 }
 .tl-bottom-row .tl-hand-area{
   flex:0 0 auto;
