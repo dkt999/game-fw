@@ -477,17 +477,21 @@ function setTileBrightness(t) {
 function renderBoard() {
   boardEl.innerHTML = "";
   // Kích thước thiết kế
-  let maxX = 0, maxY = 0, maxZ = 0;
+  // Tính cả min vì tile bẫy có tọa độ âm (vd -0.5) → trước đây bị tràn ra ngoài board
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = 0;
   for (const t of tiles) {
+    minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
     maxX = Math.max(maxX, t.x); maxY = Math.max(maxY, t.y); maxZ = Math.max(maxZ, t.z);
   }
-  const needW = (maxX + 1) * (BASE_TW + GAP) + maxZ * DEPTH + GAP;
-  const needH = (maxY + 1) * (BASE_TH + GAP) + maxZ * DEPTH + GAP;
+  if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 0; maxY = 0; }
+  const PAD = 16; // margin quanh board (đơn vị thiết kế, sẽ nhân theo scale)
+  const needW = (maxX - minX + 1) * (BASE_TW + GAP) + maxZ * DEPTH + GAP + PAD * 2;
+  const needH = (maxY - minY + 1) * (BASE_TH + GAP) + maxZ * DEPTH + GAP + PAD * 2;
   const availW = Math.max(200, boardFrame.clientWidth - 24);
   const availH = Math.max(200, boardFrame.clientHeight - 24);
   const scale = Math.min(availW / needW, availH / needH, 1.15);
   // Dùng kích thước đã scale trực tiếp (không dùng transform) để flex canh giữa chuẩn
-  const TW = BASE_TW * scale, TH = BASE_TH * scale, GP = GAP * scale, DP = DEPTH * scale;
+  const TW = BASE_TW * scale, TH = BASE_TH * scale, GP = GAP * scale, DP = DEPTH * scale, PD = PAD * scale;
   boardEl.style.width = (needW * scale) + "px";
   boardEl.style.height = (needH * scale) + "px";
   boardEl.style.transform = "none";
@@ -503,8 +507,8 @@ function renderBoard() {
     el.className = "mj-tile blocked";
     el.style.width = TW + "px";
     el.style.height = TH + "px";
-    el.style.left = (t.x * (TW + GP) + t.z * DP) + "px";
-    el.style.top = (t.y * (TH + GP) + (maxZ - t.z) * DP) + "px";
+    el.style.left = (PD + (t.x - minX) * (TW + GP) + t.z * DP) + "px";
+    el.style.top = (PD + (t.y - minY) * (TH + GP) + (maxZ - t.z) * DP) + "px";
     el.style.zIndex = String(idx + 1); // số nguyên, tăng theo thứ tự vẽ
     const img = document.createElement("img");
     img.src = tileSrc(t.face);
