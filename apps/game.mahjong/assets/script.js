@@ -433,7 +433,7 @@ function computeFree(t, list) {
     if (dbg) {
       const ix = Math.max(0, Math.min(t.x+1,o.x+1)-Math.max(t.x,o.x));
       const iy = Math.max(0, Math.min(t.y+1,o.y+1)-Math.max(t.y,o.y));
-      console.log(`  vs (${o.x},${o.y},z${o.z}) zIndex=${ozi} overlap=${ix.toFixed(2)}x${iy.toFixed(2)} -> ${ov?"ĐÈ":"không"}`);
+      console.log(`  vs (${o.x},${o.y},z${o.z}) overlap=${ix.toFixed(2)}x${iy.toFixed(2)} -> ${ov?"ĐÈ":"không"}`);
     }
     if (ov) {
       if (dbg) console.log(`  => BLOCKED`);
