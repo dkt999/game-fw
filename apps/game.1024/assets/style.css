@@ -101,19 +101,19 @@
 }
 .g1024-cell{
   background:var(--cell);
-  border-radius:50%;
+  border-radius:8px;
   position:relative;
 }
 .g1024-tile{
   position:absolute;
   inset:0;
-  border-radius:50%;
+  border-radius:8px;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:32px;
   font-weight:700;
-  animation:tileIn 0.12s ease;
+  animation:tileIn 0.25s ease;
 }
 .g1024-tile.small{ font-size:24px; }
 .g1024-tile.super{
