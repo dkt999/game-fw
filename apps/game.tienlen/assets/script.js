@@ -373,14 +373,10 @@ function renderBots(){
     const el = document.getElementById(elId);
     if (!el) return;
     el.innerHTML = "";
-    // Chong 3 lop de co chieu sau, so la hien giua mat bai
-    const layers = Math.min(3, Math.max(1, Math.ceil(count / 5)));
-    for (let i = 0; i < layers; i++){
+    // Hien dung so la up (so luong = so la con lai)
+    for (let i = 0; i < count; i++){
       const back = document.createElement("div");
       back.className = "tl-card-back";
-      if (i === layers - 1){
-        back.innerHTML = `<span class="tl-back-count">${count}</span>`;
-      }
       el.appendChild(back);
     }
   };
