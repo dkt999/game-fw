@@ -53,19 +53,19 @@ function pyramidCells(set, pos, ox, oy, w, h, layers) {
     rectCells(set, pos, ox + sh, oy + sh, ww, hh, z);
   }
 }
-// Tháp bẫy (TẠM THỜI đơn giản hóa): dùng lưới nguyên, không offset.
-// Chỉ tập trung vào logic mờ/sáng đúng. Bẫy phá pattern vẫn giữ.
+// Tháp bẫy: offset 1/2 ô — 2 tile lệch có thể CÙNG tầng (zIndex quyết định ai đè ai).
+// Bẫy phá pattern vẫn giữ.
 function trapStackCells(set, pos, ox, oy, layers, rng, diff) {
   for (let z = 1; z <= layers; z++) {
-    const sh = Math.floor((z - 1) / 2);
-    const bx = ox + sh, by = oy + sh;
-    const sz = Math.max(1, 2 - sh);
-    for (let dy = 0; dy < sz; dy++) for (let dx = 0; dx < sz; dx++) {
-      addPos(set, pos, bx + dx, by + dy, z);
+    const off = (z % 2 === 1) ? 0.5 : 0;
+    const bx = ox + off, by = oy + off;
+    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      addPosF(set, pos, bx + dx, by + dy, z);
     }
     // BẪY: chèn thêm 1 tile phá pattern
     if (rng() < diff * 0.5) {
-      addPos(set, pos, bx + sz, by, z);
+      const tx = bx + Math.floor(rng() * 2), ty = by + Math.floor(rng() * 2);
+      addPosF(set, pos, tx + 0.5, ty, z);
     }
   }
 }
@@ -192,9 +192,9 @@ function getTestLayout() {
       //   B(5.5,3.5,z1)=2 paired với E(10,1,z0)=2 (B free sau khi C gỡ)
       //   A(5,3,z0)=3 paired với F(1,6,z0)=3 (A free sau khi B gỡ)
       const cx = 5, cy = 3;
-      addPos(set, pos, cx, cy, 0);          // A
-      addPos(set, pos, cx, cy, 1); // B (chồng khít lên A)
-      addPos(set, pos, cx, cy, 2);     // C (chồng khít lên B)
+      addPosF(set, pos, cx, cy, 0);          // A
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1); // B (lệch 1/2)
+      addPosF(set, pos, cx + 1, cy + 1, 2);     // C (lệch 1/2)
       addPos(set, pos, 1, 1, 0);  // D
       addPos(set, pos, 10, 1, 0); // E
       addPos(set, pos, 1, 6, 0);  // F
@@ -208,7 +208,7 @@ function getTestLayout() {
       addPos(set, pos, cx + 1, cy, 0);   // B
       addPos(set, pos, cx, cy + 1, 0);   // C
       addPos(set, pos, cx + 1, cy + 1, 0); // D
-      addPos(set, pos, cx, cy, 1); // E (chồng khít lên A)
+      addPosF(set, pos, cx + 0.5, cy + 0.5, 1); // E (lệch 1/2, giữa)
       addPos(set, pos, 1, 1, 0); // F
       faces = [2, 2, 3, 3, 1, 1]; // A=2,B=2,C=3,D=3,E=1,F=1
     }
