@@ -373,16 +373,16 @@ function renderBots(){
     const el = document.getElementById(elId);
     if (!el) return;
     el.innerHTML = "";
-    const show = Math.min(count, 13);
-    for (let i = 0; i < show; i++){
+    // Chong 3 lop de co chieu sau, so la hien giua mat bai
+    const layers = Math.min(3, Math.max(1, Math.ceil(count / 5)));
+    for (let i = 0; i < layers; i++){
       const back = document.createElement("div");
       back.className = "tl-card-back";
+      if (i === layers - 1){
+        back.innerHTML = `<span class="tl-back-count">${count}</span>`;
+      }
       el.appendChild(back);
     }
-    const label = document.createElement("span");
-    label.className = "tl-count-label";
-    label.textContent = count;
-    el.appendChild(label);
   };
   drawBacks("tl-botCards1", hands[1].length);
   drawBacks("tl-botCards2", hands[2].length);

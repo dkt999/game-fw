@@ -237,21 +237,31 @@
   min-height:40px;
 }
 .tl-card-back{
-  width:30px;
-  height:44px;
+  width:44px;
+  height:62px;
   background:linear-gradient(135deg, #8b1a1a, #5c1010);
   border:2px solid #d4a24e;
-  border-radius:6px;
+  border-radius:8px;
   box-shadow:0 1px 4px rgba(0,0,0,0.4);
   flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
+.tl-back-count{
+  font-size:22px;
+  font-weight:800;
+  color:#ffd98a;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);
+}
+.tl-count-label{ display:none; }
 /* Bot tren: xep ngang */
 .tl-bot-top .tl-bot-cards{ flex-direction:row; }
-.tl-bot-top .tl-card-back{ margin-left:-20px; }
+.tl-bot-top .tl-card-back{ margin-left:-34px; }
 .tl-bot-top .tl-card-back:first-child{ margin-left:0; }
 /* Tat ca bot: xep ngang */
 .tl-bot-left .tl-bot-cards, .tl-bot-right .tl-bot-cards{ flex-direction:row; }
-.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{ margin-left:-20px; }
+.tl-bot-left .tl-card-back, .tl-bot-right .tl-card-back{ margin-left:-34px; }
 .tl-bot-left .tl-card-back:first-child, .tl-bot-right .tl-card-back:first-child{ margin-left:0; }
 .tl-count-label{
   margin-left:8px;

@@ -14,12 +14,20 @@ function openTienLen() {
         return;
     }
     loadAppStylesheet("./apps/game.tienlen/assets/style.css");
+    try {
+        if (window.IS_MOBILE === true && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(function(){});
+        }
+    } catch (e) {}
     tienlenWindowId = createWindow({
         title: 'Tiến Lên',
         iconUrl: "assets/icons/defaultGameIcon2.svg",
         additionClass: "tienlen-app",
         allowResize: false,
-        fullScreenApp: true
+        fullScreenApp: true,
+        onClose: function() {
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+        }
     });
     InitTienLen();
     loadAppScript("./apps/game.tienlen/assets/script.js", function() {});
