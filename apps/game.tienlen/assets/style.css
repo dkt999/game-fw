@@ -81,8 +81,8 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  min-width:80px;
-  min-height:60px;
+  min-width:178px;
+  min-height:64px;
   max-width:100%;
   overflow:hidden;
 }
@@ -275,8 +275,8 @@
 
 .tl-seat-left .tl-play-area .tl-card,
 .tl-seat-right .tl-play-area .tl-card{
-  margin-left:-24px;
-  margin-top:0;
+  margin-left:-18px;
+  margin-top:-24px;
 }
 .tl-seat-left .tl-play-area .tl-card{ transform:rotate(90deg); }
 .tl-seat-right .tl-play-area .tl-card{ transform:rotate(-90deg); }
