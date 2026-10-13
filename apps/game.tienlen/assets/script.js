@@ -367,7 +367,7 @@ function renderHand(){
     pp.classList.remove("passed");
     if (passedRound.has(0)){
       pp.classList.add("passed");
-      pp.innerHTML = '<span class="tl-passed-text">Bỏ cuộc</span>';
+      pp.innerHTML = '<span class="tl-passed-text">Bỏ qua</span>';
     } else {
       const cards = roundPlays[0];
       if (cards) for (const c of cards) pp.appendChild(cardEl(c, false, 0, true));
@@ -408,7 +408,7 @@ function renderBots(){
     el.classList.remove("passed");
     if (passedRound.has(player)){
       el.classList.add("passed");
-      el.innerHTML = '<span class="tl-passed-text">Bỏ cuộc</span>';
+      el.innerHTML = '<span class="tl-passed-text">Bỏ qua</span>';
       return;
     }
     const cards = roundPlays[player];
