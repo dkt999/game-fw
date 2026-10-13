@@ -93,6 +93,7 @@ function InitShikakuGame() {
                 <button class="zoom-btn" id="shk-zoomOut" title="Thu nhỏ">−</button>
                 <span class="zoom-label" id="shk-zoomLabel">100%</span>
                 <button class="zoom-btn" id="shk-zoomIn" title="Phóng to">+</button>
+                <button class="zoom-btn" id="shk-panMode" title="Chế độ kéo board">🖐️</button>
                 <button class="zoom-reset" id="shk-zoomReset" style="display:none">Vừa màn hình</button>
             </div>
             <div class="board-frame" id="shk-boardFrame">

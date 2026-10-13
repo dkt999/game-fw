@@ -42,8 +42,9 @@
   let timerId = null;
   let currentDiff = "medium";
   let lastCustomDims = { W: 8, H: 8 };
-  let zoomLevel = 1; // 1 = vua man hinh, >1 phong to
-  const ZOOM_MIN = 1, ZOOM_MAX = 3, ZOOM_STEP = 0.25;
+  let zoomLevel = 1; // 1 = vua man hinh, >1 phong to, <1 thu nho
+  const ZOOM_MIN = 0.5, ZOOM_MAX = 3, ZOOM_STEP = 0.25;
+  let panMode = false; // che do keo board (thay vi ve)
 
   function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
@@ -397,6 +398,7 @@
 
   boardEl.addEventListener("pointerdown", (e) => {
     if (!state || state.solved) return;
+    if (panMode) return; // che do keo: de browser xu ly cuon
     if (e.target.closest(".region-block")) return;
     boardEl.setPointerCapture(e.pointerId);
     const { col, row } = getCellFromEvent(e);
@@ -462,6 +464,15 @@
   if (zOutBtn) zOutBtn.addEventListener("click", () => setZoom(zoomLevel - ZOOM_STEP));
   if (zInBtn) zInBtn.addEventListener("click", () => setZoom(zoomLevel + ZOOM_STEP));
   if (zResetBtn) zResetBtn.addEventListener("click", () => setZoom(1));
+  const panBtn = document.getElementById("shk-panMode");
+  if (panBtn) panBtn.addEventListener("click", () => {
+    panMode = !panMode;
+    panBtn.classList.toggle("active", panMode);
+    panBtn.textContent = panMode ? "✏️" : "🖐️";
+    panBtn.title = panMode ? "Chế độ vẽ" : "Chế độ kéo board";
+    boardEl.style.touchAction = panMode ? "pan-x pan-y" : "none";
+    boardEl.style.cursor = panMode ? "grab" : "";
+  });
   document.getElementById("shk-btnMenu").addEventListener("click", () => gotoMainMenu());
   document.getElementById("shk-btnNewGame").addEventListener("click", () => startNewGame(currentDiff));
   document.getElementById("shk-btnClear").addEventListener("click", () => {
