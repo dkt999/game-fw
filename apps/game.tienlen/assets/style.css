@@ -273,3 +273,35 @@
   background:var(--gold);
   color:#3a2a10;
 }
+
+/* Popup ket qua */
+.tl-popup{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+  border-radius:12px;
+}
+.tl-popup-box{
+  background:#1e3a2a;
+  border:2px solid var(--gold);
+  border-radius:16px;
+  padding:24px 32px;
+  text-align:center;
+  min-width:280px;
+}
+.tl-popup-box h2{ margin:0 0 16px; color:var(--gold); }
+.tl-result{ margin-bottom:18px; }
+.tl-rank-row{
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  padding:8px 4px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  font-size:15px;
+}
+.tl-rank-row.loser{ color:#ff9a9a; border-bottom:none; }
+.tl-wrap{ position:relative; }

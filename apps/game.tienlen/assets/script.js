@@ -103,6 +103,7 @@ let gameOver = false;
 let firstTurn = true;
 let botLevel = "medium"; // mac dinh // easy | medium | hard
 let finished = []; // thu tu ve dich (1,2,3), nguoi con lai thua chot
+let lastWinner = -1; // nguoi thang van truoc (di truoc van sau)
 let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
@@ -120,10 +121,16 @@ function newGame(){
   roundPlays = {};
   finished = [];
   passedRound = new Set();
-  // Người có 3♠ đi trước
+  // Van dau: nguoi co 3♠ di truoc. Van sau: nguoi thang van truoc di truoc
+  const popup = document.getElementById("tl-popup");
+  if (popup) popup.style.display = "none";
   turn = 0;
-  for (let p = 0; p < 4; p++){
-    if (hands[p].some(c => c.rank === 3 && c.suit === 0)) turn = p;
+  if (lastWinner >= 0){
+    turn = lastWinner;
+  } else {
+    for (let p = 0; p < 4; p++){
+      if (hands[p].some(c => c.rank === 3 && c.suit === 0)) turn = p;
+    }
   }
   render();
   setStatus(BOT_NAMES[turn] + (turn === 0 ? " (bạn)" : "") + " đi trước (có 3♠)");
@@ -266,8 +273,17 @@ function doPlay(player, cards){
     } else {
       gameOver = true;
       const loser = [0,1,2,3].find(p => !finished.includes(p));
-      const names = finished.map((p, i) => `${i+1}. ${BOT_NAMES[p]}`).join(" · ");
-      setStatus(`🏁 ${names} · 💀 ${BOT_NAMES[loser]} thua chót!`);
+      lastWinner = finished[0]; // nhat van nay di truoc van sau
+      const medals = ["🥇", "🥈", "🥉", "💀"];
+      const rows = finished.map((p, i) =>
+        `<div class="tl-rank-row"><span>${medals[i]} ${BOT_NAMES[p]}</span><span>Hạng ${i+1}</span></div>`
+      ).join("");
+      const loserRow = `<div class="tl-rank-row loser"><span>${medals[3]} ${BOT_NAMES[loser]}</span><span>Thua chót</span></div>`;
+      const resultEl = document.getElementById("tl-result");
+      if (resultEl) resultEl.innerHTML = rows + loserRow;
+      const popup = document.getElementById("tl-popup");
+      if (popup) popup.style.display = "flex";
+      setStatus(`🏁 Xong!`);
       render();
       return true;
     }
@@ -423,7 +439,8 @@ function render(){
 /* ============ Sự kiện ============ */
 
 document.addEventListener("click", (e) => {
-  if (e.target.id === "tl-new"){ newGame(); return; }
+  if (e.target.id === "tl-new"){ lastWinner = -1; newGame(); return; }
+  if (e.target.id === "tl-again"){ newGame(); return; }
   if (e.target.id === "tl-sort"){
     hands[0].sort(cmpCard);
     selected.clear();

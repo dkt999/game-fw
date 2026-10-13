@@ -49,6 +49,13 @@ function InitTienLen() {
                     <div class="tl-bot-play" id="tl-botPlay2"></div>
                 </div>
             </div>
+            <div class="tl-popup" id="tl-popup" style="display:none">
+                <div class="tl-popup-box">
+                    <h2>🏁 Kết quả</h2>
+                    <div class="tl-result" id="tl-result"></div>
+                    <button class="tl-btn primary" id="tl-again">Chơi tiếp</button>
+                </div>
+            </div>
             <div class="tl-player">
                 <div class="tl-hand" id="tl-hand"></div>
                 <div class="tl-level">
