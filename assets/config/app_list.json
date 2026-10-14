@@ -22,5 +22,9 @@
  {
   "id": "game.tienlen",
   "manifest": "apps/game.tienlen/manifest.js"
+ },
+ {
+  "id": "game.nihongo",
+  "manifest": "apps/game.nihongo/manifest.js"
  }
 ]

@@ -1,0 +1,146 @@
+/* にほんごチャレンジ */
+.nihongo-app{
+  --pink:#ff6b9d;
+  --blue:#4ecdc4;
+  margin:0; padding:0;
+  min-height:100%;
+  background:linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color:#fff;
+  font-family:"Be Vietnam Pro","Noto Sans JP",sans-serif;
+}
+.nihongo-app *{ box-sizing:border-box; }
+.nh-wrap{
+  max-width:600px;
+  margin:0 auto;
+  padding:20px;
+  min-height:100%;
+}
+
+/* Menu */
+.nh-menu{ text-align:center; padding-top:40px; }
+.nh-menu h1{ font-size:32px; margin:0 0 8px; }
+.nh-sub{ color:#aaa; margin-bottom:30px; }
+.nh-modes{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.nh-mode{
+  background:rgba(255,255,255,0.08);
+  border:2px solid rgba(255,255,255,0.15);
+  border-radius:16px;
+  padding:24px 16px;
+  color:#fff;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:center;
+  font-family:inherit;
+}
+.nh-mode:not(.locked):hover{
+  border-color:var(--pink);
+  background:rgba(255,107,157,0.15);
+  transform:translateY(-2px);
+}
+.nh-mode.locked{ opacity:0.45; cursor:default; }
+.nh-mode-icon{ font-size:36px; }
+.nh-mode-name{ font-size:18px; font-weight:700; }
+.nh-mode-desc{ font-size:12px; color:#aaa; }
+
+/* Game */
+.nh-game{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  padding-top:10px;
+}
+.nh-topbar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+}
+.nh-score, .nh-streak, .nh-timer{
+  font-size:14px;
+  font-weight:700;
+  background:rgba(255,255,255,0.1);
+  padding:8px 14px;
+  border-radius:20px;
+}
+.nh-timer{ color:#ffd93d; }
+.nh-kana-type{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+}
+.nh-btn{
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:inherit;
+}
+.nh-btn:hover{ background:rgba(255,255,255,0.2); }
+.nh-btn.sm{ padding:8px 16px; font-size:13px; }
+.nh-btn.sm.active{ background:var(--pink); }
+
+/* Question */
+.nh-question{
+  text-align:center;
+  background:rgba(255,255,255,0.06);
+  border-radius:20px;
+  padding:30px 20px;
+}
+.nh-kana{
+  font-size:90px;
+  font-weight:700;
+  margin-bottom:24px;
+  color:#fff;
+  text-shadow:0 4px 20px rgba(255,107,157,0.4);
+}
+.nh-answers{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  max-width:400px;
+  margin:0 auto;
+}
+.nh-answer{
+  padding:16px;
+  font-size:20px;
+  font-weight:700;
+  border:2px solid rgba(255,255,255,0.2);
+  border-radius:12px;
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  cursor:pointer;
+  font-family:inherit;
+  transition:all 0.2s;
+}
+.nh-answer:hover:not(:disabled){
+  border-color:var(--blue);
+  background:rgba(78,205,196,0.2);
+}
+.nh-answer.correct{
+  border-color:#2ecc71;
+  background:rgba(46,204,113,0.3);
+}
+.nh-answer.wrong{
+  border-color:#e74c3c;
+  background:rgba(231,76,60,0.3);
+}
+.nh-answer:disabled{ cursor:default; }
+
+.nh-feedback{
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
+  min-height:28px;
+}
+.nh-feedback.good{ color:#2ecc71; }
+.nh-feedback.bad{ color:#e74c3c; }

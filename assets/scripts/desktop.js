@@ -1,5 +1,5 @@
 window.appListData = [];
-window.APP_VERSION = "20261017g";
+window.APP_VERSION = "20261017h";
 function registerApp(appInfo) {
     window.appListData.push(appInfo);
 }
