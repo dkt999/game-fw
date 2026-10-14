@@ -344,9 +344,8 @@ function getTestLayout() {
 }
 function generateMapLayout(pack, mapIdx) {
   const mapNum = (pack - 1) * MAPS_PER_PACK + mapIdx;
-  const t = (pack - 1) / (PACK_COUNT - 1);
-  const tm = (mapIdx - 1) / (MAPS_PER_PACK - 1);
-  const diff = Math.min(1, t * 0.85 + tm * 0.15);
+  // Độ khó tăng đều theo TỪNG map (không còn nhảy theo pack) → map sau luôn nặng hơn map trước
+  const diff = Math.min(1, Math.pow((mapNum - 1) / (TOTAL_MAPS - 1), 0.9));
   const rng = mulberry32(mapNum * 7919 + 13);
   const arch = mapArchetype(mapNum);
   const variant = mapNum <= 5 ? 0 : Math.floor((mapNum - 6) / ARCHETYPES_MAIN.length);
@@ -355,7 +354,7 @@ function generateMapLayout(pack, mapIdx) {
   let W = arch.fixed ? 12 : clamp(Math.round(lerp(8, 14, diff)), 8, BOARD_W);
   let H = arch.fixed ? 8 : clamp(Math.round(lerp(6, 9, diff)), 6, BOARD_H);
   let L = 2 + Math.round(diff * 3);
-  const minT = Math.round(lerp(36, 130, diff)), maxT = Math.round(lerp(90, 320, diff));
+  const minT = Math.round(lerp(36, 150, diff)), maxT = Math.round(lerp(90, 330, diff));
   const stagger = mapNum > 8 && diff > 0.2 && rng() < 0.45;
 
   let best = null, bestScore = Infinity;
@@ -371,6 +370,15 @@ function generateMapLayout(pack, mapIdx) {
     else { W = Math.max(6, W - 1); H = Math.max(5, H - 1); }
   }
   const pos = best;
+  // Archetype cố định (pháo đài, song tháp, rải rác...) thường quá nhỏ ở map khó:
+  // rải thêm tháp 3x3 ngẫu nhiên chồng lên nền cho đủ số quân tối thiểu.
+  if (arch.fixed && mapNum >= 10 && pos.length < minT) {
+    const set = new Set(pos.map(p => p.x + "," + p.y + "," + p.z));
+    const r2 = mulberry32(mapNum * 31 + 5);
+    for (let k = 0; k < 60 && pos.length < minT; k++) {
+      pyramidCells(set, pos, Math.floor(r2() * (W - 3)), Math.floor(r2() * (H - 3)), 3, 3, 2 + Math.round(diff * 2));
+    }
+  }
   if (pos.length % 2 !== 0) pos.pop();
   return pos;
 }
@@ -385,10 +393,16 @@ function packParams(pack) {
   const t = (pack - 1) / (PACK_COUNT - 1);
   return {
     name: "Pack " + pack,
-    tilePool: Math.round(40 + t * 160),              // 40 -> 200 loại hình
-    shuffles: Math.max(2, Math.round(4 - t * 2)),    // 4 -> 2
-    hints: Math.max(2, Math.round(4 - t * 2)),       // 4 -> 2
+    tilePool: Math.round(40 + t * 160),              // 40 -> 200 loại hình (chỉ dùng cho map < 10)
+    shuffles: Math.max(1, Math.round(4 - t * 3)),    // 4 -> 1
+    hints: Math.max(1, Math.round(4 - t * 3)),       // 4 -> 1
   };
+}
+/* Độ khó theo từng map: 0 với map 1-9 (học luật), từ map 10 tăng đều 0.2 -> 1.0 ở map 100.
+   Dùng cho cách gán hình: nhiều bản sao cùng hình + bẫy "quân giống hệt nằm ngay dưới". */
+function levelHardness(mapNum) {
+  if (mapNum < 10) return 0;
+  return 0.2 + 0.8 * (mapNum - 10) / 90;
 }
 
 // Tiến trình: map cao nhất đã mở (1-100)
@@ -525,10 +539,17 @@ function assignFacesByConstruction(list) {
     return s;
   });
   const pairCount = Math.floor(n / 2);
-  const poolSize = Math.min(packParams(curPack).tilePool, TILE_COUNT, pairCount);
+  const hard = levelHardness(curMapNum);
+  // Map khó: mỗi hình dùng chung cho nhiều cặp: 2 cặp (map 10-34), 3 cặp (35-64), 4 cặp (65+)
+  const prog = hard > 0 ? (hard - 0.2) / 0.8 : 0;          // 0 ở map 10 → 1 ở map 100
+  const maxGroup = hard > 0 ? 2 + (prog >= 0.28 ? 1 : 0) + (prog >= 0.6 ? 1 : 0) : 1;
+  const poolSize = hard > 0
+    ? Math.min(TILE_COUNT, Math.max(1, Math.ceil(pairCount / maxGroup)))
+    : Math.min(packParams(curPack).tilePool, TILE_COUNT, pairCount);
   if (poolSize < 1) return false;
   for (let attempt = 0; attempt < 60; attempt++) {
-    const codes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1)).slice(0, poolSize);
+    const allCodes = shuffleArr(Array.from({ length: TILE_COUNT }, (_, i) => i + 1));
+    const codes = allCodes.slice(0, poolSize);
     const placed = new Array(n).fill(false);
     const order = [];
     while (order.length < n) {
@@ -539,24 +560,77 @@ function assignFacesByConstruction(list) {
         for (const b of blockers[i]) if (!placed[b]) { ok = false; break; }
         if (ok) av.push(i);
       }
-      if (!av.length) break; // không xảy ra vì quan hệ đè là DAG theo z
+      if (!av.length) break; // không xảy ra vì quan hệ đè là DAG
       shuffleArr(av);
       for (const i of av) { placed[i] = true; order.push(i); }
     }
     if (order.length < n) continue;
-    const faces = new Array(n).fill(0);
-    let ci = 0, bad = false;
-    for (let k = 0; k < n; k += 2) {
+    const pairs = [];
+    let bad = false;
+    for (let k = 0; k + 1 < n; k += 2) {
       const a = order[k], b = order[k + 1];
       if (blockers[a].indexOf(b) >= 0 || blockers[b].indexOf(a) >= 0) { bad = true; break; }
-      const f = codes[(ci++) % poolSize];
-      faces[a] = f; faces[b] = f;
+      pairs.push([a, b]);
     }
     if (bad) continue;
+    const faces = new Array(n).fill(0);
+    if (hard <= 0) {
+      pairs.forEach(([a, b], ci) => { const f = codes[ci % poolSize]; faces[a] = f; faces[b] = f; });
+    } else {
+      assignHardFaces(list, pairs, allCodes, maxGroup, hard).forEach((f, k) => {
+        faces[pairs[k][0]] = f; faces[pairs[k][1]] = f;
+      });
+    }
     list.forEach((t, i) => { t.face = faces[i]; });
+    // Lưu 1 lời giải đảm bảo: mỗi quân biết "bạn cặp" và thứ tự cặp trong lời giải
+    pairs.forEach(([a, b], k) => { list[a]._mate = list[b]; list[b]._mate = list[a]; list[a]._solIdx = list[b]._solIdx = k; });
     return true;
   }
   return false;
+}
+/* Gán hình cho các cặp (đã theo thứ tự gỡ hợp lệ) ở map khó.
+   Mọi cách gán đều giải được vì mỗi cặp vẫn cùng hình & gỡ được theo đúng thứ tự.
+   B1. Bẫy "quân giống hệt nằm dưới": cặp j dùng CHUNG hình với 1 cặp i đứng trên nó
+       (quân của i đè trực tiếp quân của j) → thấy 1 quả táo nhưng bên dưới còn táo nữa.
+   B2. Gộp ngẫu nhiên các nhóm nhỏ lại (tối đa maxGroup cặp / hình) → mỗi hình có
+       nhiều bản sao rải khắp board, dễ ghép nhầm cặp. */
+function assignHardFaces(list, pairs, allCodes, maxGroup, hard) {
+  const P = pairs.length;
+  const groups = [], grp = new Array(P).fill(-1);
+  const prog = Math.max(0, (hard - 0.2) / 0.8);
+  const twinProb = 0.1 + 0.85 * prog;     // bẫy quân-giống-hệt-nằm-dưới tăng dần
+  const mergeProb = 0.35 + 0.6 * prog;    // nhiều bản sao cùng hình tăng dần
+  const over = (pi, pj) => {
+    for (const a of pairs[pi]) for (const b of pairs[pj]) if (covers(list[a], list[b])) return true;
+    return false;
+  };
+  for (let j = 0; j < P; j++) {
+    let g = -1;
+    if (Math.random() < twinProb) {
+      const cand = [];
+      for (let i = 0; i < j; i++) if (groups[grp[i]].length < maxGroup && over(i, j)) cand.push(i);
+      if (cand.length) g = grp[cand[Math.floor(Math.random() * cand.length)]];
+    }
+    if (g < 0) { g = groups.length; groups.push([]); }
+    groups[g].push(j); grp[j] = g;
+  }
+  // B2: gộp nhóm vào "hình" (bin) – nhóm lớn xếp trước
+  const ids = shuffleArr(groups.map((_, i) => i)).sort((x, y) => groups[y].length - groups[x].length);
+  const bins = [];
+  for (const id of ids) {
+    const size = groups[id].length;
+    const open = bins.filter(b => b.size + size <= maxGroup);
+    let bin;
+    if (open.length && Math.random() < mergeProb) bin = open[Math.floor(Math.random() * open.length)];
+    else { bin = { size: 0, gs: [] }; bins.push(bin); }
+    bin.size += size; bin.gs.push(id);
+  }
+  const faceOf = new Array(P).fill(0);
+  bins.forEach((bin, k) => {
+    const code = allCodes[k % allCodes.length];
+    for (const id of bin.gs) for (const pi of groups[id]) faceOf[pi] = code;
+  });
+  return faceOf;
 }
 
 /* ---------- Luật tile tự do ---------- */
@@ -601,6 +675,12 @@ function hasAnyMove() {
   return false;
 }
 function findOneMove() {
+  // Ưu tiên cặp nằm trong lời giải đảm bảo → gợi ý không dẫn vào ngõ cụt ở map khó
+  for (const t of tiles) {
+    if (t.removed || !t.free || !t._mate) continue;
+    const m = t._mate;
+    if (!m.removed && m.free && m.face === t.face) return [t, m];
+  }
   const byFace = {};
   for (const t of tiles) {
     if (t.removed || !t.free) continue;
@@ -732,7 +812,8 @@ function refreshTileClasses() {
 function updateStats() {
   statTime.textContent = "⏱ " + fmtTime(seconds);
   statLeft.textContent = "🀄 " + tiles.filter(t => !t.removed).length;
-  statDiff.textContent = "P" + curPack + "-" + curMapIdx + " · " + curShapeName();
+  const stars = curMapNum < 10 ? 1 : 1 + Math.min(4, Math.floor(levelHardness(curMapNum) * 4.99));
+  statDiff.textContent = "P" + curPack + "-" + curMapIdx + " · " + curShapeName() + " · " + "★".repeat(stars) + "☆".repeat(5 - stars);
   shuffleBadge.textContent = shufflesLeft;
   hintBadge.textContent = hintsLeft;
   updateMoveWarning();
@@ -826,13 +907,14 @@ function doShuffle(auto) {
   // Xáo bằng construction: ván sau xáo luôn giải được (thử tối đa 20 seed,
   // mỗi lần render để có rect rồi kiểm tra lại bằng solver cho chắc)
   for (let k = 0; k < 20; k++) {
-    if (!assignFacesByConstruction(alive)) {
+    const built = assignFacesByConstruction(alive); // true = có lời giải đảm bảo
+    if (!built) {
       const faces = shuffleArr(alive.map(t => t.face));
       alive.forEach((t, i) => t.face = faces[i]);
     }
     selected = null;
     renderBoard();
-    if (isSolvableState(tiles)) break;
+    if (built || isSolvableState(tiles)) break;
   }
 }
 function useHint() {
