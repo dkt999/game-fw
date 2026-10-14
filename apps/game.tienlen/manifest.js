@@ -35,6 +35,14 @@ function openTienLen() {
 function InitTienLen() {
     $('#' + tienlenWindowId).find('.window-content').html(`
     <div class="tl-arena">
+        <button class="tl-help-btn" id="tl-helpBtn" title="Luật chơi">?</button>
+        <div class="tl-popup" id="tl-helpPopup" style="display:none">
+            <div class="tl-popup-box tl-rules-box">
+                <h2>📖 Nội quy Tiến Lên Miền Nam</h2>
+                <div class="tl-rules" id="tl-rules"></div>
+                <button class="tl-btn primary" id="tl-helpClose">Đóng</button>
+            </div>
+        </div>
         <!-- Bot 1 (trên) -->
         <div class="tl-seat tl-seat-top">
             <div class="tl-hand-area" id="tl-botCards1"></div>

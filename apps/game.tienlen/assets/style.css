@@ -432,3 +432,29 @@
 #tl-money2{ right:8px; top:50%; transform:translateY(-50%); }
 #tl-money3{ left:8px; top:50%; transform:translateY(-50%); }
 .tl-rank-row.penalty{ color:#ff9a9a; }
+
+/* Nut ? luat choi */
+.tl-help-btn{
+  position:absolute;
+  top:10px; right:10px;
+  width:36px; height:36px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.3);
+  color:#fff;
+  font-size:18px;
+  font-weight:700;
+  cursor:pointer;
+  z-index:60;
+}
+.tl-help-btn:hover{ background:rgba(255,255,255,0.25); }
+.tl-rules-box{ max-width:520px; max-height:80vh; overflow-y:auto; text-align:left; }
+.tl-rules{ font-size:13px; line-height:1.5; margin-bottom:16px; }
+.tl-rules h3{ color:var(--gold); margin:14px 0 6px; font-size:14px; }
+.tl-rules table{ width:100%; border-collapse:collapse; margin:8px 0; }
+.tl-rules td, .tl-rules th{
+  border:1px solid rgba(255,255,255,0.2);
+  padding:6px 8px;
+  font-size:12px;
+}
+.tl-rules th{ background:rgba(255,255,255,0.1); }

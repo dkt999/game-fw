@@ -1,5 +1,6 @@
 (function(){
 "use strict";
+const TL_RULES_HTML = '<h3>Điều 2. Thứ tự bài</h3>\n<p><b>Giá trị:</b> 3 &lt; 4 &lt; 5 &lt; 6 &lt; 7 &lt; 8 &lt; 9 &lt; 10 &lt; J &lt; Q &lt; K &lt; A &lt; 2</p>\n<p><b>Chất:</b> Bích &lt; Chuồn &lt; Rô &lt; Cơ</p>\n<p>Sảnh: 3+ lá liên tiếp, <b>không có 2</b>, không nối A-2.</p>\n<h3>Điều 3. Tổ hợp hợp lệ</h3>\n<p>Lẻ, Đôi, Sám cô, Sảnh (3+), Tứ quý, 3 đôi thông, 4 đôi thông.</p>\n<h3>Điều 5. Bỏ lượt</h3>\n<p><b>Đã bỏ lượt là mất quyền trong vòng đó</b> — không được quay lại chặn/chặt.</p>\n<h3>Điều 6. Luật chặt</h3>\n<table>\n<tr><th>Hàng chặt</th><th>Được chặt</th></tr>\n<tr><td>3 đôi thông</td><td>1 lá 2</td></tr>\n<tr><td>Tứ quý</td><td>1 lá 2</td></tr>\n<tr><td>4 đôi thông</td><td>1 lá 2 hoặc đôi 2</td></tr>\n</table>\n<p><b>Chốt:</b> Tứ quý KHÔNG chặt đôi 2. 3 đôi thông KHÔNG chặt đôi 2.</p>\n<h3>Điều 7. Tới trắng</h3>\n<p>Thắng ngay khi chia: Tứ quý 2, Sảnh rồng, 5 đôi thông, 6 đôi.</p>\n<h3>Điều 8. Cóng &amp; Thối</h3>\n<p><b>Có ng:</b> chưa đánh lá nào mà người khác hết bài → +10 điểm + toàn bộ lá còn lại.</p>\n<p><b>Thối heo:</b> heo đen 2đ, heo đỏ 3đ.</p>\n<p><b>Thối hàng:</b> tứ quý 4đ, 3 đôi thông 3đ, 4 đôi thông 6đ.</p>\n<h3>Điều 9. Điểm phạt</h3>\n<table>\n<tr><td>Mỗi lá còn lại</td><td>1đ</td></tr>\n<tr><td>Heo đen</td><td>2đ</td></tr>\n<tr><td>Heo đỏ</td><td>3đ</td></tr>\n<tr><td>Bị chặt 1 lá 2</td><td>5đ (trả người chặt)</td></tr>\n<tr><td>Bị chặt đôi 2</td><td>10đ (trả người chặt)</td></tr>\n<tr><td>Tới trắng</td><td>Mỗi đối thủ 13đ</td></tr>\n</table>';
 
 /* ============ Bài ============ */
 // rank: 3..15 (3=3 ... 10=10, 11=J, 12=Q, 13=K, 14=A, 15=2)
@@ -75,17 +76,11 @@ function detectCombo(cards){
 
 // Bộ a có chặt được bộ b không?
 function canBeat(a, b){
-  if (!b) return true; // đi đầu vòng
+  if (!b) return true;
   if (a.type !== b.type) {
-    // Chặt đặc biệt
-    // Tứ quý chặt 1 con 2
     if (a.type === 4 && b.type === 1 && b.rank === 15) return true;
-    // 3 đôi thông+ chặt 1 con 2
     if (a.type === 6 && a.len >= 3 && b.type === 1 && b.rank === 15) return true;
-    // 4 đôi thông+ chặt đôi 2
     if (a.type === 6 && a.len >= 4 && b.type === 2 && b.rank === 15) return true;
-    // Tứ quý chặt 3 đôi thông
-    if (a.type === 4 && b.type === 6 && b.len === 3) return true;
     return false;
   }
   if (a.len !== b.len) return false;
@@ -109,44 +104,82 @@ let trickId = 0; // tang moi trick de kich hoat hieu ung
 let money = [1000, 1000, 1000, 1000];
 const BASE = 10;
 let gameStopped = false; // het tien -> ngung
+let hasPlayed = [false, false, false, false]; // ai da danh la nao chua (chong cong)
+let chatLog = []; // [{from, to, amount}] phat chat
 let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
-// Tinh tien khi van ket thuc
+// Tinh diem theo rulebook Dieu 9
 function settleMoney(){
-  if (finished.length < 3) return;
+  if (finished.length < 3) return [0,0,0,0];
   const loser = [0,1,2,3].find(p => !finished.includes(p));
-  const pay = [0,0,0,0];
-  // Hang 2 tra 1x, hang 3 tra 2x, bet tra 3x + 5/la con lai
-  pay[finished[1]] -= BASE;
-  pay[finished[2]] -= BASE*2;
-  pay[loser] -= BASE*3 + hands[loser].length*5;
-  // Thui heo: heo den (♠♣) = 10, heo do (♦♥) = 20, chia deu cho 3 nguoi kia
+  const pay = [0,0,0,0]; // am = tra, duong = nhan
+  const detail = [[],[],[],[]]; // chi tiet de hien
+
   for (let p = 0; p < 4; p++){
-    const twos = hands[p].filter(c => c.rank === 15);
-    if (!twos.length) continue;
+    if (p === finished[0]) continue; // nhat khong bi phat
     let fine = 0;
+    const parts = [];
+    // So la con lai: 1d/la
+    const rc = hands[p].length;
+    if (rc > 0){ fine += rc; parts.push(rc + " lá"); }
+    // Heo: den 2d, do 3d
+    const twos = hands[p].filter(c => c.rank === 15);
     for (const t of twos){
-      fine += (t.suit <= 1) ? 10 : 20; // den:♠♣, do:♦♥
+      const hf = (t.suit <= 1) ? 2 : 3;
+      fine += hf;
+      parts.push((t.suit <= 1 ? "heo đen" : "heo đỏ") + "+" + hf);
+    }
+    // Thoi hang
+    const th = checkThoiHang(hands[p]);
+    if (th > 0){ fine += th; parts.push("thối hàng+" + th); }
+    // Cong: chua danh la nao
+    if (!hasPlayed[p] && hands[p].length > 0){
+      fine += 10;
+      parts.push("cóng+10");
     }
     pay[p] -= fine;
-    const share = Math.floor(fine / 3);
-    for (let q = 0; q < 4; q++) if (q !== p) pay[q] += share;
+    detail[p] = parts;
   }
-  // Tong tra -> nhat huong
-  const totalPay = -(pay[finished[1]] + pay[finished[2]] + pay[loser]);
-  pay[finished[0]] += totalPay;
-  // Cap nhat
-  for (let p = 0; p < 4; p++) money[p] += pay[p];
-  // Kiem tra het tien
+  // Nhat huong tong
+  const totalFine = -(pay[1] + pay[2] + pay[3] - pay[finished[0]]);
+  // Tinh lai: tong tien phat cua 3 nguoi thua
+  let sum = 0;
+  for (let p = 0; p < 4; p++) if (p !== finished[0]) sum -= pay[p];
+  pay[finished[0]] += sum;
+
+  // Phat chat: nguoi bi chat tra truc tiep cho nguoi chat
+  for (const cl of chatLog){
+    pay[cl.from] -= cl.amount;
+    pay[cl.to] += cl.amount;
+  }
+
+  // Cap nhat tien
   for (let p = 0; p < 4; p++){
-    if (money[p] <= 0){
-      money[p] = 0;
-      gameStopped = true;
-    }
+    money[p] += pay[p];
+    if (money[p] <= 0){ money[p] = 0; gameStopped = true; }
   }
-  return pay;
+  return {pay, detail};
+}
+
+// Kiem tra thoi hang (tu quy / 3 doi thong / 4 doi thong con nguyen)
+function checkThoiHang(hand){
+  let fine = 0;
+  const counts = {};
+  hand.forEach(c => counts[c.rank] = (counts[c.rank]||0)+1);
+  // Tu quy
+  for (const r in counts) if (counts[r] === 4) fine += 4;
+  // Doi thong: tim 3/4 doi lien tiep
+  const pairs = Object.keys(counts).filter(r => counts[r] === 2).map(Number).sort((a,b)=>a-b);
+  for (let i = 0; i < pairs.length; i++){
+    let len = 1;
+    while (i+len < pairs.length && pairs[i+len] === pairs[i]+len) len++;
+    if (len >= 4) fine += 6;
+    else if (len === 3) fine += 3;
+    i += len - 1;
+  }
+  return fine;
 }
 
 // Phat khong chan: khi co nguoi thang, kiem tra nguoi tiep theo co bai chan duoc khong
@@ -183,14 +216,16 @@ function checkThangTrang(hand){
   const counts = {};
   ranks.forEach(r => counts[r] = (counts[r]||0)+1);
   const pairs = Object.keys(counts).filter(r => counts[r] === 2).map(Number).sort((a,b)=>a-b);
-  // 6 doi thong (6 doi lien tiep)
-  if (pairs.length >= 6){
-    for (let i = 0; i <= pairs.length - 6; i++){
+  // 5 doi thong
+  if (pairs.length >= 5){
+    for (let i = 0; i <= pairs.length - 5; i++){
       let ok = true;
-      for (let j = 1; j < 6; j++) if (pairs[i+j] !== pairs[i]+j) ok = false;
-      if (ok) return "6 đôi thông";
+      for (let j = 1; j < 5; j++) if (pairs[i+j] !== pairs[i]+j) ok = false;
+      if (ok) return "5 đôi thông";
     }
   }
+  // 6 doi (khong can lien tiep)
+  if (pairs.length >= 6) return "6 đôi";
   // Sanh rong (3-A lien tiep, 12 la)
   const uniq = [...new Set(ranks)].sort((a,b)=>a-b);
   if (uniq.length >= 12){
@@ -202,9 +237,6 @@ function checkThangTrang(hand){
       }
     }
   }
-  // 4 sam co (4 bo 3 la giong nhau)
-  const triples = Object.keys(counts).filter(r => counts[r] === 3).length;
-  if (triples >= 4) return "4 sám cô";
   return null;
 }
 
@@ -228,6 +260,8 @@ function newGame(resetMoney){
   finished = [];
   passedRound = new Set();
   trickId++; // xoa bai giua van cu
+  hasPlayed = [false, false, false, false];
+  chatLog = [];
   // Van dau: nguoi co 3♠ di truoc. Van sau: nguoi thang van truoc di truoc
   const popup = document.getElementById("tl-popup");
   if (popup) popup.style.display = "none";
@@ -248,10 +282,16 @@ function newGame(resetMoney){
       lastWinner = p;
       render();
       const medals = ["🥇"];
+      // Toi trang: moi doi thu tra 13
+      for (let q = 0; q < 4; q++) if (q !== p){
+        money[q] -= 13;
+        money[p] += 13;
+        if (money[q] <= 0){ money[q] = 0; gameStopped = true; }
+      }
       const resultEl = document.getElementById("tl-result");
       if (resultEl) resultEl.innerHTML =
-        `<div class="tl-rank-row"><span>🥇 ${BOT_NAMES[p]}</span><span>Thắng trắng!</span></div>
-         <div class="tl-rank-row"><span>🎴 ${tt}</span><span></span></div>`;
+        `<div class="tl-rank-row"><span>🥇 ${BOT_NAMES[p]} (${money[p]} xu)</span><span>+39</span></div>
+         <div class="tl-rank-row"><span>🎴 ${tt}</span><span>Mỗi đối thủ -13</span></div>`;
       const popup = document.getElementById("tl-popup");
       if (popup) popup.style.display = "flex";
       return;
@@ -380,9 +420,18 @@ function doPlay(player, cards){
       return false;
     }
   }
-  if (!canBeat(combo, lastPlay ? lastPlay.combo : null)){
+  const prevPlay = lastPlay;
+  if (!canBeat(combo, prevPlay ? prevPlay.combo : null)){
     if (player === 0) setStatus("Bài không hợp lệ hoặc không lớn hơn!");
     return false;
+  }
+  // Ghi log chat heo
+  if (prevPlay && combo.type !== prevPlay.combo.type){
+    const pc = prevPlay.combo;
+    if (pc.rank === 15){ // chat heo
+      const amt = (pc.type === 1) ? 5 : 10; // 1 la:5, doi:10
+      chatLog.push({from: prevPlay.player, to: player, amount: amt});
+    }
   }
   // Loại bài khỏi tay
   const hand = hands[player];
@@ -391,9 +440,10 @@ function doPlay(player, cards){
     if (idx >= 0) hand.splice(idx, 1);
   }
   lastPlay = {player, combo, cards: [...cards]};
-  roundPlays[player] = [...cards]; // giu bai da danh toi het vong
+  roundPlays[player] = [...cards];
   passes = 0;
-  trickId++; // trick moi -> hieu ung bay
+  trickId++;
+  hasPlayed[player] = true;
   // KHONG reset passedRound o day: ai da bo qua phai nghi HET VONG,
   // chi xoa khi co nguoi thang vong va dan bai moi (trong doPass)
   firstTurn = false;
@@ -415,15 +465,21 @@ function doPlay(player, cards){
       const winCombo = lastPlay ? lastPlay.combo : null;
       let penalized = -1;
       if (winCombo) penalized = checkNoBlockPenalty(finished[0], winCombo);
-      const pay = settleMoney();
       const medals = ["🥇", "🥈", "🥉", "💀"];
       const moneyStr = p => `<span class="tl-money">${money[p]} xu</span>`;
-      const rows = finished.map((p, i) =>
-        `<div class="tl-rank-row"><span>${medals[i]} ${BOT_NAMES[p]} ${moneyStr(p)}</span><span>${pay[p] >= 0 ? "+" : ""}${pay[p]}</span></div>`
-      ).join("");
-      const loserRow = `<div class="tl-rank-row loser"><span>${medals[3]} ${BOT_NAMES[loser]} ${moneyStr(loser)}</span><span>${pay[loser]}</span></div>`;
-      const penaltyRow = penalized >= 0 ?
-        `<div class="tl-rank-row penalty"><span>⚠️ ${BOT_NAMES[penalized]} không chặn</span><span>-50</span></div>` : "";
+      const res = settleMoney();
+      const pay = res.pay, detail = res.detail;
+      const rows = finished.map((p, i) => {
+        const d = detail[p].length ? ` <small>(${detail[p].join(", ")})</small>` : "";
+        return `<div class="tl-rank-row"><span>${medals[i]} ${BOT_NAMES[p]} ${moneyStr(p)}${d}</span><span>${pay[p] >= 0 ? "+" : ""}${pay[p]}</span></div>`;
+      }).join("");
+      const ld = detail[loser].length ? ` <small>(${detail[loser].join(", ")})</small>` : "";
+      const loserRow = `<div class="tl-rank-row loser"><span>${medals[3]} ${BOT_NAMES[loser]} ${moneyStr(loser)}${ld}</span><span>${pay[loser]}</span></div>`;
+      let penaltyRow = "";
+      if (penalized >= 0) penaltyRow += `<div class="tl-rank-row penalty"><span>⚠️ ${BOT_NAMES[penalized]} không chặn</span><span>-50</span></div>`;
+      for (const cl of chatLog){
+        penaltyRow += `<div class="tl-rank-row penalty"><span>🔪 ${BOT_NAMES[cl.from]} bị chặt</span><span>-${cl.amount} → ${BOT_NAMES[cl.to]}</span></div>`;
+      }
       const resultEl = document.getElementById("tl-result");
       if (resultEl) resultEl.innerHTML = rows + loserRow + penaltyRow;
       // Het tien -> ngung
@@ -635,6 +691,15 @@ document.addEventListener("click", (e) => {
   if (e.target.id === "tl-pass"){
     if (turn !== 0 || gameOver) return;
     doPass(0);
+    return;
+  }
+  if (e.target.id === "tl-helpBtn"){
+    document.getElementById("tl-rules").innerHTML = TL_RULES_HTML;
+    document.getElementById("tl-helpPopup").style.display = "flex";
+    return;
+  }
+  if (e.target.id === "tl-helpClose"){
+    document.getElementById("tl-helpPopup").style.display = "none";
     return;
   }
   const startBtn = e.target.closest("[data-start-level]");
