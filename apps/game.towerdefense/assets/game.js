@@ -415,9 +415,8 @@ function bindUI(){
   });
 
   document.getElementById("td-startWave").addEventListener("click", startWave);
-  document.getElementById("td-upgrade").addEventListener("click", upgradeTower);
-  document.getElementById("td-sell").addEventListener("click", sellTower);
   document.getElementById("td-restart").addEventListener("click", restart);
+  // Nut nâng cấp/bán được tạo động trong updatePanel()
 }
 
 function upgradeTower(){
