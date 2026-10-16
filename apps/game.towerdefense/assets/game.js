@@ -367,20 +367,28 @@ function towerAt(gx, gy){
   return towers.find(t => t.gx === gx && t.gy === gy);
 }
 
+// Chuột -> ô, có bù letterbox do canvas dùng object-fit:contain
+// (getBoundingClientRect trả về cả phần viền đen 2 bên, phải trừ ra)
+function eventToCell(e){
+  const r = canvas.getBoundingClientRect();
+  const s = Math.min(r.width / COLS, r.height / ROWS); // scale thật khi contain
+  const ox = r.left + (r.width - COLS * s) / 2;
+  const oy = r.top + (r.height - ROWS * s) / 2;
+  const gx = Math.floor((e.clientX - ox) / s);
+  const gy = Math.floor((e.clientY - oy) / s);
+  return (gx >= 0 && gx < COLS && gy >= 0 && gy < ROWS) ? [gx, gy] : null;
+}
+
 function bindUI(){
   canvas.addEventListener("mousemove", e => {
-    const r = canvas.getBoundingClientRect();
-    const gx = Math.floor((e.clientX - r.left) / r.width * COLS);
-    const gy = Math.floor((e.clientY - r.top) / r.height * ROWS);
-    hoverCell = (gx >= 0 && gx < COLS && gy >= 0 && gy < ROWS) ? [gx, gy] : null;
+    hoverCell = eventToCell(e);
   });
   canvas.addEventListener("mouseleave", () => hoverCell = null);
   canvas.addEventListener("click", e => {
     if (gameState === "gameover" || gameState === "victory") return;
-    const r = canvas.getBoundingClientRect();
-    const gx = Math.floor((e.clientX - r.left) / r.width * COLS);
-    const gy = Math.floor((e.clientY - r.top) / r.height * ROWS);
-    if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return;
+    const cell = eventToCell(e);
+    if (!cell) return;
+    const [gx, gy] = cell;
 
     const existing = towerAt(gx, gy);
     if (existing){
