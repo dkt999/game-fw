@@ -108,6 +108,47 @@ let hasPlayed = [false, false, false, false]; // ai da danh la nao chua (chong c
 let chatLog = []; // [{from, to, amount}] phat chat
 let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
+// ===== LUU GAME =====
+const TL_SAVE_KEY = "tienlen_save_v1";
+function saveGame(){
+  if (gameOver) return;
+  try {
+    const data = {
+      hands, turn,
+      lastPlay: lastPlay ? {player: lastPlay.player, combo: lastPlay.combo, cards: lastPlay.cards} : null,
+      money, firstTurn, botLevel, finished, lastWinner,
+      passedRound: [...passedRound], hasPlayed, gameStopped,
+      roundPlays,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(TL_SAVE_KEY, JSON.stringify(data));
+  } catch(e){}
+}
+function loadGame(){
+  try {
+    const raw = localStorage.getItem(TL_SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.hands || d.hands.length !== 4) return false;
+    hands = d.hands; turn = d.turn; lastPlay = d.lastPlay;
+    money = d.money; firstTurn = d.firstTurn; botLevel = d.botLevel || "medium";
+    finished = d.finished || []; lastWinner = d.lastWinner ?? -1;
+    passedRound = new Set(d.passedRound || []);
+    hasPlayed = d.hasPlayed || [false,false,false,false];
+    gameStopped = d.gameStopped || false;
+    roundPlays = d.roundPlays || {};
+    gameOver = false;
+    selected = new Set();
+    return true;
+  } catch(e){ return false; }
+}
+function clearSave(){
+  try { localStorage.removeItem(TL_SAVE_KEY); } catch(e){}
+}
+function hasSave(){
+  try { return !!localStorage.getItem(TL_SAVE_KEY); } catch(e){ return false; }
+}
+
 const BOT_NAMES = ["Bạn", "Bot 1", "Bot 2", "Bot 3"];
 
 // Tinh diem theo rulebook Dieu 9
@@ -244,6 +285,7 @@ function checkThangTrang(hand){
 }
 
 function newGame(resetMoney){
+  clearSave();
   if (resetMoney){
     money = [1000, 1000, 1000, 1000];
     gameStopped = false;
@@ -447,6 +489,7 @@ function doPlay(player, cards){
   passes = 0;
   trickId++;
   hasPlayed[player] = true;
+  saveGame();
   // KHONG reset passedRound o day: ai da bo qua phai nghi HET VONG,
   // chi xoa khi co nguoi thang vong va dan bai moi (trong doPass)
   firstTurn = false;
@@ -672,6 +715,18 @@ function render(){
 
 document.addEventListener("click", (e) => {
   if (e.target.id === "tl-new"){ newGame(true); return; }
+  if (e.target.id === "tl-continue"){
+    if (!loadGame()){
+      setStatus("Không load được ván đã lưu!");
+      return;
+    }
+    document.getElementById("tl-startPopup").style.display = "none";
+    document.getElementById("tl-popup").style.display = "none";
+    renderAll();
+    updateMoneyBar();
+    if (turn !== 0) setTimeout(botPlay, 800);
+    return;
+  }
   if (e.target.id === "tl-again"){
     newGame(false);
     // Choi tiep voi do kho da chon: khoi dong luot neu la bot
@@ -716,6 +771,20 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Hien nut "Tiep tuc" neu co save
+(function(){
+  const btn = document.getElementById("tl-continue");
+  if (btn && hasSave()){
+    btn.style.display = "block";
+    // Hien thong tin save
+    try {
+      const d = JSON.parse(localStorage.getItem(TL_SAVE_KEY));
+      const date = new Date(d.savedAt);
+      btn.textContent = "▶ Tiếp tục (" + date.toLocaleString("vi-VN") + ")";
+    } catch(e){}
+  }
+})();
+
 /* Logic vòng: ai bỏ qua thì nghỉ hết vòng */
 (function patchPass(){
   const _doPass = doPass;
@@ -751,11 +820,13 @@ document.addEventListener("click", (e) => {
       if (hands[turn].length === 0) turn = nextActive(turn);
       setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
       render();
+      saveGame();
       if (turn !== 0) setTimeout(botPlay, 800);
       return true;
     }
     turn = nextActive(player);
     render();
+    saveGame();
     if (turn !== 0){
       setTimeout(botPlay, 700 + Math.random() * 600);
     }
