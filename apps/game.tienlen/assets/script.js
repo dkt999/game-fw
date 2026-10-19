@@ -285,7 +285,9 @@ function checkThangTrang(hand){
 }
 
 function newGame(resetMoney){
-  clearSave();
+  // KHONG clearSave() o day: luc script load (trang reload) phai giu save
+  // de nut "Tiep tuc" con tac dung. Xoa save o cac cho goi newGame chu dong
+  // (nut Van moi / Choi tiep / chon do kho) va khi van da ket thuc.
   if (resetMoney){
     money = [1000, 1000, 1000, 1000];
     gameStopped = false;
@@ -325,6 +327,7 @@ function newGame(resetMoney){
       gameOver = true;
       finished = [p];
       lastWinner = p;
+      clearSave(); // van ket thuc ngay khi chia -> khong de save cu song lai
       render();
       const medals = ["🥇"];
       // Toi trang: moi doi thu tra 13
@@ -489,7 +492,9 @@ function doPlay(player, cards){
   passes = 0;
   trickId++;
   hasPlayed[player] = true;
-  saveGame();
+  // KHONG save o day: turn chua chuyen sang nguoi tiep theo.
+  // saveGame() duoc goi o cac nhanh return ben duoi, sau khi turn da chot
+  // (nguoi vua danh ma luu thi khi resume se bi danh 2 luot lien tiep).
   // KHONG reset passedRound o day: ai da bo qua phai nghi HET VONG,
   // chi xoa khi co nguoi thang vong va dan bai moi (trong doPass)
   firstTurn = false;
@@ -505,6 +510,7 @@ function doPlay(player, cards){
       setStatus(`🎉 ${BOT_NAMES[player]} về ${rankNames[finished.length-1]}! Còn lại đánh tiếp...`);
     } else {
       gameOver = true;
+      clearSave(); // van da xong -> khong de nut "Tiep tuc" hoi sinh van cu
       const loser = [0,1,2,3].find(p => !finished.includes(p));
       lastWinner = finished[0];
       // Phat khong chan (kiem tra truoc khi tinh tien)
@@ -553,6 +559,7 @@ function doPlay(player, cards){
       turn = window._tlNextActive(turn); // người thắng đã hết bài -> người kế tiếp còn bài dẫn
     render();
     setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
+    saveGame(); // turn + lastPlay=null da chot cho trick moi
     if (turn !== 0) setTimeout(botPlay, 800);
     return true;
   }
@@ -561,6 +568,7 @@ function doPlay(player, cards){
   else { let _nx = (player + 1) % 4, _gd = 0;
     while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4;
     turn = _nx; }
+  saveGame(); // luu sau khi turn da chuyen sang nguoi tiep theo
   render();
   if (turn === 0){
     /* vien sang da chi luot */
@@ -714,7 +722,7 @@ function render(){
 /* ============ Sự kiện ============ */
 
 document.addEventListener("click", (e) => {
-  if (e.target.id === "tl-new"){ newGame(true); return; }
+  if (e.target.id === "tl-new"){ clearSave(); newGame(true); return; }
   if (e.target.id === "tl-continue"){
     if (!loadGame()){
       alert("Không load được ván đã lưu!");
@@ -727,6 +735,7 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (e.target.id === "tl-again"){
+    clearSave();
     newGame(false);
     // Choi tiep voi do kho da chon: khoi dong luot neu la bot
     if (turn !== 0) setTimeout(botPlay, 800);
@@ -762,6 +771,7 @@ document.addEventListener("click", (e) => {
   const startBtn = e.target.closest("[data-start-level]");
   if (startBtn){
     botLevel = startBtn.dataset.startLevel;
+    clearSave(); // bat dau van moi (da chia san khi load) -> bo save cu
     const sp = document.getElementById("tl-startPopup");
     if (sp) sp.style.display = "none";
     setStatus("Độ khó: " + startBtn.textContent + " — " + BOT_NAMES[turn] + " đi trước");
