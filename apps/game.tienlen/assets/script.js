@@ -717,13 +717,12 @@ document.addEventListener("click", (e) => {
   if (e.target.id === "tl-new"){ newGame(true); return; }
   if (e.target.id === "tl-continue"){
     if (!loadGame()){
-      setStatus("Không load được ván đã lưu!");
+      alert("Không load được ván đã lưu!");
       return;
     }
     document.getElementById("tl-startPopup").style.display = "none";
     document.getElementById("tl-popup").style.display = "none";
-    renderAll();
-    updateMoneyBar();
+    render();
     if (turn !== 0) setTimeout(botPlay, 800);
     return;
   }
@@ -772,18 +771,23 @@ document.addEventListener("click", (e) => {
 });
 
 // Hien nut "Tiep tuc" neu co save
-(function(){
+function checkContinueBtn(){
   const btn = document.getElementById("tl-continue");
-  if (btn && hasSave()){
+  if (!btn) return;
+  if (hasSave()){
     btn.style.display = "block";
-    // Hien thong tin save
     try {
       const d = JSON.parse(localStorage.getItem(TL_SAVE_KEY));
       const date = new Date(d.savedAt);
       btn.textContent = "▶ Tiếp tục (" + date.toLocaleString("vi-VN") + ")";
     } catch(e){}
+  } else {
+    btn.style.display = "none";
   }
-})();
+}
+// Goi khi script load
+checkContinueBtn();
+window.TLCheckContinue = checkContinueBtn;
 
 /* Logic vòng: ai bỏ qua thì nghỉ hết vòng */
 (function patchPass(){

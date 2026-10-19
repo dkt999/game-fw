@@ -11,6 +11,7 @@ function openTienLen() {
         const existingWindowId = $existingApp.closest('.window').attr('id');
         $(`#${existingWindowId}`).attr('index', zIndexCounter + 1);
         $(`#${existingWindowId}`).css('display', 'block');
+        if (window.TLCheckContinue) window.TLCheckContinue();
         return;
     }
     loadAppStylesheet("./apps/game.tienlen/assets/style.css");
