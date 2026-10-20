@@ -119,7 +119,7 @@ function saveGame(){
       lastPlay: lastPlay ? {player: lastPlay.player, combo: lastPlay.combo, cards: lastPlay.cards} : null,
       money, firstTurn, botLevel, finished, lastWinner,
       passedRound: [...passedRound], hasPlayed, gameStopped,
-      roundPlays,
+      roundPlays, trickId,
       savedAt: Date.now()
     };
     localStorage.setItem(TL_SAVE_KEY, JSON.stringify(data));
@@ -138,6 +138,7 @@ function loadGame(){
     hasPlayed = d.hasPlayed || [false,false,false,false];
     gameStopped = d.gameStopped || false;
     roundPlays = d.roundPlays || {};
+    trickId = d.trickId ?? 0;
     gameOver = false;
     selected = new Set();
     // Save chi ton tai khi game da danh -> firstTurn phai false
@@ -767,6 +768,9 @@ document.addEventListener("click", (e) => {
     }
     document.getElementById("tl-startPopup").style.display = "none";
     document.getElementById("tl-popup").style.display = "none";
+    // Ep render lai bai giua ban (xoa trickId cu de renderTrick khong bo qua)
+    const trickEl = document.getElementById("tl-trick");
+    if (trickEl) trickEl.dataset.trickId = "";
     render();
     if (turn !== 0) setTimeout(botPlay, 800);
     return;
