@@ -140,6 +140,9 @@ function loadGame(){
     roundPlays = d.roundPlays || {};
     gameOver = false;
     selected = new Set();
+    // Save chi ton tai khi game da danh -> firstTurn phai false
+    // (saveGame luu truoc khi doPlay set firstTurn=false nen gia tri cu bi sai)
+    if (hasPlayed.some(Boolean)) firstTurn = false;
     // Tu sua: neu turn dang o nguoi het bai -> chuyen sang nguoi ke tiep con bai
     if (hands[turn] && hands[turn].length === 0){
       let _n = (turn + 1) % 4, _g = 0;
