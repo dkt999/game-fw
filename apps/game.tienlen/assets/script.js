@@ -455,6 +455,7 @@ function activePlayers(){
   return [0,1,2,3].filter(p => hands[p].length > 0);
 }
 function botPlay(){
+  console.log("[TL-DEBUG] botPlay turn=", turn, "gameOver=", gameOver, "hands=", hands.map(h=>h.length));
   if (gameOver || turn === 0) return;
   const hand = hands[turn];
   const cards = botChoose(hand);
@@ -466,6 +467,7 @@ function botPlay(){
 }
 
 function doPlay(player, cards){
+  console.log("[TL-DEBUG] doPlay player=", player, "cards=", cards.length, "turn=", turn, "gameOver=", gameOver);
   const combo = detectCombo(cards);
   if (!combo) return false;
   // Van dau tien (chua co winner): bat buoc ra 3♠. Van sau winner tu do.
@@ -512,11 +514,13 @@ function doPlay(player, cards){
   // Hết bài -> ghi nhận hạng, còn lại đánh tiếp
   if (hands[player].length === 0 && !finished.includes(player)){
     finished.push(player);
+    console.log("[TL-DEBUG] Player", player, "finished. finished=", [...finished], "hands=", hands.map(h=>h.length));
     if (finished.length < 3){
       const rankNames = ["🥇 Nhất", "🥈 Nhì", "🥉 Ba"];
       setStatus(`🎉 ${BOT_NAMES[player]} về ${rankNames[finished.length-1]}! Còn lại đánh tiếp...`);
     } else {
       gameOver = true;
+      console.log("[TL-DEBUG] GAME OVER! finished=", [...finished]);
       clearSave(); // van da xong -> khong de nut "Tiep tuc" hoi sinh van cu
       const loser = [0,1,2,3].find(p => !finished.includes(p));
       lastWinner = finished[0];
@@ -526,7 +530,9 @@ function doPlay(player, cards){
       if (winCombo) penalized = checkNoBlockPenalty(finished[0], winCombo);
       const medals = ["🥇", "🥈", "🥉", "💀"];
       const moneyStr = p => `<span class="tl-money">${money[p]} xu</span>`;
+      console.log("[TL-DEBUG] Goi settleMoney...");
       const res = settleMoney();
+      console.log("[TL-DEBUG] settleMoney xong:", res);
       const pay = res.pay, detail = res.detail;
       const rows = finished.map((p, i) => {
         const d = detail[p].length ? ` <small>(${detail[p].join(", ")})</small>` : "";
@@ -547,7 +553,9 @@ function doPlay(player, cards){
         if (resultEl) resultEl.innerHTML += stopRow;
       }
       const popup = document.getElementById("tl-popup");
+      console.log("[TL-DEBUG] Popup element:", popup, "resultEl:", resultEl);
       if (popup) popup.style.display = "flex";
+      console.log("[TL-DEBUG] Da set popup display=flex, display hien tai:", popup ? popup.style.display : "N/A");
       setStatus(`🏁 Xong!`);
       render();
       return true;
