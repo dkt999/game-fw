@@ -110,6 +110,30 @@ let passedRound = new Set(); // nguoi da bo qua trong vong nay
 
 // ===== LUU GAME =====
 const TL_SAVE_KEY = "tienlen_save_v1";
+const TL_META_KEY = "tienlen_meta_v1";
+// Meta: tien + lastWinner giua cac van (khi het van ma chua bam Choi tiep)
+function saveMeta(){
+  try {
+    localStorage.setItem(TL_META_KEY, JSON.stringify({
+      money, lastWinner, gameStopped, savedAt: Date.now()
+    }));
+  } catch(e){}
+}
+function loadMeta(){
+  try {
+    const raw = localStorage.getItem(TL_META_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.money || d.money.length !== 4) return false;
+    money = d.money;
+    lastWinner = d.lastWinner ?? -1;
+    gameStopped = d.gameStopped || false;
+    return true;
+  } catch(e){ return false; }
+}
+function clearMeta(){
+  try { localStorage.removeItem(TL_META_KEY); } catch(e){}
+}
 function saveGame(){
   if (gameOver) return;
   try {
@@ -353,6 +377,7 @@ function newGame(resetMoney){
          <div class="tl-rank-row"><span>🎴 ${tt}</span><span>Mỗi đối thủ -13</span></div>`;
       const popup = document.getElementById("tl-popup");
       if (popup) popup.style.display = "flex";
+      saveMeta();
       return;
     }
   }
@@ -553,6 +578,7 @@ function doPlay(player, cards){
       const popup = document.getElementById("tl-popup");
       if (popup) popup.style.display = "flex";
       setStatus(`🏁 Xong!`);
+      saveMeta(); // luu tien giua cac van, phong khi tat trinh duyet ma chua bam Choi tiep
       render();
       return true;
     }
@@ -759,7 +785,7 @@ function render(){
 /* ============ Sự kiện ============ */
 
 document.addEventListener("click", (e) => {
-  if (e.target.id === "tl-new"){ clearSave(); newGame(true); return; }
+  if (e.target.id === "tl-new"){ clearSave(); clearMeta(); newGame(true); return; }
   if (e.target.id === "tl-continue"){
     if (!loadGame()){
       alert("Không load được ván đã lưu!");
@@ -836,6 +862,8 @@ function checkContinueBtn(){
     btn.style.display = "none";
   }
 }
+// Load tien da luu giua cac van (neu co)
+loadMeta();
 // Goi khi script load
 checkContinueBtn();
 window.TLCheckContinue = checkContinueBtn;
