@@ -1,1 +1,23 @@
-{"background_color":"#0f0c29","description":"Chơi game Pikachu, Shikaku, Sudoku trên điện thoại","display":"fullscreen","icons":[{"sizes":"192x192","src":"./assets/icons/icon-192.png","type":"image/png"},{"sizes":"512x512","src":"./assets/icons/icon-512.png","type":"image/png"}],"name":"Dinh Kim Thach Games","orientation":"any","scope":"./","short_name":"DKT Games","start_url":"./index.html","theme_color":"#0f0c29"}
+{
+  "background_color": "#0f0c29",
+  "description": "Chơi game Tiến Lên, Pikachu, Shikaku, Sudoku, Mahjong, 1024 trên điện thoại",
+  "display": "standalone",
+  "icons": [
+    {
+      "sizes": "192x192",
+      "src": "./assets/icons/icon-192.png",
+      "type": "image/png"
+    },
+    {
+      "sizes": "512x512",
+      "src": "./assets/icons/icon-512.png",
+      "type": "image/png"
+    }
+  ],
+  "name": "Dinh Kim Thach Games",
+  "orientation": "any",
+  "scope": "./",
+  "short_name": "DKT Games",
+  "start_url": "./index.html",
+  "theme_color": "#0f0c29"
+}
