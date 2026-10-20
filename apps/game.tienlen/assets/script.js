@@ -563,17 +563,40 @@ function doPlay(player, cards){
     if (turn !== 0) setTimeout(botPlay, 800);
     return true;
   }
-  // Lượt tiếp: bỏ qua người đã hết bài HOẶC đã bỏ qua trong vòng này (tự động qua lượt)
-  if (typeof window._tlNextActive === "function") turn = window._tlNextActive(player);
-  else { let _nx = (player + 1) % 4, _gd = 0;
-    while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4;
-    turn = _nx; }
-  saveGame(); // luu sau khi turn da chuyen sang nguoi tiep theo
+  // Lượt tiếp: bỏ qua người đã hết bài HOẶC đã bỏ qua trong vòng này
+  let _nx = -1;
+  if (typeof window._tlNextActive === "function") _nx = window._tlNextActive(player);
+  else { _nx = (player + 1) % 4; let _gd = 0;
+    while (hands[_nx].length === 0 && _gd++ < 4) _nx = (_nx + 1) % 4; }
+  if (_nx === -1){
+    // Không còn ai chặn được -> thắng vòng, ra bài mới
+    lastPlay = null;
+    passes = 0;
+    roundPlays = {};
+    passedRound = new Set();
+    trickId++;
+    turn = player;
+    // Nếu người thắng đã hết bài, tìm người còn bài
+    if (hands[turn].length === 0){
+      let _n2 = (turn + 1) % 4, _g2 = 0;
+      while (_g2++ < 8){
+        if (hands[_n2].length > 0) break;
+        _n2 = (_n2 + 1) % 4;
+      }
+      turn = _n2;
+    }
+    setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
+    saveGame();
+    render();
+    if (turn !== 0) setTimeout(botPlay, 800);
+    return true;
+  }
+  turn = _nx;
+  saveGame();
   render();
   if (turn === 0){
     /* vien sang da chi luot */
   } else {
-    /* vien sang da chi luot */
     setTimeout(botPlay, 700 + Math.random() * 600);
   }
   return true;
@@ -803,13 +826,14 @@ window.TLCheckContinue = checkContinueBtn;
 (function patchPass(){
   const _doPass = doPass;
   // Hàm tìm người tiếp theo chưa bỏ qua và còn bài
+  // Trả về -1 nếu không còn ai (thắng vòng)
   function nextActive(from){
     let n = (from + 1) % 4, guard = 0;
     while (guard++ < 8){
       if (hands[n].length > 0 && !passedRound.has(n)) return n;
       n = (n + 1) % 4;
     }
-    return from;
+    return -1; // không còn ai -> thắng vòng
   }
   doPass = function(player){
     if (!lastPlay || lastPlay.player === player){
@@ -831,14 +855,29 @@ window.TLCheckContinue = checkContinueBtn;
       trickId++; // xoa bai giua khi qua trick moi
       turn = winnerBefore;
       // Nếu người thắng vòng đã hết bài, tìm người tiếp theo
-      if (hands[turn].length === 0) turn = nextActive(turn);
+      if (hands[turn].length === 0){
+        const _na = nextActive(turn);
+        if (_na !== -1) turn = _na;
+      }
       setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
       render();
       saveGame();
       if (turn !== 0) setTimeout(botPlay, 800);
       return true;
     }
-    turn = nextActive(player);
+    const _na2 = nextActive(player);
+    if (_na2 === -1){
+      // Lạ: không còn ai nhưng chưa hết vòng -> coi như thắng vòng
+      lastPlay = null; passes = 0; roundPlays = {}; passedRound = new Set(); trickId++;
+      turn = winnerBefore;
+      if (hands[turn].length === 0){
+        let _n3 = (turn + 1) % 4, _g3 = 0;
+        while (_g3++ < 8 && hands[_n3].length === 0) _n3 = (_n3 + 1) % 4;
+        turn = _n3;
+      }
+    } else {
+      turn = _na2;
+    }
     render();
     saveGame();
     if (turn !== 0){
