@@ -15,11 +15,20 @@ function openTienLen() {
         return;
     }
     loadAppStylesheet("./apps/game.tienlen/assets/style.css");
-    try {
-        if (window.IS_MOBILE === true && screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock("landscape").catch(function(){});
-        }
-    } catch (e) {}
+    // Khoa xoay ngang (thu lai neu that bai)
+    function lockLandscape(){
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock("landscape").catch(function(){
+                    setTimeout(lockLandscape, 1000);
+                });
+            }
+        } catch (e) {}
+    }
+    if (window.IS_MOBILE === true) {
+        lockLandscape();
+        setTimeout(lockLandscape, 500);
+    }
     tienlenWindowId = createWindow({
         title: 'Tiến Lên',
         iconUrl: "assets/icons/defaultGameIcon2.svg",

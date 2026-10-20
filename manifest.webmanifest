@@ -1,7 +1,7 @@
 {
   "background_color": "#0f0c29",
   "description": "Chơi game Tiến Lên, Pikachu, Shikaku, Sudoku, Mahjong, 1024 trên điện thoại",
-  "display": "standalone",
+  "display": "fullscreen",
   "icons": [
     {
       "sizes": "192x192",
