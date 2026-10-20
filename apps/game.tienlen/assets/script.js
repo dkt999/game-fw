@@ -850,6 +850,11 @@ document.addEventListener("click", (e) => {
 });
 
 // Hien nut "Tiep tuc" neu co save
+// Phat hien trinh duyet in-app (Zalo/FB/Messenger) thuong khong luu localStorage
+function isInAppBrowser(){
+  const ua = navigator.userAgent || "";
+  return /Zalo|FBAN|FBAV|Messenger|Line\/|Instagram/i.test(ua);
+}
 function checkContinueBtn(){
   const btn = document.getElementById("tl-continue");
   if (!btn) return;
@@ -869,6 +874,14 @@ function checkContinueBtn(){
 loadMeta();
 // Goi khi script load
 checkContinueBtn();
+// Canh bao neu trinh duyet in-app (khong luu duoc tien trinh)
+if (isInAppBrowser()){
+  const warn = document.createElement("div");
+  warn.style.cssText = "position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#ffd93d;font-size:11px;padding:6px 12px;border-radius:8px;z-index:100;white-space:nowrap;";
+  warn.textContent = "⚠️ Mở bằng Chrome/Safari để lưu tiến trình";
+  const arena = document.querySelector(".tl-arena");
+  if (arena) arena.appendChild(warn);
+}
 window.TLCheckContinue = checkContinueBtn;
 
 /* Logic vòng: ai bỏ qua thì nghỉ hết vòng */
