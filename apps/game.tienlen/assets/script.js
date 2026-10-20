@@ -112,7 +112,6 @@ let passedRound = new Set(); // nguoi da bo qua trong vong nay
 const TL_SAVE_KEY = "tienlen_save_v1";
 function saveGame(){
   if (gameOver) return;
-  console.log("[TL] saveGame goi, turn=" + turn);
   try {
     const data = {
       hands, turn,
@@ -826,7 +825,6 @@ function checkContinueBtn(){
   const btn = document.getElementById("tl-continue");
   if (!btn) return;
   const hs = hasSave();
-  console.log("[TL] checkContinueBtn hasSave=" + hs);
   if (hs){
     btn.style.display = "block";
     try {

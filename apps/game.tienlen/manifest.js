@@ -31,7 +31,10 @@ function openTienLen() {
         }
     });
     InitTienLen();
-    loadAppScript("./apps/game.tienlen/assets/script.js", function() {});
+    loadAppScript("./apps/game.tienlen/assets/script.js", function() {
+        // Script co the da load san (mo lai sau khi dong cua so) -> van phai check nut Tiep tuc
+        if (window.TLCheckContinue) window.TLCheckContinue();
+    });
 }
 function InitTienLen() {
     $('#' + tienlenWindowId).find('.window-content').html(`
