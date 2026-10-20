@@ -85,8 +85,6 @@ function InitTienLen() {
                     <button class="tl-btn big" data-start-level="hard">Khó</button>
                 </div>
                 <button class="tl-btn big" id="tl-continue" style="display:none;margin-top:12px;width:100%">▶ Tiếp tục ván đang dở</button>
-                <div class="tl-start-levels"
-                </div>
             </div>
         </div>
         <div class="tl-popup" id="tl-popup" style="display:none">
