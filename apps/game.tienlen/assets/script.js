@@ -440,42 +440,45 @@ function botChoose(hand){
     if (canBeat(dc, lastPlay ? lastPlay.combo : null)) valid.push({cards: c, combo: dc});
   }
   if (!valid.length) return null;
-  valid.sort((a, b) => cardVal(a.combo.top) - cardVal(b.combo.top));
   const isLeading = !lastPlay || lastPlay.player === turn;
 
+  // Cham diem khi dan: uu tien xa nhieu bai, dung bo doi/sanh, tranh phi bai lon
+  function leadScore(v){
+    let sc = v.cards.length * 10;
+    if (v.combo.type === 5 || v.combo.type === 6) sc += 8; // sanh/doi thong
+    else if (v.combo.type === 2 || v.combo.type === 3) sc += 4; // doi/sam
+    sc -= cardVal(v.combo.top) * 0.6;
+    if (botLevel === "hard" && v.combo.top === 15) sc -= 15; // giu heo cuoi
+    return sc;
+  }
+
+  if (isLeading){
+    if (botLevel === "easy"){
+      // De: 70% ra bo nho nhat, 30% ra doi nho nhat neu co
+      valid.sort((a, b) => cardVal(a.combo.top) - cardVal(b.combo.top));
+      const pairs = valid.filter(v => v.combo.type === 2);
+      if (pairs.length && Math.random() < 0.3) return pairs[0].cards;
+      return valid[0].cards;
+    }
+    // Vua/Kho: dan bang bo diem cao nhat (doi, sanh duoc uu tien)
+    valid.sort((a, b) => leadScore(b) - leadScore(a));
+    if (botLevel === "hard" && valid.length > 2 && Math.random() < 0.2){
+      return valid[1].cards; // chut bat ngo, kho doan
+    }
+    return valid[0].cards;
+  }
+
+  // Theo bai
+  valid.sort((a, b) => cardVal(a.combo.top) - cardVal(b.combo.top));
   if (botLevel === "easy"){
-    // De: luon ra bo nho nhat
     return valid[0].cards;
   }
   if (botLevel === "hard"){
-    // Kho: giu bai manh, chi chan khi can
-    if (!isLeading){
-      // Theo: neu bai doi thu sap het (<3 la), chan manh tay
-      const oppCounts = hands.map((h, i) => i === turn ? 99 : h.length);
-      const minOpp = Math.min(...oppCounts);
-      if (minOpp <= 2){
-        // Chon bo lon nhat de chan
-        return valid[valid.length - 1].cards;
-      }
-      // Binh thuong: 30% bo qua de giu bai (neu khong phai bo nho nhat)
-      if (valid.length > 1 && Math.random() < 0.3) return null;
-    } else {
-      // Dan: ra sanh dai hoac bo co rank trung binh (giu bai nho de xa sau)
-      const straights = valid.filter(v => v.combo.type === 5 || v.combo.type === 6);
-      if (straights.length){
-        straights.sort((a, b) => b.cards.length - a.cards.length);
-        return straights[0].cards;
-      }
-    }
-    return valid[0].cards;
-  }
-  // Medium (mac dinh)
-  if (isLeading){
-    const straights = valid.filter(v => v.combo.type === 5 || v.combo.type === 6);
-    if (straights.length && Math.random() < 0.6){
-      straights.sort((a, b) => b.cards.length - a.cards.length || cardVal(a.combo.top) - cardVal(b.combo.top));
-      return straights[0].cards;
-    }
+    // Doi thu sap het (<3 la): chan manh tay bang bo lon nhat
+    const oppCounts = hands.map((h, i) => i === turn ? 99 : h.length);
+    if (Math.min(...oppCounts) <= 2) return valid[valid.length - 1].cards;
+    // Binh thuong: 30% bo qua de giu bai
+    if (valid.length > 1 && Math.random() < 0.3) return null;
   }
   return valid[0].cards;
 }
