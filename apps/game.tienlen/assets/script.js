@@ -788,7 +788,19 @@ function render(){
 /* ============ Sự kiện ============ */
 
 document.addEventListener("click", (e) => {
-  if (e.target.id === "tl-new"){ clearSave(); clearMeta(); newGame(true); return; }
+  if (e.target.id === "tl-new"){
+    document.getElementById("tl-confirmPopup").style.display = "flex";
+    return;
+  }
+  if (e.target.id === "tl-cancelNew"){
+    document.getElementById("tl-confirmPopup").style.display = "none";
+    return;
+  }
+  if (e.target.id === "tl-confirmNew"){
+    document.getElementById("tl-confirmPopup").style.display = "none";
+    clearSave(); clearMeta(); newGame(true);
+    return;
+  }
   if (e.target.id === "tl-continue"){
     if (!loadGame()){
       alert("Không load được ván đã lưu!");

@@ -1,5 +1,5 @@
 // Service Worker cho DKT Games PWA
-const CACHE_NAME = "dkt-games-v20261018a";
+const CACHE_NAME = "dkt-games-v20261018b";
 const CORE_ASSETS = [
   "./",
   "./index.html",

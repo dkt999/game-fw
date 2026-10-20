@@ -99,6 +99,16 @@ function InitTienLen() {
                 <button class="tl-btn big" id="tl-continue" style="display:none;margin-top:12px;width:100%">▶ Tiếp tục ván đang dở</button>
             </div>
         </div>
+        <div class="tl-popup" id="tl-confirmPopup" style="display:none">
+            <div class="tl-popup-box">
+                <h2>⚠️ Ván mới?</h2>
+                <p style="color:#cfe0d4;margin-bottom:16px">Tiền sẽ reset về 1000 xu.<br>Tiếp tục?</p>
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <button class="tl-btn" id="tl-cancelNew">Hủy</button>
+                    <button class="tl-btn primary" id="tl-confirmNew">Đồng ý</button>
+                </div>
+            </div>
+        </div>
         <div class="tl-popup" id="tl-popup" style="display:none">
             <div class="tl-popup-box">
                 <h2>🏁 Kết quả</h2>
