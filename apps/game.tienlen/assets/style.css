@@ -17,12 +17,12 @@
   position:absolute;
   inset:0;
   display:grid;
-  grid-template-columns:1fr;
+  grid-template-columns:auto 1fr auto;
   grid-template-rows:auto 1fr auto;
   grid-template-areas:
-    "top"
-    "center"
-    "bottom";
+    ". top ."
+    "left center right"
+    ". bottom .";
   background: radial-gradient(ellipse at 50% 50%, #1e6b42 0%, #134a2e 55%, #0d3520 100%);
   overflow:auto;
   align-content:center;
@@ -99,14 +99,10 @@
 .tl-center-arena{
   grid-area:center;
   display:flex;
-  flex-direction:row;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:14px;
-}
-.tl-side-inline{
-  flex-direction:column;
-  min-height:120px;
+  gap:10px;
 }
 .tl-status{
   font-size:15px;

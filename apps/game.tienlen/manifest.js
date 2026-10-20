@@ -60,19 +60,18 @@ function InitTienLen() {
         <div class="tl-seat tl-seat-top">
             <div class="tl-hand-area" id="tl-botCards1"></div>
         </div>
-        <!-- Bot 3 (trái) - an, bai chuyen vao giua -->
-        <div class="tl-seat tl-seat-left" style="display:none">
-            <div class="tl-hand-area" id="tl-botCards0-hidden"></div>
+        <!-- Bot 3 (trái) -->
+        <div class="tl-seat tl-seat-left">
+            <div class="tl-hand-area" id="tl-botCards0"></div>
         </div>
-        <!-- Giữa: 2 bot 2 ben + vung trang -->
+        <!-- Giữa: trạng thái -->
         <div class="tl-center-arena">
-            <div class="tl-hand-area tl-side-inline" id="tl-botCards0"></div>
             <div class="tl-trick-center" id="tl-trick"></div>
-            <div class="tl-hand-area tl-side-inline" id="tl-botCards2"></div>
+
         </div>
-        <!-- Bot 2 (phải) - an -->
-        <div class="tl-seat tl-seat-right" style="display:none">
-            <div class="tl-hand-area" id="tl-botCards2-hidden"></div>
+        <!-- Bot 2 (phải) -->
+        <div class="tl-seat tl-seat-right">
+            <div class="tl-hand-area" id="tl-botCards2"></div>
         </div>
         <!-- Người chơi (dưới) -->
         <div class="tl-seat tl-seat-bottom">
