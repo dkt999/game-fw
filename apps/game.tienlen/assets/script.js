@@ -872,6 +872,13 @@ function checkContinueBtn(){
 }
 // Load tien da luu giua cac van (neu co)
 loadMeta();
+// Luoi an toan: luu khi trang bi an/tat (PWA swipe away, tat trinh duyet)
+window.addEventListener("pagehide", () => {
+  try {
+    if (!gameOver) saveGame();
+    saveMeta();
+  } catch(e){}
+});
 // Goi khi script load
 checkContinueBtn();
 // Canh bao neu trinh duyet in-app (khong luu duoc tien trinh)
