@@ -139,6 +139,13 @@ function loadGame(){
     roundPlays = d.roundPlays || {};
     gameOver = false;
     selected = new Set();
+    // Tu sua: neu turn dang o nguoi het bai -> chuyen sang nguoi ke tiep con bai
+    if (hands[turn] && hands[turn].length === 0){
+      let _n = (turn + 1) % 4, _g = 0;
+      while (_g++ < 8 && hands[_n].length === 0) _n = (_n + 1) % 4;
+      if (hands[_n].length > 0) turn = _n;
+    }
+    if (!hands.some(h => h.length > 0)) return false;
     return true;
   } catch(e){ return false; }
 }
@@ -555,8 +562,11 @@ function doPlay(player, cards){
     roundPlays = {};
     passedRound = new Set();
     turn = player;
-    if (hands[turn].length === 0 && typeof window._tlNextActive === "function")
-      turn = window._tlNextActive(turn); // người thắng đã hết bài -> người kế tiếp còn bài dẫn
+    if (hands[turn].length === 0){
+      let _n = (turn + 1) % 4, _g = 0;
+      while (_g++ < 8 && hands[_n].length === 0) _n = (_n + 1) % 4;
+      if (hands[_n].length > 0) turn = _n;
+    }
     render();
     setStatus(`${BOT_NAMES[turn]} thắng vòng, ra bài mới`);
     saveGame(); // turn + lastPlay=null da chot cho trick moi
