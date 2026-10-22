@@ -246,21 +246,63 @@ function curePest(p) {
     return true;
 }
 
-/* ============ RENDER ============ */
+/* ============ RENDER (giả 3D isometric) ============ */
+const ISO = { cols: 6, rows: 4, tw: 120, th: 60, W: 600, H: 308 };
+function isoXY(i) {
+    const c = i % ISO.cols, r = Math.floor(i / ISO.cols);
+    return { x: (c - r) * 60 + 180, y: (c + r) * 30, z: r * ISO.cols + c + 1 };
+}
+function diamondSVG(kind, dry) {
+    let top, s1, s2;
+    if (kind === 'grass') { top = '#79c25e'; s1 = '#4e8a3c'; s2 = '#5da344'; }
+    else if (dry) { top = '#c49a63'; s1 = '#8a5f30'; s2 = '#9c713c'; }
+    else { top = '#9c6b3f'; s1 = '#6e4423'; s2 = '#7c4f24'; }
+    let deco = '<path d="M30 34 L60 48 L90 34" stroke="rgba(0,0,0,.20)" stroke-width="3" fill="none"/>';
+    if (kind === 'grass') deco = '<path d="M40 30 q5 -8 10 0 M70 36 q5 -8 10 0" stroke="#3f7a1f" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+    else if (dry) deco += '<path d="M42 26 l9 7 M78 24 l-8 9 M60 36 l5 9" stroke="#6e4423" stroke-width="2" fill="none"/>';
+    return '<svg viewBox="0 0 120 68" class="diamond">' +
+        '<polygon points="4,34 60,60 60,68 4,42" fill="' + s1 + '"/>' +
+        '<polygon points="60,60 116,34 116,42 60,68" fill="' + s2 + '"/>' +
+        '<polygon points="60,8 116,34 60,60 4,34" fill="' + top + '" stroke="#5b3a1e" stroke-width="3"/>' +
+        deco + '</svg>';
+}
+function sceneryHTML() {
+    let fence = '';
+    for (let k = 0; k < 13; k++) fence += '<rect x="' + (k * 40) + '" y="6" width="9" height="30" rx="2" fill="#8a5a33" stroke="#5b3a1e" stroke-width="2"/>';
+    fence += '<rect x="0" y="12" width="520" height="6" rx="3" fill="#a06a35" stroke="#5b3a1e" stroke-width="1.5"/><rect x="0" y="26" width="520" height="6" rx="3" fill="#a06a35" stroke="#5b3a1e" stroke-width="1.5"/>';
+    const house = '<polygon points="32,6 60,28 4,28" fill="#c0392b" stroke="#5b3a1e" stroke-width="3"/>' +
+        '<rect x="10" y="28" width="44" height="28" fill="#f5e6c8" stroke="#5b3a1e" stroke-width="3"/>' +
+        '<rect x="27" y="40" width="10" height="16" fill="#7b4a2b"/>' +
+        '<rect x="14" y="33" width="9" height="9" fill="#7ec8f7" stroke="#5b3a1e" stroke-width="2"/>';
+    const tree = '<rect x="28" y="36" width="8" height="20" fill="#7b4a2b" stroke="#5b3a1e" stroke-width="2"/>' +
+        '<circle cx="32" cy="24" r="18" fill="#4e8a3c" stroke="#2f5e22" stroke-width="3"/>' +
+        '<circle cx="22" cy="30" r="11" fill="#5da344" stroke="#2f5e22" stroke-width="2.5"/>';
+    const flowers = '<g stroke="#3f7a1f" stroke-width="2"><path d="M10 22 V10 M22 22 V12" /></g>' +
+        '<circle cx="10" cy="8" r="4" fill="#ff6f91" stroke="#b5179e" stroke-width="1.5"/><circle cx="22" cy="10" r="4" fill="#ffd93b" stroke="#b06a00" stroke-width="1.5"/>';
+    return '<div class="farm-scenery">' +
+        '<svg style="left:40px;top:2px;width:520px;height:40px" viewBox="0 0 520 40">' + fence + '</svg>' +
+        '<svg style="right:6px;top:0px;width:130px" viewBox="0 0 64 60">' + house + '</svg>' +
+        '<svg style="left:-6px;top:56px;width:76px" viewBox="0 0 64 60">' + tree + '</svg>' +
+        '<svg style="right:36px;bottom:2px;width:84px" viewBox="0 0 64 60">' + tree + '</svg>' +
+        '<svg style="left:120px;bottom:6px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
+        '<svg style="right:150px;top:120px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
+        '</div>';
+}
 function plotHTML(i) {
     const p = S.plots[i];
     if (!p.unlocked) {
         const price = LAND_PRICES[S.plots.filter(x => x.unlocked).length - START_PLOTS] || 0;
-        return '<div class="soil"></div><div style="font-size:26px">🌱</div><div class="price">🪙 ' + price + '</div><div style="font-size:11px">Mở đất</div>';
+        return diamondSVG('grass') +
+            '<div class="farm-locktag"><div style="font-size:22px">🌱</div><div class="price">🪙 ' + price + '</div></div>';
     }
     const c = p.crop;
-    if (!c) return '<div class="soil"></div>';
+    if (!c) return diamondSVG('soil');
     const now = Date.now();
     const st = cropStage(c, now), w = cropWater(c, now);
     const mature = cropProgress(c, now) >= 1 && !c.dead;
-    let h = '<div class="soil"></div>';
+    let h = diamondSVG('soil', w <= 0 && !c.dead);
+    if (!c.dead) h += '<div class="pshadow"></div>';
     h += '<div class="farm-plant">' + (c.dead ? WITHER_SVG : cropSVG(c.id, st)) + '</div>';
-    h += '<div class="farm-moist' + (w < 30 ? ' low' : '') + '"><i style="width:' + Math.round(w) + '%"></i></div>';
     if (c.pestStart && !c.dead) h += '<div class="farm-pest" data-pest="' + i + '">🐛</div>';
     if (c.dead) h += '<div class="farm-badge">💀</div>';
     else if (mature) h += '<div class="farm-badge">🧺</div>';
@@ -283,10 +325,15 @@ function renderGrid(force) {
     const g = $('#farm-grid');
     if (!g) return;
     if (!g.children.length || force) {
-        g.innerHTML = S.plots.map((_, i) =>
-            '<div class="farm-plot" data-i="' + i + '" id="farm-plot-' + i + '">' + plotHTML(i) + '</div>').join('');
+        let h = sceneryHTML();
+        S.plots.forEach((p, i) => {
+            const pos = isoXY(i);
+            h += '<div class="farm-plot' + (p.unlocked ? '' : ' locked') + '" data-i="' + i + '" id="farm-plot-' + i +
+                '" style="left:' + pos.x + 'px;top:' + pos.y + 'px;z-index:' + pos.z + '">' + plotHTML(i) + '</div>';
+        });
+        g.innerHTML = h;
         S.plots.forEach((_, i) => plotSig[i] = plotSignature(i));
-        S.plots.forEach((_, i) => { if (!S.plots[i].unlocked) $('#farm-plot-' + i).classList.add('locked'); });
+        fitIso();
         return;
     }
     S.plots.forEach((_, i) => {
@@ -298,23 +345,22 @@ function renderGrid(force) {
             el.classList.toggle('locked', !S.plots[i].unlocked);
         }
     });
-    // cập nhật thanh ẩm + đồng hồ mỗi tick (rẻ)
+    // cập nhật đồng hồ đếm ngược mỗi tick
     const now = Date.now();
     S.plots.forEach((p, i) => {
         if (!p.unlocked || !p.crop || p.crop.dead) return;
-        const el = $('#farm-plot-' + i);
-        const bar = el.querySelector('.farm-moist i');
-        if (bar) {
-            const w = cropWater(p.crop, now);
-            bar.style.width = Math.round(w) + '%';
-            bar.parentElement.classList.toggle('low', w < 30);
-        }
-        const t = el.querySelector('.farm-timer');
-        if (t) {
-            const left = CROPS[p.crop.id].grow * 1000 - (now - p.crop.t0 - (p.crop.paused || 0));
-            t.textContent = fmtT(left);
-        }
+        const t = $('#farm-plot-' + i).querySelector('.farm-timer');
+        if (t) t.textContent = fmtT(CROPS[p.crop.id].grow * 1000 - (now - p.crop.t0 - (p.crop.paused || 0)));
     });
+}
+/* co giãn khung iso vừa màn hình */
+function fitIso() {
+    const g = $('#farm-grid');
+    if (!g || !g.parentElement) return;
+    const avail = g.parentElement.clientWidth || 600;
+    const s = Math.min(1, avail / ISO.W);
+    g.style.transform = 'translateX(-50%) scale(' + s + ')';
+    g.parentElement.style.height = (ISO.H * s + 8) + 'px';
 }
 function slotHTML(kind, i) {
     const arr = kind === 'pond' ? S.pond : S.coop;
@@ -668,6 +714,7 @@ function bindEvents() {
         window.FarmGame._docBound = true;
         document.addEventListener('visibilitychange', () => { if (document.hidden && S) save(); });
         window.addEventListener('beforeunload', () => { if (S) save(); });
+        window.addEventListener('resize', () => { if (winId && document.getElementById(winId)) fitIso(); });
     }
 }
 

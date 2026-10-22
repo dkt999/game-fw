@@ -45,7 +45,7 @@ function openFarmGame() {
         </nav>
         <main class="farm-main">
             <section class="farm-pane active" id="farm-pane-vuon">
-                <div class="farm-grid" id="farm-grid"></div>
+                <div class="farm-fieldwrap" id="farm-fieldwrap"><div class="farm-grid" id="farm-grid"></div></div>
             </section>
             <section class="farm-pane" id="farm-pane-ao">
                 <div class="farm-water" id="farm-pond"></div>
