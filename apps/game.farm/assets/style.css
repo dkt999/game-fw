@@ -1,0 +1,81 @@
+/* Nông Trại Vui Vẻ — style */
+.farm-wrap{display:flex;flex-direction:column;height:100%;background:linear-gradient(#9be15d,#7cc24a 60%,#6aaf3e);font-family:inherit;overflow:hidden;user-select:none;-webkit-user-select:none}
+.farm-hud{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px;background:linear-gradient(#a06a35,#7c4f24);border-bottom:3px solid #5b3a1e;flex-wrap:wrap}
+.farm-hud-left{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.farm-pill{background:#fff8e7;border:2px solid #5b3a1e;border-radius:999px;padding:4px 12px;font-size:14px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 0 #5b3a1e}
+.farm-pill b{font-size:15px}
+.farm-expbar{display:inline-block;width:70px;height:10px;background:#d7c49a;border-radius:99px;overflow:hidden;border:1px solid #5b3a1e}
+.farm-expbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd93b,#ff9d2e);transition:width .4s}
+.farm-auto{font-size:12px}
+.farm-hud-right{display:flex;gap:6px}
+.farm-hbtn{background:#ffdf6b;border:2px solid #5b3a1e;border-radius:12px;padding:6px 10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 0 #5b3a1e}
+.farm-hbtn:active{transform:translateY(2px);box-shadow:none}
+.farm-tabs{display:flex;gap:8px;padding:8px 12px 0;justify-content:center}
+.farm-tab{background:#e8d8b0;border:2px solid #5b3a1e;border-bottom:none;border-radius:12px 12px 0 0;padding:8px 22px;font-size:15px;font-weight:700;cursor:pointer;opacity:.75}
+.farm-tab.active{background:#fff8e7;opacity:1}
+.farm-tab.locked{opacity:.45}
+.farm-lock{font-size:11px}
+.farm-main{flex:1;overflow-y:auto;background:#fff8e7;border-top:3px solid #5b3a1e;padding:12px;position:relative}
+.farm-pane{display:none}
+.farm-pane.active{display:block}
+.farm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;max-width:760px;margin:0 auto}
+.farm-plot{position:relative;aspect-ratio:1/1;border-radius:14px;cursor:pointer;background:linear-gradient(#9c6b3f,#7c4f24);border:3px solid #5b3a1e;box-shadow:inset 0 -6px 0 rgba(0,0,0,.15);overflow:hidden;transition:transform .08s}
+.farm-plot:active{transform:scale(.96)}
+.farm-plot .soil{position:absolute;inset:0;background:
+  radial-gradient(circle at 30% 30%,rgba(255,255,255,.12),transparent 40%),
+  repeating-linear-gradient(0deg,transparent 0 10px,rgba(0,0,0,.12) 10px 13px)}
+.farm-plot.locked{background:linear-gradient(#79c25e,#5da344);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);font-weight:700}
+.farm-plot.locked .price{background:#5b3a1e;border-radius:99px;padding:2px 10px;font-size:12px}
+.farm-plant{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);width:72%;pointer-events:none;filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}
+.farm-plant svg{width:100%;height:auto;display:block}
+.farm-moist{position:absolute;left:8%;right:8%;bottom:6px;height:7px;background:rgba(0,0,0,.35);border-radius:99px;overflow:hidden}
+.farm-moist i{display:block;height:100%;background:linear-gradient(90deg,#4fc3f7,#0288d1);border-radius:99px}
+.farm-moist.low i{background:linear-gradient(90deg,#ff8a65,#d84315)}
+.farm-badge{position:absolute;top:4px;right:4px;font-size:18px;animation:farmBob 1s infinite}
+@keyframes farmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.farm-pest{position:absolute;top:2px;left:4px;font-size:20px;animation:farmWiggle .4s infinite;cursor:pointer;z-index:2}
+@keyframes farmWiggle{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.farm-timer{position:absolute;top:4px;left:6px;font-size:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:8px;padding:1px 6px}
+.farm-water{background:linear-gradient(#7ec8f7,#4a9fd8);border:3px solid #2f6f9f;border-radius:18px;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;max-width:640px;margin:0 auto}
+.farm-slot{background:rgba(255,255,255,.35);border:2px dashed #fff;border-radius:14px;aspect-ratio:1/1;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+.farm-slot .swim{width:64%;animation:farmSwim 3s ease-in-out infinite}
+@keyframes farmSwim{0%,100%{transform:translateX(-8%)}50%{transform:translateX(8%)}}
+.farm-slot .plus{font-size:34px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+.farm-coop{background:linear-gradient(#c9a06a,#a97e4b);border:3px solid #5b3a1e;border-radius:18px;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;max-width:640px;margin:0 auto}
+.farm-note{text-align:center;color:#7c5a2e;font-size:13px;margin:10px 4px 0}
+.farm-seedbar{display:flex;gap:8px;overflow-x:auto;padding:8px 10px;background:#fff3d6;border-top:3px solid #5b3a1e}
+.farm-seed{flex:0 0 auto;background:#fff;border:2px solid #5b3a1e;border-radius:12px;padding:6px 10px;font-size:13px;cursor:pointer;text-align:center;min-width:86px}
+.farm-seed.sel{background:#ffe08a;box-shadow:0 0 0 2px #ff9d2e}
+.farm-seed .p{font-weight:700}
+.farm-seed .c{color:#b06a00}
+.farm-seed.vip{border-color:#b5179e;background:#fae6ff}
+.farm-toolbar{display:flex;justify-content:center;gap:8px;padding:10px;background:linear-gradient(#a06a35,#7c4f24);border-top:3px solid #5b3a1e;flex-wrap:wrap}
+.farm-tool{background:#fff8e7;border:2px solid #5b3a1e;border-radius:14px;padding:8px 6px;font-size:22px;cursor:pointer;min-width:64px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 2px 0 #5b3a1e}
+.farm-tool span{font-size:11px;font-weight:700}
+.farm-tool.sel{background:#ffe08a;box-shadow:0 0 0 3px #ff9d2e}
+.farm-tool:active{transform:translateY(2px);box-shadow:none}
+.farm-toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(40,25,10,.92);color:#ffe9b0;padding:10px 18px;border-radius:14px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .3s;z-index:50;max-width:90%;text-align:center}
+.farm-toast.show{opacity:1}
+.farm-modal{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px}
+.farm-modal-box{background:#fff8e7;border:3px solid #5b3a1e;border-radius:18px;max-width:560px;width:100%;max-height:86%;overflow-y:auto;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.farm-modal-box h3{margin:0 0 10px;text-align:center}
+.farm-shop-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+.farm-shop-tab{background:#e8d8b0;border:2px solid #5b3a1e;border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.farm-shop-tab.active{background:#ffdf6b}
+.farm-item{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #d9c48f;border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.farm-item .ic{font-size:30px}
+.farm-item .inf{flex:1}
+.farm-item .inf b{font-size:14px}
+.farm-item .inf small{display:block;color:#7c5a2e;font-size:12px}
+.farm-item .vip-tag{background:#b5179e;color:#fff;font-size:10px;border-radius:6px;padding:1px 6px;margin-left:6px}
+.farm-buy{background:#7cc24a;border:2px solid #3f7a1f;color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap}
+.farm-buy:disabled{background:#bbb;border-color:#888;cursor:not-allowed}
+.farm-close{display:block;margin:12px auto 0;background:#e8d8b0;border:2px solid #5b3a1e;border-radius:12px;padding:8px 26px;font-weight:700;cursor:pointer}
+.farm-kho-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:2px solid #d9c48f;border-radius:12px;padding:8px 12px;margin-bottom:8px}
+.farm-help p{font-size:14px;line-height:1.65;margin:6px 0}
+.farm-help b{color:#7c4f24}
+@media (max-width:520px){
+  .farm-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .farm-tool{min-width:56px;font-size:20px}
+  .farm-pill{font-size:12px;padding:3px 9px}
+}
