@@ -28,7 +28,7 @@
 .farm-plot .diamond{position:absolute;top:80px;left:0;width:120px;height:68px}
 .farm-plot .pshadow{position:absolute;left:50%;top:106px;width:56px;height:14px;transform:translateX(-50%);background:rgba(0,0,0,.20);border-radius:50%;pointer-events:none}
 .farm-plot.locked .diamond{cursor:pointer}
-.farm-locktag{position:absolute;top:88px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:700;pointer-events:none}
+.farm-locktag{position:absolute;top:92px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:700;pointer-events:none}
 .farm-locktag .price{background:#5b3a1e;border-radius:99px;padding:2px 10px;font-size:12px}
 .farm-plant{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:64px;pointer-events:none;animation:farmSway 3.2s ease-in-out infinite}
 .farm-plant svg{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 2px rgba(0,0,0,.25))}

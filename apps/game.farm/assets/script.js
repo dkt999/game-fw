@@ -247,23 +247,19 @@ function curePest(p) {
 }
 
 /* ============ RENDER (giả 3D isometric) ============ */
-const ISO = { cols: 6, rows: 4, tw: 120, th: 60, W: 600, H: 308 };
+const ISO = { cols: 6, rows: 4, W: 564, H: 304 };
 function isoXY(i) {
     const c = i % ISO.cols, r = Math.floor(i / ISO.cols);
-    return { x: (c - r) * 60 + 180, y: (c + r) * 30, z: r * ISO.cols + c + 1 };
+    return { x: (c - r) * 56 + 168, y: (c + r) * 30, z: r * ISO.cols + c + 1 };
 }
+/* mảnh đất hình thoi phẳng, các ô ghép khít nhau không khe hở */
 function diamondSVG(kind, dry) {
-    let top, s1, s2;
-    if (kind === 'grass') { top = '#79c25e'; s1 = '#4e8a3c'; s2 = '#5da344'; }
-    else if (dry) { top = '#c49a63'; s1 = '#8a5f30'; s2 = '#9c713c'; }
-    else { top = '#9c6b3f'; s1 = '#6e4423'; s2 = '#7c4f24'; }
-    let deco = '<path d="M30 34 L60 48 L90 34" stroke="rgba(0,0,0,.20)" stroke-width="3" fill="none"/>';
-    if (kind === 'grass') deco = '<path d="M40 30 q5 -8 10 0 M70 36 q5 -8 10 0" stroke="#3f7a1f" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
-    else if (dry) deco += '<path d="M42 26 l9 7 M78 24 l-8 9 M60 36 l5 9" stroke="#6e4423" stroke-width="2" fill="none"/>';
+    const top = kind === 'grass' ? '#79c25e' : (dry ? '#c49a63' : '#9c6b3f');
+    let deco = '<path d="M32 34 L60 47 L88 34" stroke="rgba(0,0,0,.16)" stroke-width="3" fill="none"/>';
+    if (kind === 'grass') deco = '<path d="M42 32 q5 -8 10 0 M70 38 q5 -8 10 0" stroke="#3f7a1f" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+    else if (dry) deco += '<path d="M44 28 l9 7 M76 26 l-8 9 M60 38 l5 9" stroke="#6e4423" stroke-width="2" fill="none"/>';
     return '<svg viewBox="0 0 120 68" class="diamond">' +
-        '<polygon points="4,34 60,60 60,68 4,42" fill="' + s1 + '"/>' +
-        '<polygon points="60,60 116,34 116,42 60,68" fill="' + s2 + '"/>' +
-        '<polygon points="60,8 116,34 60,60 4,34" fill="' + top + '" stroke="#5b3a1e" stroke-width="3"/>' +
+        '<polygon points="60,4 116,34 60,64 4,34" fill="' + top + '" stroke="#5b3a1e" stroke-width="3" stroke-linejoin="round"/>' +
         deco + '</svg>';
 }
 function sceneryHTML() {
@@ -280,12 +276,12 @@ function sceneryHTML() {
     const flowers = '<g stroke="#3f7a1f" stroke-width="2"><path d="M10 22 V10 M22 22 V12" /></g>' +
         '<circle cx="10" cy="8" r="4" fill="#ff6f91" stroke="#b5179e" stroke-width="1.5"/><circle cx="22" cy="10" r="4" fill="#ffd93b" stroke="#b06a00" stroke-width="1.5"/>';
     return '<div class="farm-scenery">' +
-        '<svg style="left:40px;top:2px;width:520px;height:40px" viewBox="0 0 520 40">' + fence + '</svg>' +
+        '<svg style="left:32px;top:2px;width:500px;height:40px" viewBox="0 0 520 40">' + fence + '</svg>' +
         '<svg style="right:6px;top:0px;width:130px" viewBox="0 0 64 60">' + house + '</svg>' +
         '<svg style="left:-6px;top:56px;width:76px" viewBox="0 0 64 60">' + tree + '</svg>' +
-        '<svg style="right:36px;bottom:2px;width:84px" viewBox="0 0 64 60">' + tree + '</svg>' +
-        '<svg style="left:120px;bottom:6px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
-        '<svg style="right:150px;top:120px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
+        '<svg style="right:24px;bottom:2px;width:84px" viewBox="0 0 64 60">' + tree + '</svg>' +
+        '<svg style="left:100px;bottom:6px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
+        '<svg style="right:120px;top:110px;width:36px" viewBox="0 0 32 24">' + flowers + '</svg>' +
         '</div>';
 }
 function plotHTML(i) {
